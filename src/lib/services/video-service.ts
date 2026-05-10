@@ -1,5 +1,5 @@
 import { db } from "@/lib/db"
-import { videos, videoSchedules, uploadJobs, analytics, channels, notifications } from "@/lib/db/schema"
+import { videos, videoSchedules, uploadJobs, analytics, channels, notifications, userSettings } from "@/lib/db/schema"
 import { eq, and, desc, asc, count, sum, like } from "drizzle-orm"
 import { sql } from "drizzle-orm/sql"
 import { redis } from "../redis"
@@ -7,6 +7,17 @@ import { redis } from "../redis"
 export class VideoService {
   async getUserVideos(userId: string, status?: string, query?: string, limitValue = 50) {
     const conditions = [eq(videos.userId, userId)]
+    
+    // Get selected channel
+    const [settings] = await db
+      .select({ selectedChannelId: userSettings.selectedChannelId })
+      .from(userSettings)
+      .where(eq(userSettings.userId, userId))
+      
+    if (settings?.selectedChannelId) {
+      conditions.push(eq(videos.channelId, settings.selectedChannelId))
+    }
+
     if (status) {
       conditions.push(eq(videos.status, status))
     }
@@ -126,6 +137,19 @@ export class VideoService {
       }
     }
 
+    const [settings] = await db
+      .select({ selectedChannelId: userSettings.selectedChannelId })
+      .from(userSettings)
+      .where(eq(userSettings.userId, userId))
+
+    const analyticsConditions = [eq(analytics.userId, userId)]
+    const videoConditions = [eq(videos.userId, userId)]
+
+    if (settings?.selectedChannelId) {
+      analyticsConditions.push(eq(analytics.channelId, settings.selectedChannelId))
+      videoConditions.push(eq(videos.channelId, settings.selectedChannelId))
+    }
+
     const [analyticsData] = await db
       .select({
         totalViews: sum(analytics.views),
@@ -133,12 +157,12 @@ export class VideoService {
         totalComments: sum(analytics.comments),
       })
       .from(analytics)
-      .where(eq(analytics.userId, userId))
+      .where(and(...analyticsConditions))
 
     const [videoCount] = await db
       .select({ count: count() })
       .from(videos)
-      .where(eq(videos.userId, userId))
+      .where(and(...videoConditions))
 
     return {
       totalViews: analyticsData?.totalViews ? Number(analyticsData.totalViews) : 0,
@@ -149,10 +173,20 @@ export class VideoService {
   }
 
   async getChannels(userId: string) {
-    return await db
+    const userChans = await db
       .select()
       .from(channels)
       .where(eq(channels.userId, userId))
+
+    const [settings] = await db
+      .select({ selectedChannelId: userSettings.selectedChannelId })
+      .from(userSettings)
+      .where(eq(userSettings.userId, userId))
+
+    return userChans.map(ch => ({
+      ...ch,
+      isSelected: ch.id === settings?.selectedChannelId
+    }))
   }
 
   async getDailyStats(userId: string, days = 7) {
@@ -195,26 +229,56 @@ export class VideoService {
       .where(eq(notifications.userId, userId))
   }
 
-  async getHealth() {
+  async getHealth(): Promise<{
+    status: "operational" | "degraded"
+    services: {
+      database: { status: string; latencyMs: number }
+      queue: { status: string; latencyMs: number }
+      storage: string
+    }
+    latencyMs: number
+    timestamp: number
+    error?: string
+  }> {
+    const start = Date.now()
     try {
+      const dbStart = Date.now()
       await db.select({ count: count() }).from(videos).limit(1)
+      const dbLatency = Date.now() - dbStart
+
+      let redisLatency = -1
+      if (redis) {
+        const redisStart = Date.now()
+        await redis.ping()
+        redisLatency = Date.now() - redisStart
+      }
+
       return {
         status: "operational",
         services: {
-          database: "connected",
-          queue: redis ? "active" : "offline",
+          database: {
+            status: "connected",
+            latencyMs: dbLatency
+          },
+          queue: {
+            status: redis ? "active" : "offline",
+            latencyMs: redisLatency
+          },
           storage: "available",
         },
+        latencyMs: Date.now() - start,
         timestamp: Date.now()
       }
-    } catch {
+    } catch (error) {
       return {
         status: "degraded",
         services: {
-          database: "disconnected",
-          queue: "unknown",
+          database: { status: "disconnected", latencyMs: -1 },
+          queue: { status: "unknown", latencyMs: -1 },
           storage: "unknown",
         },
+        error: error instanceof Error ? error.message : "Unknown error",
+        latencyMs: Date.now() - start,
         timestamp: Date.now()
       }
     }

@@ -9,8 +9,10 @@ import { Icons } from "@/components/ui/icons"
 import { motion } from "framer-motion"
 import Link from "next/link"
 
+import { BRAND_CONFIG } from "@/constants/brand.constant"
+
 // Animated background particles
-function ParticleField() {
+function ParticleField({ color }: { color: string }) {
   const particlesRef = useRef<THREE.Points>(null)
   const particlesCount = 1500
 
@@ -44,7 +46,7 @@ function ParticleField() {
       </bufferGeometry>
       <pointsMaterial
         size={0.04}
-        color="#ff0000"
+        color={color}
         sizeAttenuation
         transparent
         opacity={0.4}
@@ -85,21 +87,24 @@ function ContentBox({ position, delay, color }: { position: [number, number, num
 }
 
 function Scene3D() {
+  const primaryColor = BRAND_CONFIG.colors.primary[500]
+  const secondaryColor = BRAND_CONFIG.colors.secondary[500]
+
   return (
     <>
       <PerspectiveCamera makeDefault position={[0, 0, 10]} />
       <OrbitControls enableZoom={false} enablePan={false} autoRotate autoRotateSpeed={0.5} />
       <Environment preset="night" />
       <ambientLight intensity={0.2} />
-      <pointLight position={[10, 10, 10]} color="#ff0000" intensity={2} />
-      <pointLight position={[-10, -10, -10]} color="#ec4899" intensity={2} />
+      <pointLight position={[10, 10, 10]} color={primaryColor} intensity={2} />
+      <pointLight position={[-10, -10, -10]} color={secondaryColor} intensity={2} />
       
-      <ParticleField />
+      <ParticleField color={primaryColor} />
       
-      <ContentBox position={[3, 2, -2]} delay={0} color="#ff0000" />
-      <ContentBox position={[-4, 1, -3]} delay={1} color="#ec4899" />
-      <ContentBox position={[2, -3, -1]} delay={2} color="#ff0000" />
-      <ContentBox position={[-2, -2, 2]} delay={3} color="#ec4899" />
+      <ContentBox position={[3, 2, -2]} delay={0} color={primaryColor} />
+      <ContentBox position={[-4, 1, -3]} delay={1} color={secondaryColor} />
+      <ContentBox position={[2, -3, -1]} delay={2} color={primaryColor} />
+      <ContentBox position={[-2, -2, 2]} delay={3} color={secondaryColor} />
     </>
   )
 }

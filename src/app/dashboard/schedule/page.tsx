@@ -6,7 +6,7 @@ import { VideoService } from "@/lib/services/video-service"
 
 export default async function SchedulePage() {
   const session = await getServerSession(authOptions)
-  if (!session?.user?.id) redirect("/auth/login")
+  if (!session?.user?.id) redirect("/auth/sigin")
 
   const videoService = new VideoService()
   const scheduledVideos = (await videoService.getScheduledVideos(session.user.id)).map(item => ({

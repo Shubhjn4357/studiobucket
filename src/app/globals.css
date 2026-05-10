@@ -16,6 +16,9 @@
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
   
@@ -29,59 +32,71 @@
   --radius-sm: 0.5rem;
 
   --animate-gradient-flow: gradient-flow 6s linear infinite;
+  --animate-shimmer: shimmer 2s infinite linear;
   
   @keyframes gradient-flow {
     0% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
     100% { background-position: 0% 50%; }
   }
+
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
 }
 
 :root {
   --background: #ffffff;
-  --foreground: #020617;
+  --foreground: #0f0f0f;
   
   --primary: #ff0000;
   --primary-foreground: #ffffff;
   
-  --secondary: #f1f5f9;
-  --secondary-foreground: #0f172a;
+  --secondary: #f2f2f2;
+  --secondary-foreground: #0f0f0f;
   
-  --accent: #d946ef;
+  --accent: #065fd4;
   --accent-foreground: #ffffff;
   
-  --muted: #f1f5f9;
-  --muted-foreground: #64748b;
+  --muted: #f2f2f2;
+  --muted-foreground: #606060;
+  
+  --surface: #f8f8f8;
+  --surface-hover: #e5e5e5;
   
   --card: #ffffff;
-  --card-foreground: #020617;
+  --card-foreground: #0f0f0f;
   
-  --border: #e2e8f0;
-  --input: #e2e8f0;
+  --border: #e5e5e5;
+  --input: #e5e5e5;
   --ring: #ff0000;
 }
 
 .dark {
-  --background: #020617;
-  --foreground: #f8fafc;
+  --background: #0f0f0f;
+  --foreground: #ffffff;
   
   --primary: #ff0000;
   --primary-foreground: #ffffff;
   
-  --secondary: #0f172a;
-  --secondary-foreground: #f8fafc;
+  --secondary: #272727;
+  --secondary-foreground: #ffffff;
   
-  --accent: #d946ef;
+  --accent: #3ea6ff;
   --accent-foreground: #ffffff;
   
-  --muted: #1e293b;
-  --muted-foreground: #94a3b8;
+  --muted: #272727;
+  --muted-foreground: #aaaaaa;
   
-  --card: #020617;
-  --card-foreground: #f8fafc;
+  --surface: #212121;
+  --surface-hover: #3f3f3f;
   
-  --border: rgba(255, 255, 255, 0.05);
-  --input: rgba(255, 255, 255, 0.05);
+  --card: #0f0f0f;
+  --card-foreground: #ffffff;
+  
+  --border: rgba(255, 255, 255, 0.1);
+  --input: rgba(255, 255, 255, 0.1);
   --ring: #ff0000;
 }
 
@@ -91,10 +106,6 @@
   }
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    background-image: 
-      radial-gradient(at 0% 0%, hsla(0, 100%, 50%, 0.03) 0, transparent 50%),
-      radial-gradient(at 100% 0%, hsla(300, 100%, 50%, 0.03) 0, transparent 50%),
-      radial-gradient(at 50% 100%, hsla(220, 100%, 50%, 0.01) 0, transparent 50%);
   }
 }
 
@@ -104,7 +115,7 @@
   }
   
   .glass-dark {
-    @apply bg-slate-950/40 backdrop-blur-2xl border border-white/5 shadow-2xl;
+    @apply bg-black/40 backdrop-blur-2xl border border-white/5 shadow-2xl;
   }
 
   .text-gradient {
@@ -112,29 +123,24 @@
   }
 
   .cyber-card {
-    @apply relative overflow-hidden rounded-xl border border-border bg-card backdrop-blur-xl transition-all duration-300 hover:border-primary/30 hover:shadow-[0_0_30px_-10px_rgba(255,0,0,0.2)];
+    @apply relative overflow-hidden rounded-xl border border-border bg-card transition-all duration-300 hover:border-primary/30;
   }
 
-  .animate-glow {
-    animation: glow 4s ease-in-out infinite alternate;
+  .yt-button {
+    @apply inline-flex items-center justify-center rounded-full px-4 h-9 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50;
   }
 
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
+  .yt-button-primary {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90;
   }
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    @apply bg-foreground/10 rounded-full hover:bg-foreground/20;
-  }
-}
 
-@keyframes glow {
-  from {
-    box-shadow: 0 0 10px -5px rgba(255, 0, 0, 0.1);
+  .yt-button-secondary {
+    @apply bg-secondary text-secondary-foreground hover:bg-secondary/80;
   }
-  to {
-    box-shadow: 0 0 30px 5px rgba(255, 0, 0, 0.3);
+
+  .skeleton {
+    @apply bg-muted animate-shimmer;
+    background: linear-gradient(90deg, transparent 25%, rgba(255,255,255,0.05) 50%, transparent 75%);
+    background-size: 200% 100%;
   }
 }

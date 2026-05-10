@@ -9,7 +9,7 @@ import { VideoService } from "@/lib/services/video-service"
 
 export default async function SettingsPage() {
   const session = await getServerSession(authOptions)
-  if (!session?.user?.id) redirect("/auth/login")
+  if (!session?.user?.id) redirect("/auth/signin")
 
   const user = await db.query.users.findFirst({
     where: eq(users.id, session.user.id)

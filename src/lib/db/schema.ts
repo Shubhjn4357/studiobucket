@@ -8,6 +8,9 @@ export const users = sqliteTable("users", {
   email: text("email").notNull().unique(),
   emailVerified: integer("email_verified", { mode: "boolean" }).notNull().default(false),
   image: text("image"),
+  plan: text("plan").notNull().default("alpha"), // alpha, pro, fleet
+  stripeCustomerId: text("stripe_customer_id"),
+  subscriptionId: text("subscription_id"),
   createdAt: integer("created_at").notNull(),
   updatedAt: integer("updated_at").notNull(),
 })
@@ -163,6 +166,7 @@ export const userSettings = sqliteTable("user_settings", {
   uploadSettings: text("upload_settings").notNull(), // JSON object for upload preferences
   scheduleSettings: text("schedule_settings").notNull(), // JSON object for scheduling preferences
   apiSettings: text("api_settings").notNull(), // JSON object for API preferences
+  selectedChannelId: text("selected_channel_id").references(() => channels.id),
   createdAt: integer("created_at").notNull(),
   updatedAt: integer("updated_at").notNull(),
 })
@@ -210,6 +214,16 @@ export const activityLogs = sqliteTable("activity_logs", {
   timestamp: integer("timestamp").notNull(),
 })
 
+// Team members table
+export const teamMembers = sqliteTable("team_members", {
+  id: text("id").primaryKey(),
+  ownerId: text("owner_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  role: text("role").notNull().default("editor"), // viewer, editor, admin
+  createdAt: integer("created_at").notNull(),
+  updatedAt: integer("updated_at").notNull(),
+})
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   accounts: many(accounts),
@@ -222,6 +236,8 @@ export const usersRelations = relations(users, ({ many }) => ({
   analytics: many(analytics),
   activityLogs: many(activityLogs),
   notifications: many(notifications),
+  ownedTeams: many(teamMembers, { relationName: "owner" }),
+  teamMemberships: many(teamMembers, { relationName: "member" }),
 }))
 
 export const accountsRelations = relations(accounts, ({ one }) => ({
@@ -332,5 +348,18 @@ export const notificationsRelations = relations(notifications, ({ one }) => ({
   user: one(users, {
     fields: [notifications.userId],
     references: [users.id],
+  }),
+}))
+
+export const teamMembersRelations = relations(teamMembers, ({ one }) => ({
+  owner: one(users, {
+    fields: [teamMembers.ownerId],
+    references: [users.id],
+    relationName: "owner",
+  }),
+  member: one(users, {
+    fields: [teamMembers.userId],
+    references: [users.id],
+    relationName: "member",
   }),
 }))

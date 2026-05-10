@@ -6,7 +6,7 @@ import { AnalyticsClient } from "./analytics-client"
 
 export default async function AnalyticsPage() {
   const session = await getServerSession(authOptions)
-  if (!session?.user?.id) redirect("/auth/login")
+  if (!session?.user?.id) redirect("/auth/signin")
 
   const videoService = new VideoService()
   const stats = await videoService.getAnalyticsData(session.user.id)

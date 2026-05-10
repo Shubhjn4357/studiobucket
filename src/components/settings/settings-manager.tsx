@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Icons } from "@/components/ui/icons"
@@ -8,8 +8,11 @@ import { cn } from "@/lib/utils"
 import { signIn } from "next-auth/react"
 import { User, Channel } from "@/schemas"
 import { updateGeneralSettings } from "@/app/dashboard/settings/actions"
+import { ThemeToggle } from "@/components/ui/theme-toggle"
 import { toast } from "sonner"
 import { motion, AnimatePresence } from "framer-motion"
+import { createCheckoutSession, createPortalSession } from "@/app/dashboard/settings/billing-actions"
+import { inviteTeamMember, getTeamMembers } from "@/app/dashboard/settings/actions"
 
 interface SettingsManagerProps {
   initialUser?: User
@@ -19,14 +22,24 @@ interface SettingsManagerProps {
 export function SettingsManager({ initialUser, initialChannels = [] }: SettingsManagerProps) {
   const [activeTab, setActiveTab] = useState("account")
   const [isSaving, setIsSaving] = useState(false)
+  const [inviteEmail, setInviteEmail] = useState("")
+  const [team, setTeam] = useState<Array<{ id: string; role: string; member: { name: string | null; email: string | null } }>>([])
   const [formData, setFormData] = useState({
     name: initialUser?.name || "",
     email: initialUser?.email || "",
   })
 
+  useEffect(() => {
+    if (activeTab === "team") {
+      getTeamMembers().then(setTeam).catch(console.error)
+    }
+  }, [activeTab])
+
   const tabs = [
     { id: "account", label: "Account", icon: Icons.user },
+    { id: "team", label: "Team", icon: Icons.users },
     { id: "youtube", label: "YouTube", icon: Icons.youtube },
+    { id: "billing", label: "Billing", icon: Icons.creditCard },
     { id: "notifications", label: "Alerts", icon: Icons.bell },
     { id: "api", label: "Protocol", icon: Icons.shield },
   ]
@@ -163,6 +176,179 @@ export function SettingsManager({ initialUser, initialChannels = [] }: SettingsM
     </div>
   )
 
+  const renderTeamSettings = () => (
+    <div className="space-y-8">
+      <div className="p-8 rounded-2xl bg-linear-to-br from-primary/10 to-accent/10 border border-primary/20 flex flex-col lg:flex-row items-center justify-between gap-6">
+        <div className="flex items-center gap-6">
+          <div className="h-16 w-16 rounded-2xl bg-background flex items-center justify-center border border-border shadow-xl">
+            <Icons.users className="h-8 w-8 text-primary" />
+          </div>
+          <div>
+            <h4 className="text-lg font-black text-foreground uppercase tracking-tight italic">Team Orchestration</h4>
+            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest mt-1">
+              Invite operative units to assist in content deployment.
+            </p>
+          </div>
+        </div>
+        <div className="flex gap-3">
+          <div className="relative group">
+            <input 
+              type="email" 
+              placeholder="Unit Email..."
+              value={inviteEmail}
+              onChange={(e) => setInviteEmail(e.target.value)}
+              className="bg-background/50 border border-border rounded-xl px-4 h-10 text-[10px] font-black uppercase tracking-widest outline-none focus:border-primary/50 w-64"
+            />
+          </div>
+          <Button 
+            onClick={async () => {
+              setIsSaving(true)
+              try {
+                await inviteTeamMember(inviteEmail)
+                toast.success("Unit invitation transmitted")
+                setInviteEmail("")
+                const updatedTeam = await getTeamMembers()
+                setTeam(updatedTeam as Array<{ id: string; role: string; member: { name: string | null; email: string | null } }>)
+              } catch (err: unknown) {
+                const message = err instanceof Error ? err.message : "Invitation failed"
+                toast.error(message)
+              } finally {
+                setIsSaving(false)
+              }
+            }}
+            disabled={isSaving || !inviteEmail}
+            className="h-10 rounded-xl px-6 text-[10px] font-black uppercase tracking-[0.2em] bg-primary text-white hover:opacity-90 shadow-lg shadow-primary/20"
+          >
+            Deploy Invite
+          </Button>
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        {team.length === 0 ? (
+          <div className="py-20 text-center border border-dashed border-border rounded-2xl">
+             <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground italic">No operative units assigned</p>
+          </div>
+        ) : (
+          team.map((member) => (
+            <div key={member.id} className="p-4 rounded-2xl bg-muted/30 border border-border flex items-center justify-between group hover:border-primary/20 transition-all">
+              <div className="flex items-center gap-4 overflow-hidden">
+                <div className="h-12 w-12 rounded-xl bg-background border border-border flex items-center justify-center shrink-0">
+                  <Icons.user className="h-5 w-5 text-muted-foreground" />
+                </div>
+                <div className="overflow-hidden">
+                  <p className="text-[10px] font-black text-foreground uppercase tracking-tight italic truncate">{member.member?.name || "Unknown Unit"}</p>
+                  <p className="text-[8px] text-muted-foreground font-bold uppercase tracking-widest">{member.member?.email}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="px-2 py-1 rounded bg-muted border border-border text-[8px] font-black uppercase tracking-widest text-primary">
+                  {member.role}
+                </div>
+                <Button size="icon" variant="ghost" className="h-6 w-6 text-red-500 hover:text-red-400">
+                  <Icons.trash2 className="h-3 w-3" />
+                </Button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  )
+
+  const renderBillingSettings = () => (
+    <div className="space-y-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {[
+          { id: "alpha", name: "Alpha", price: "0", features: ["1 Channel", "5 Uploads/mo", "720p Rendering"], current: true },
+          { id: "pro", name: "Pro", price: "29", features: ["5 Channels", "Unlimited Uploads", "4K Rendering", "AI Auto-Cut"], current: false },
+          { id: "fleet", name: "Fleet", price: "99", features: ["Unlimited Channels", "Priority Queue", "AI Super-Res", "Team Access"], current: false }
+        ].map((plan) => (
+          <div key={plan.name} className={cn(
+            "p-6 rounded-2xl border transition-all relative flex flex-col justify-between h-full group",
+            plan.current ? "bg-primary/10 border-primary shadow-lg shadow-primary/10" : "bg-muted/30 border-border hover:border-primary/30"
+          )}>
+            {plan.current && (
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-primary text-white text-[8px] font-black uppercase tracking-widest rounded-full">
+                Active Node
+              </div>
+            )}
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <h4 className="text-sm font-black text-foreground uppercase tracking-widest italic">{plan.name} Tier</h4>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-3xl font-black text-foreground">${plan.price}</span>
+                  <span className="text-[10px] text-muted-foreground font-bold uppercase">/mo</span>
+                </div>
+              </div>
+              <ul className="space-y-3">
+                {plan.features.map(f => (
+                  <li key={f} className="flex items-center gap-2 text-[9px] font-black uppercase tracking-tight text-muted-foreground">
+                    <Icons.check className="h-3 w-3 text-primary" />
+                    {f}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <Button 
+              variant={plan.current ? "secondary" : "default"}
+              disabled={plan.current || isSaving}
+              onClick={async () => {
+                if (plan.current) return
+                setIsSaving(true)
+                try {
+                  const { url } = await createCheckoutSession(plan.id as "alpha" | "pro" | "fleet")
+                  if (url) window.location.href = url
+                } catch (err: unknown) {
+                  const message = err instanceof Error ? err.message : "Failed to initiate checkout"
+                  toast.error(message)
+                } finally {
+                  setIsSaving(false)
+                }
+              }}
+              className={cn(
+                "mt-8 w-full h-10 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all",
+                !plan.current && "bg-primary text-white hover:opacity-90 shadow-lg shadow-primary/20"
+              )}
+            >
+              {plan.current ? "Current Plan" : "Upgrade Node"}
+            </Button>
+          </div>
+        ))}
+      </div>
+
+      <div className="p-6 rounded-2xl bg-muted/30 border border-border flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className="h-10 w-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
+             <Icons.creditCard className="h-5 w-5 text-muted-foreground" />
+          </div>
+          <div>
+            <p className="text-[10px] font-black text-foreground uppercase tracking-widest">Payment Method</p>
+            <p className="text-[9px] text-muted-foreground font-medium uppercase tracking-tight">Visa ending in 4242</p>
+          </div>
+        </div>
+        <Button 
+          variant="outline" 
+          onClick={async () => {
+            setIsSaving(true)
+            try {
+              const { url } = await createPortalSession()
+              if (url) window.location.href = url
+            } catch (err: unknown) {
+              const message = err instanceof Error ? err.message : "No subscription found"
+              toast.error(message)
+            } finally {
+              setIsSaving(false)
+            }
+          }}
+          className="h-9 rounded-xl border-border bg-muted/50 text-[9px] font-black uppercase tracking-widest"
+        >
+          Manage in Stripe
+        </Button>
+      </div>
+    </div>
+  )
+
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
@@ -225,7 +411,9 @@ export function SettingsManager({ initialUser, initialChannels = [] }: SettingsM
                 transition={{ duration: 0.2 }}
               >
                 {activeTab === "account" && renderAccountSettings()}
+                {activeTab === "team" && renderTeamSettings()}
                 {activeTab === "youtube" && renderYouTubeSettings()}
+                {activeTab === "billing" && renderBillingSettings()}
                 {activeTab === "notifications" && (
                   <div className="space-y-6">
                     <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30 border border-border">

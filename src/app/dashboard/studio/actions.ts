@@ -6,7 +6,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { revalidatePath } from "next/cache"
 import { eq } from "drizzle-orm"
-import { addStudioJob } from "@/lib/queue"
+import { addStudioJob, getJobStatus } from "@/lib/queue"
 import { VideoProject } from "@/types/video"
 
 export async function createRenderJob(videoId: string, projectData: VideoProject) {
@@ -104,4 +104,75 @@ export async function triggerAutoCut(videoId: string) {
 
   revalidatePath("/dashboard")
   return { jobId }
+}
+
+export async function triggerTranscription(videoId: string) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) throw new Error("Unauthorized")
+
+  const [video] = await db.select().from(videos).where(eq(videos.id, videoId))
+  if (!video) throw new Error("Video not found")
+
+  const jobId = crypto.randomUUID()
+
+  await db.insert(uploadJobs).values({
+    id: jobId,
+    userId: session.user.id,
+    videoId: videoId,
+    queueName: "studio-queue",
+    status: "waiting",
+    data: JSON.stringify({ type: "transcribe", title: `Transcription: ${video.title}` }),
+    createdAt: Math.floor(Date.now() / 1000),
+    updatedAt: Math.floor(Date.now() / 1000),
+  })
+
+  await addStudioJob({
+    type: "transcribe",
+    videoId,
+    jobId,
+    userId: session.user.id,
+    inputPath: video.filePath,
+  })
+
+  revalidatePath("/dashboard")
+  return { jobId }
+}
+
+export async function triggerThumbnailGen(videoId: string) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) throw new Error("Unauthorized")
+
+  const [video] = await db.select().from(videos).where(eq(videos.id, videoId))
+  if (!video) throw new Error("Video not found")
+
+  const jobId = crypto.randomUUID()
+
+  await db.insert(uploadJobs).values({
+    id: jobId,
+    userId: session.user.id,
+    videoId: videoId,
+    queueName: "studio-queue",
+    status: "waiting",
+    data: JSON.stringify({ type: "generate-thumbnails", title: `Thumbnails: ${video.title}` }),
+    createdAt: Math.floor(Date.now() / 1000),
+    updatedAt: Math.floor(Date.now() / 1000),
+  })
+
+  await addStudioJob({
+    type: "generate-thumbnails",
+    videoId,
+    jobId,
+    userId: session.user.id,
+    inputPath: video.filePath,
+  })
+
+  revalidatePath("/dashboard")
+  return { jobId }
+}
+
+export async function getJobStatusAction(queueName: string, jobId: string) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) throw new Error("Unauthorized")
+
+  return await getJobStatus(queueName, jobId)
 }

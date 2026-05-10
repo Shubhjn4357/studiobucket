@@ -6,12 +6,19 @@ import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
-import { updateVideoMetadata, triggerAutoCut } from "@/app/dashboard/studio/actions"
+import { updateVideoMetadata, triggerAutoCut, triggerTranscription, triggerThumbnailGen, getJobStatusAction } from "@/app/dashboard/studio/actions"
 import { toast } from "sonner"
-import { Track } from "@/types/video"
+import { Track, Clip } from "@/types/video"
 import { motion, AnimatePresence } from "framer-motion"
 
 type StudioTab = "details" | "editor" | "analytics" | "editor-v2"
+
+interface JobResult {
+  thumbnails?: string[]
+  cuts?: number[]
+  text?: string
+  srt?: string
+}
 
 interface VideoStudioProps {
   videoId: string
@@ -33,6 +40,9 @@ export function VideoStudio({ videoId, initialData, title = "Untitled Project" }
     tags: "",
     privacy: "private" as "public" | "private" | "unlisted",
   })
+
+  const [thumbnails, setThumbnails] = useState<string[]>([])
+  const [isGeneratingThumbs, setIsGeneratingThumbs] = useState(false)
 
   const [tracks, setTracks] = useState<Track[]>(initialData?.tracks || [])
 
@@ -79,15 +89,63 @@ export function VideoStudio({ videoId, initialData, title = "Untitled Project" }
           </div>
 
           <div className="space-y-4">
-            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Thumbnail</label>
+            <div className="flex items-center justify-between">
+              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Thumbnail</label>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                disabled={isGeneratingThumbs}
+                onClick={async () => {
+                  setIsGeneratingThumbs(true)
+                  toast.promise(
+                    (async () => {
+                      const { jobId } = await triggerThumbnailGen(videoId)
+                      let completed = false
+                      while (!completed) {
+                        const status = await getJobStatusAction("studio-queue", jobId)
+                        if (status?.status === "completed") {
+                          completed = true
+                          const result = (status.result as JobResult)?.thumbnails || []
+                          setThumbnails(result.map((p: string) => p.replace("./public", "")))
+                          return "Variations generated"
+                        }
+                        if (status?.status === "failed") throw new Error("Generation failed")
+                        await new Promise(r => setTimeout(r, 2000))
+                      }
+                    })(),
+                    {
+                      loading: "AI generating variations...",
+                      success: (msg) => msg,
+                      error: (err) => err.message
+                    }
+                  )
+                  setIsGeneratingThumbs(false)
+                }}
+                className="h-7 text-[8px] font-black uppercase tracking-widest gap-2"
+              >
+                <Icons.sparkles className="h-3 w-3 text-primary" />
+                Generate AI Variations
+              </Button>
+            </div>
             <div className="grid grid-cols-4 gap-4">
               <div className="aspect-video rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center gap-2 hover:border-primary/30 cursor-pointer transition-colors bg-muted/20">
                 <Icons.imagePlus className="h-5 w-5 text-muted-foreground" />
-                <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground text-center px-2">Upload Thumbnail</span>
+                <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground text-center px-2">Upload</span>
               </div>
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="aspect-video rounded-xl bg-slate-900 border border-border animate-pulse" />
-              ))}
+              {thumbnails.length > 0 ? (
+                thumbnails.map((src, i) => (
+                  <div key={i} className="aspect-video rounded-xl bg-slate-900 border border-border overflow-hidden group relative cursor-pointer hover:border-primary transition-all">
+                    <img src={src} alt="variation" className="h-full w-full object-cover" />
+                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                       <Button size="sm" className="h-7 text-[8px] font-black uppercase">Select</Button>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                [1, 2, 3].map((i) => (
+                  <div key={i} className="aspect-video rounded-xl bg-slate-900 border border-border animate-pulse" />
+                ))
+              )}
             </div>
           </div>
         </div>
@@ -159,17 +217,87 @@ export function VideoStudio({ videoId, initialData, title = "Untitled Project" }
                  toast.promise(
                    (async () => {
                      const { jobId } = await triggerAutoCut(videoId)
-                     return jobId
+                     
+                     // Poll for completion
+                     let completed = false
+                     while (!completed) {
+                       const status = await getJobStatusAction("studio-queue", jobId)
+                       if (status?.status === "completed") {
+                         completed = true
+                         const cuts = (status.result as JobResult)?.cuts
+                         if (cuts && cuts.length > 0) {
+                           // Apply cuts to the first video track
+                           setTracks(prev => prev.map(track => {
+                             if (track.type === "video") {
+                               const newClips: Clip[] = []
+                               let lastTime = 0
+                               cuts.forEach((cut, idx) => {
+                                 newClips.push({
+                                   id: `cut-${idx}`,
+                                   start: lastTime,
+                                   end: cut,
+                                   duration: cut - lastTime,
+                                   color: "bg-primary/40"
+                                 })
+                                 lastTime = cut
+                               })
+                               return { ...track, clips: newClips }
+                             }
+                             return track
+                           }))
+                         }
+                         return "Cuts applied to timeline"
+                       }
+                       if (status?.status === "failed") {
+                         throw new Error("Detection failed")
+                       }
+                       await new Promise(r => setTimeout(r, 2000))
+                     }
                    })(),
                    {
-                     loading: "Detecting scene cuts...",
-                     success: (jobId) => `AI Detection initiated (Job: ${jobId})`,
-                     error: "Detection failed"
+                     loading: "AI analyzing scenes...",
+                     success: (msg) => msg,
+                     error: (err) => err.message
                    }
                  )
                }}
              >
                <Icons.sparkles className="h-4 w-4" />
+             </Button>
+             <Button 
+               size="icon" 
+               variant="ghost" 
+               className="h-9 w-9 rounded-xl hover:bg-muted text-accent"
+               title="AI Transcription"
+               onClick={async () => {
+                 toast.promise(
+                   (async () => {
+                     const { jobId } = await triggerTranscription(videoId)
+                     let completed = false
+                     while (!completed) {
+                       const status = await getJobStatusAction("studio-queue", jobId)
+                       if (status?.status === "completed") {
+                         completed = true
+                         const text = (status.result as JobResult)?.text
+                         const srt = (status.result as JobResult)?.srt
+                         if (text) {
+                           setMetadata(prev => ({ ...prev, description: `${prev.description}\n\n[Transcript]\n${text}` }))
+                         }
+                         return "Transcription complete. Added to description."
+                       }
+                       if (status?.status === "failed") throw new Error("Transcription failed")
+                       await new Promise(r => setTimeout(r, 2000))
+                     }
+                   })(),
+                   {
+                     loading: "AI transcribing audio...",
+                     success: (msg) => msg,
+                     error: (err) => err.message
+                   }
+                 )
+               }}
+             >
+               <Icons.messageSquare className="h-4 w-4" />
              </Button>
              <div className="h-4 w-px bg-border mx-2" />
              <Button size="icon" variant="ghost" className="h-9 w-9 rounded-xl hover:bg-muted"><Icons.undo className="h-4 w-4" /></Button>

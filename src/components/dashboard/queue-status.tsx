@@ -18,13 +18,13 @@ interface QueueData {
 interface ActiveJob {
   id: string
   status: string
-  progress: number
+  progress: number | null
   data?: string | Record<string, unknown> | null
 }
 
 function JobRow({ job }: { job: ActiveJob }) {
   const liveData = useTelemetry(job.id)
-  const currentProgress = liveData?.progress ?? job.progress
+  const currentProgress = liveData?.progress ?? job.progress ?? 0
   const currentStatus = liveData?.status ?? job.status
 
   let jobName = "Processing Job"

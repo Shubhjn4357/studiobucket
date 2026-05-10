@@ -9,9 +9,10 @@ export const ROUTES = {
   studio: "/dashboard/studio",
   downloader: "/dashboard/downloader",
   content: "/dashboard/content",
+  channels: "/dashboard/channels",
   
   // Auth routes
-  login: "/auth/login",
+  signin: "/auth/signin",
   signup: "/auth/signup",
   logout: "/auth/logout",
   
@@ -40,6 +41,11 @@ export const NAVIGATION_ITEMS = [
     title: "Content",
     href: ROUTES.content,
     icon: "play",
+  },
+  {
+    title: "Channels",
+    href: ROUTES.channels,
+    icon: "users",
   },
   {
     title: "Analytics",

@@ -7,7 +7,7 @@ import { UploadJob } from "@/schemas"
 
 export default async function QueuePage() {
   const session = await getServerSession(authOptions)
-  if (!session?.user?.id) redirect("/auth/login")
+  if (!session?.user?.id) redirect("/auth/signin")
 
   const videoService = new VideoService()
   const activeJobs = await videoService.getActiveJobs(session.user.id) as unknown as UploadJob[]

@@ -1,3 +1,5 @@
+import * as React from "react"
+import Brandlogo from "@/assets/brand/logo.png"
 import {
   LayoutDashboard,
   Upload,
@@ -120,7 +122,12 @@ import {
   Redo,
   Lightbulb,
   AlertTriangle,
+  CreditCard,
+  HardDrive,
+  Cpu,
+  ShieldCheck,
 } from "lucide-react"
+import Image from "next/image"
 
 export const Icons = {
   alertTriangle: AlertTriangle,
@@ -232,7 +239,9 @@ export const Icons = {
   calendarSearch: CalendarSearch,
   calendarSync: CalendarSync,
   calendarClock: CalendarClock,
-  logo: PlayCircle,
+  logo: (props: Omit<React.ComponentPropsWithoutRef<typeof Image>, "src" | "alt">) => (
+    <Image src={Brandlogo} alt="StudioBucket Logo" width={32} height={32} {...props} />
+  ),
   scissors: Scissors,
   maximize: Maximize,
   tag: Tag,
@@ -245,6 +254,10 @@ export const Icons = {
   undo: Undo,
   redo: Redo,
   lightbulb: Lightbulb,
+  creditCard: CreditCard,
+  hardDrive: HardDrive,
+  cpu: Cpu,
+  shieldCheck: ShieldCheck,
   google: (props: React.SVGProps<SVGSVGElement>) => (
     <svg
       role="img"

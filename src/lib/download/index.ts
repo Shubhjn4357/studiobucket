@@ -147,10 +147,8 @@ export class DownloadService {
       let errorOutput = ""
       let filePath = ""
 
-      let output = ""
       process.stdout.on("data", (data) => {
         const outputStr = data.toString()
-        output += outputStr
 
         // Extract file path from output
         const pathMatch = outputStr.match(/\[download\] Destination: (.+)/)

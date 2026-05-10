@@ -4,6 +4,9 @@ import GoogleProvider from "next-auth/providers/google"
 import { db } from "@/lib/db"
 import { channels } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
+import { SubscriptionService } from "@/lib/services/subscription-service"
+
+const subService = new SubscriptionService()
 
 export const authOptions: NextAuthOptions = {
   adapter: DrizzleAdapter(db),
@@ -33,6 +36,21 @@ export const authOptions: NextAuthOptions = {
           const data = await res.json()
           if (data.items?.[0]) {
             const ytChannel = data.items[0]
+            
+            // Check if channel already exists
+            const existingChannel = await db.query.channels.findFirst({
+              where: eq(channels.id, ytChannel.id)
+            })
+
+            if (!existingChannel) {
+              const limitCheck = await subService.checkChannelLimit(user.id)
+              
+              if (!limitCheck.allowed) {
+                console.warn(`Channel sync skipped for user ${user.id}: ${limitCheck.message}`)
+                return true // Still allow login, just skip sync
+              }
+            }
+
             await db.insert(channels).values({
               id: ytChannel.id,
               channelId: ytChannel.id,

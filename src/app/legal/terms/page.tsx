@@ -10,23 +10,37 @@ export default function TermsPage() {
 
       <div className="prose prose-invert max-w-none space-y-8 text-muted-foreground font-medium text-sm leading-relaxed">
         <section className="space-y-4">
-          <h2 className="text-lg font-black text-foreground uppercase tracking-tight">1. Interface Access</h2>
+          <h2 className="text-lg font-black text-foreground uppercase tracking-tight">1. Interface Access & Automation</h2>
           <p>
-            StudioBucket is a professional-grade automation interface. Users are responsible for the content they deploy and must adhere to YouTube&apos;s Community Guidelines and Terms of Service.
+            StudioBucket is a professional-grade automation interface. By using the automated scheduling and posting features, you explicitly authorize StudioBucket to interact with your YouTube account via the Google API on your behalf. You remain the sole &quot;Content Commander&quot; and are responsible for all data deployed through our nodes.
           </p>
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-lg font-black text-foreground uppercase tracking-tight">2. API Quotas</h2>
+          <h2 className="text-lg font-black text-foreground uppercase tracking-tight">2. API Quotas & Reliability</h2>
           <p>
-            Users acknowledge that YouTube API operations are subject to daily quota limits. StudioBucket provides telemetry on usage but cannot circumvent Google-imposed restrictions.
+            Users acknowledge that YouTube API operations are subject to daily quota limits. While we provide real-time telemetry, StudioBucket is not liable for failed deployments caused by quota exhaustion, Google API outages, or network latency in the distribution tier.
           </p>
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-lg font-black text-foreground uppercase tracking-tight">3. Termination of Node</h2>
+          <h2 className="text-lg font-black text-foreground uppercase tracking-tight">3. Automated Posting Liability</h2>
           <p>
-            Integrated Operations reserves the right to terminate access for any account found to be using the platform for malicious automation or copyright infringement.
+            The &quot;Fleet&quot; automation system operates on a non-deterministic background layer. You agree that StudioBucket and its parent entity, Integrated Operations, are not liable for any account strikes, community guideline violations, or channel terminations resulting from automated posting of content that violates third-party rights or YouTube policies.
+          </p>
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="text-lg font-black text-foreground uppercase tracking-tight">4. Data Integrity & Retention</h2>
+          <p>
+            We maintain a &quot;Mission Control&quot; data retention policy. While we strive for 99.9% uptime of the storage nodes, we do not guarantee the permanent storage of your source files beyond the active processing window. Users should maintain local backups of all archival footage.
+          </p>
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="text-lg font-black text-foreground uppercase tracking-tight">5. Termination of Node</h2>
+          <p>
+            Integrated Operations reserves the right to terminate access for any account found to be using the platform for malicious automation, spam orchestration, or massive copyright infringement. Such termination is final and may result in the immediate purging of all associated archival data.
           </p>
         </section>
       </div>

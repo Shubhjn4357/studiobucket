@@ -9,6 +9,8 @@ import { Progress } from "@/components/ui/progress"
 import { cn } from "@/lib/utils"
 import { useTelemetry } from "@/hooks/use-telemetry"
 import { UploadJob } from "@/schemas"
+import { pauseQueueAction, purgeQueueAction, resumeQueueAction } from "@/app/dashboard/actions"
+import { toast } from "sonner"
 
 interface JobData {
   title?: string
@@ -111,6 +113,31 @@ export function QueueClient({ initialJobs, initialStats }: {
   initialStats: { active: number, completed: number, failed: number, waiting: number } 
 }) {
   const [jobs] = useState(initialJobs)
+  const [isPaused, setIsPaused] = useState(false)
+
+  const handlePause = async () => {
+    try {
+      if (isPaused) {
+        await resumeQueueAction()
+        toast.success("Fleet resumed")
+      } else {
+        await pauseQueueAction()
+        toast.success("Fleet paused")
+      }
+      setIsPaused(!isPaused)
+    } catch {
+      toast.error("Operation failed")
+    }
+  }
+
+  const handlePurge = async () => {
+    try {
+      await purgeQueueAction()
+      toast.success("Archives purged")
+    } catch {
+      toast.error("Purge failed")
+    }
+  }
 
   return (
     <div className="space-y-12 pb-20">
@@ -120,10 +147,17 @@ export function QueueClient({ initialJobs, initialStats }: {
           <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-primary">Operational Task Manager</p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" className="h-12 px-8 rounded-2xl border-white/5 bg-white/5 text-[10px] font-black uppercase tracking-widest hover:bg-white/10 text-white transition-all">
-            Pause Fleet
+          <Button 
+            variant="outline" 
+            onClick={handlePause}
+            className="h-12 px-8 rounded-2xl border-white/5 bg-white/5 text-[10px] font-black uppercase tracking-widest hover:bg-white/10 text-white transition-all"
+          >
+            {isPaused ? "Resume Fleet" : "Pause Fleet"}
           </Button>
-          <Button className="h-12 px-8 rounded-2xl bg-primary text-white font-black uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20 hover:opacity-90 transition-all">
+          <Button 
+            onClick={handlePurge}
+            className="h-12 px-8 rounded-2xl bg-primary text-white font-black uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20 hover:opacity-90 transition-all"
+          >
             Purge Archives
           </Button>
         </div>

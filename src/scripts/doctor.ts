@@ -66,7 +66,7 @@ async function runDoctor() {
   try {
     const ffmpegVersion = execSync("ffmpeg -version").toString().split("\n")[0]
     console.log(`  ✅ ${ffmpegVersion}`)
-  } catch (error) {
+  } catch {
     console.log("  ❌ FFmpeg not found! Please install ffmpeg.")
     healthy = false
   }
@@ -77,7 +77,7 @@ async function runDoctor() {
     const ytDlpPath = process.env.YT_DLP_PATH || "yt-dlp"
     const ytDlpVersion = execSync(`${ytDlpPath} --version`).toString().trim()
     console.log(`  ✅ yt-dlp version ${ytDlpVersion}`)
-  } catch (error) {
+  } catch {
     console.log("  ❌ yt-dlp not found! Please check YT_DLP_PATH in .env or install it.")
     healthy = false
   }

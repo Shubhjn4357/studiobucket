@@ -23,7 +23,7 @@ export default async function ContentPage({
 }) {
   const { q } = await searchParams
   const session = await getServerSession(authOptions)
-  if (!session?.user?.id) redirect("/auth/login")
+  if (!session?.user?.id) redirect("/auth/signin")
 
   const videoService = new VideoService()
   const videos = await videoService.getUserVideos(session.user.id, undefined, q) as unknown as VideoWithStats[]

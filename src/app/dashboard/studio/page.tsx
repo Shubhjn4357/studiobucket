@@ -6,6 +6,26 @@ import { db } from "@/lib/db"
 import { videos } from "@/lib/db/schema"
 import { eq, and } from "drizzle-orm"
 import { Icons } from "@/components/ui/icons"
+import { Suspense } from "react"
+import { StudioSkeleton } from "@/components/ui/skeleton-loader"
+
+async function StudioContent({ videoId, userId }: { videoId: string, userId: string }) {
+  let initialVideo = null
+
+  if (videoId !== "default") {
+    initialVideo = await db.query.videos.findFirst({
+      where: and(eq(videos.id, videoId), eq(videos.userId, userId))
+    })
+  }
+
+  return (
+    <VideoStudio 
+      videoId={videoId} 
+      initialData={initialVideo ? JSON.parse(initialVideo.metadata || "{}") : undefined}
+      title={initialVideo?.title || "Alpha Strike"}
+    />
+  )
+}
 
 export default async function StudioPage({
   searchParams,
@@ -16,15 +36,7 @@ export default async function StudioPage({
   const session = await getServerSession(authOptions)
   
   if (!session?.user?.id) {
-    redirect("/auth/login")
-  }
-
-  let initialVideo = null
-
-  if (id) {
-    initialVideo = await db.query.videos.findFirst({
-      where: and(eq(videos.id, id), eq(videos.userId, session.user.id))
-    })
+    redirect("/auth/signin")
   }
 
   return (
@@ -32,21 +44,19 @@ export default async function StudioPage({
       {/* Studio Header */}
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-3">
-          <div className="h-12 w-12 rounded-2xl bg-linear-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/20">
-            <Icons.video className="h-6 w-6 text-white" />
+          <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center">
+            <Icons.video className="h-5 w-5 text-white" />
           </div>
           <div>
-            <h1 className="text-3xl font-black text-foreground uppercase tracking-tighter leading-none italic">Integrated Studio</h1>
-            <p className="text-muted-foreground font-bold uppercase tracking-[0.2em] text-[10px] mt-1">Non-Destructive Editing • AI Pipeline</p>
+            <h1 className="text-2xl font-bold tracking-tight">Creative Studio</h1>
+            <p className="text-sm text-muted-foreground">Orchestrate your content with AI precision.</p>
           </div>
         </div>
       </div>
 
-      <VideoStudio 
-        videoId={id || "default"} 
-        initialData={initialVideo ? JSON.parse(initialVideo.metadata || "{}") : undefined}
-        title={initialVideo?.title || "Alpha Strike"}
-      />
+      <Suspense fallback={<StudioSkeleton />}>
+        <StudioContent videoId={id || "default"} userId={session.user.id} />
+      </Suspense>
     </div>
   )
 }

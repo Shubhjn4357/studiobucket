@@ -6,6 +6,10 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { revalidatePath } from "next/cache"
 import { addUploadJob } from "@/lib/queue"
+import { SubscriptionService } from "@/lib/services/subscription-service"
+
+const subService = new SubscriptionService()
+
 export async function createUploadJob(data: {
   title: string
   fileSize: number
@@ -13,6 +17,12 @@ export async function createUploadJob(data: {
 }) {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) throw new Error("Unauthorized")
+
+  const limitCheck = await subService.checkUploadLimit(session.user.id)
+  
+  if (!limitCheck.allowed) {
+    throw new Error(limitCheck.message)
+  }
 
   const videoId = crypto.randomUUID()
   const jobId = crypto.randomUUID()
