@@ -1,27 +1,26 @@
-import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core"
-import { relations } from "drizzle-orm"
+import { sqliteTable, text, integer, primaryKey } from "drizzle-orm/sqlite-core"
+import { relations, sql } from "drizzle-orm"
 
 // Users table
 export const users = sqliteTable("users", {
-  id: text("id").primaryKey(),
-  name: text("name").notNull(),
+  id: text("id").notNull().primaryKey().$defaultFn(() => crypto.randomUUID()),
+  name: text("name"),
   email: text("email").notNull().unique(),
-  emailVerified: integer("email_verified", { mode: "boolean" }).notNull().default(false),
+  emailVerified: integer("emailVerified", { mode: "timestamp_ms" }),
   image: text("image"),
-  plan: text("plan").notNull().default("alpha"), // alpha, pro, fleet
-  stripeCustomerId: text("stripe_customer_id"),
-  subscriptionId: text("subscription_id"),
-  createdAt: integer("created_at").notNull(),
-  updatedAt: integer("updated_at").notNull(),
+  plan: text("plan").notNull().default("alpha"),
+  stripeCustomerId: text("stripeCustomerId"),
+  subscriptionId: text("subscriptionId"),
+  createdAt: integer("createdAt").default(sql`(strftime('%s', 'now') * 1000)`),
+  updatedAt: integer("updatedAt").default(sql`(strftime('%s', 'now') * 1000)`),
 })
 
 // Accounts table (for OAuth)
 export const accounts = sqliteTable("accounts", {
-  id: text("id").primaryKey(),
-  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  userId: text("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
   type: text("type").notNull(),
   provider: text("provider").notNull(),
-  providerAccountId: text("provider_account_id").notNull(),
+  providerAccountId: text("providerAccountId").notNull(),
   refresh_token: text("refresh_token"),
   access_token: text("access_token"),
   expires_at: integer("expires_at"),
@@ -29,19 +28,25 @@ export const accounts = sqliteTable("accounts", {
   scope: text("scope"),
   id_token: text("id_token"),
   session_state: text("session_state"),
-  createdAt: integer("created_at").notNull(),
-  updatedAt: integer("updated_at").notNull(),
-})
+}, (account) => ({
+  compoundKey: primaryKey({ columns: [account.provider, account.providerAccountId] }),
+}))
 
 // Sessions table
 export const sessions = sqliteTable("sessions", {
-  id: text("id").primaryKey(),
-  sessionToken: text("session_token").notNull().unique(),
-  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  expires: integer("expires").notNull(),
-  createdAt: integer("created_at").notNull(),
-  updatedAt: integer("updated_at").notNull(),
+  sessionToken: text("sessionToken").primaryKey(),
+  userId: text("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  expires: integer("expires", { mode: "timestamp_ms" }).notNull(),
 })
+
+// Verification Tokens table
+export const verificationTokens = sqliteTable("verification_tokens", {
+  identifier: text("identifier").notNull(),
+  token: text("token").notNull(),
+  expires: integer("expires", { mode: "timestamp_ms" }).notNull(),
+}, (vt) => ({
+  compoundKey: primaryKey({ columns: [vt.identifier, vt.token] }),
+}))
 
 // YouTube channels
 export const channels = sqliteTable("channels", {

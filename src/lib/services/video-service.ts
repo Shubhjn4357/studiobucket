@@ -248,9 +248,18 @@ export class VideoService {
 
       let redisLatency = -1
       if (redis) {
-        const redisStart = Date.now()
-        await redis.ping()
-        redisLatency = Date.now() - redisStart
+        try {
+          const redisStart = Date.now()
+          // Use a timeout for the ping to avoid hanging the health check
+          const pingPromise = redis.ping()
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error("Redis Timeout")), 1000)
+          )
+          await Promise.race([pingPromise, timeoutPromise])
+          redisLatency = Date.now() - redisStart
+        } catch (e) {
+          console.warn("Health Check: Redis ping failed", e)
+        }
       }
 
       return {

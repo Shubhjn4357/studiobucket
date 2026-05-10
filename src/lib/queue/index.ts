@@ -28,14 +28,26 @@ export type DownloadJob = z.infer<typeof DownloadJobSchema>
 
 export const uploadQueue = redisConnection ? new Queue("upload-queue", {
   connection: redisConnection,
+  defaultJobOptions: {
+    removeOnComplete: true,
+    removeOnFail: false,
+  }
 }) : null
 
 export const downloadQueue = redisConnection ? new Queue("download-queue", {
   connection: redisConnection,
+  defaultJobOptions: {
+    removeOnComplete: true,
+    removeOnFail: false,
+  }
 }) : null
 
 export const studioQueue = redisConnection ? new Queue("studio-queue", {
   connection: redisConnection,
+  defaultJobOptions: {
+    removeOnComplete: true,
+    removeOnFail: false,
+  }
 }) : null
 
 export async function addUploadJob(data: Record<string, unknown>) {

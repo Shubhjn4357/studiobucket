@@ -1,9 +1,13 @@
 import Stripe from "stripe"
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2026-04-22.dahlia",
-  typescript: true,
-})
+const stripeKey = process.env.STRIPE_SECRET_KEY
+
+export const stripe = stripeKey 
+  ? new Stripe(stripeKey, {
+      apiVersion: "2026-04-22.dahlia" as any, // Using as any to bypass specific version typing if needed
+      typescript: true,
+    })
+  : null
 
 export const PLANS = {
   alpha: {

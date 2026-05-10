@@ -32,9 +32,13 @@ export async function markAllAsReadAction() {
 }
 
 export async function getDailyStatsAction(days = 7) {
+  try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) return []
     return await videoService.getDailyStats(session.user.id, days)
+  } catch {
+    return []k
+  }
 }
 
 export async function pauseQueueAction() {

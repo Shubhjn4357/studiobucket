@@ -2,14 +2,19 @@ import { NextAuthOptions } from "next-auth"
 import { DrizzleAdapter } from "@auth/drizzle-adapter"
 import GoogleProvider from "next-auth/providers/google"
 import { db } from "@/lib/db"
-import { channels } from "@/lib/db/schema"
+import { accounts, sessions, users, verificationTokens, channels } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
 import { SubscriptionService } from "@/lib/services/subscription-service"
 
 const subService = new SubscriptionService()
 
 export const authOptions: NextAuthOptions = {
-  adapter: DrizzleAdapter(db),
+  adapter: DrizzleAdapter(db, {
+    usersTable: users,
+    accountsTable: accounts,
+    sessionsTable: sessions,
+    verificationTokensTable: verificationTokens,
+  }),
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -26,31 +31,38 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async signIn({ account, user }) {
-      if (account?.provider === "google" && account.access_token) {
+      return true
+    },
+    session: ({ session, token }) => ({
+      ...session,
+      user: {
+        ...session.user,
+        id: token.sub,
+      },
+    }),
+    jwt: ({ token, user }) => {
+      if (user) {
+        token.uid = user.id
+      }
+      return token
+    },
+  },
+  events: {
+    async signIn({ user, account }) {
+      if (account?.provider === "google" && account.access_token && user.id) {
         try {
           const res = await fetch(`https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&mine=true`, {
             headers: {
               Authorization: `Bearer ${account.access_token}`
             }
           })
+          
+          if (!res.ok) return
+
           const data = await res.json()
           if (data.items?.[0]) {
             const ytChannel = data.items[0]
             
-            // Check if channel already exists
-            const existingChannel = await db.query.channels.findFirst({
-              where: eq(channels.id, ytChannel.id)
-            })
-
-            if (!existingChannel) {
-              const limitCheck = await subService.checkChannelLimit(user.id)
-              
-              if (!limitCheck.allowed) {
-                console.warn(`Channel sync skipped for user ${user.id}: ${limitCheck.message}`)
-                return true // Still allow login, just skip sync
-              }
-            }
-
             await db.insert(channels).values({
               id: ytChannel.id,
               channelId: ytChannel.id,
@@ -77,24 +89,10 @@ export const authOptions: NextAuthOptions = {
             })
           }
         } catch (error) {
-          console.error("Failed to sync YouTube channel:", error)
+          console.error("YouTube sync failure during sign-in event:", error)
         }
       }
-      return true
-    },
-    session: ({ session, token }) => ({
-      ...session,
-      user: {
-        ...session.user,
-        id: token.sub,
-      },
-    }),
-    jwt: ({ token, user }) => {
-      if (user) {
-        token.uid = user.id
-      }
-      return token
-    },
+    }
   },
   session: {
     strategy: "jwt",

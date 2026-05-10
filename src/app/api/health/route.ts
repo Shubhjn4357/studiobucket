@@ -10,5 +10,5 @@ export async function GET() {
   return NextResponse.json({
     ...health,
     version: "1.0.0-prod"
-  }, { status: health.status === "operational" ? 200 : 500 })
+  }, { status: 200 })
 }

@@ -73,6 +73,9 @@ export class SubscriptionService {
   }
 
   async createCheckoutSession(userId: string, priceId: string) {
+    if (!stripe) {
+      throw new Error("Payments are currently disabled. Please contact support.")
+    }
     const user = await db.query.users.findFirst({
       where: eq(users.id, userId)
     })
@@ -93,6 +96,9 @@ export class SubscriptionService {
   }
 
   async createPortalSession(userId: string) {
+    if (!stripe) {
+      throw new Error("Portal is currently disabled. Please contact support.")
+    }
     const user = await db.query.users.findFirst({
       where: eq(users.id, userId)
     })

@@ -7,10 +7,23 @@ export async function register() {
 
     const connection = new IORedis(process.env.REDIS_URL || "redis://localhost:6379", {
       maxRetriesPerRequest: null,
+      lazyConnect: true,
+      retryStrategy(times) {
+        // Stop retrying after 3 failures in dev if Redis is missing
+        if (process.env.NODE_ENV === 'development' && times > 3) return null
+        return Math.min(times * 100, 3000)
+      }
     })
 
+    connection.on('error', (err: unknown) => {
+      const error = err as NodeJS.ErrnoException
+      if (error.code !== 'ECONNREFUSED') {
+        console.error('Instrumentation Redis Error:', err)
+      }
+    })
+k
     // Upload Worker
-    new Worker('upload-queue', async (job) => {
+    const uploadWorker = new Worker('upload-queue', async (job) => {
       logger.info(`Processing upload job ${job.id}`)
       const { userId, filePath, metadata } = job.data
       
@@ -27,11 +40,21 @@ export async function register() {
       logger.info(`Job ${job.id} completed`)
     }, { connection })
 
+    uploadWorker.on('error', (err) => {
+      if (err.message.includes('ECONNREFUSED')) return
+      logger.error({ err }, 'Upload Worker Error')
+    })
+
     // Download Worker
-    new Worker('download-queue', async (job) => {
+    const downloadWorker = new Worker('download-queue', async (job) => {
       logger.info(`Processing download job ${job.id}`)
       // Add yt-dlp logic here
     }, { connection })
+
+    downloadWorker.on('error', (err) => {
+      if (err.message.includes('ECONNREFUSED')) return
+      logger.error({ err }, 'Download Worker Error')
+    })
 
     logger.info('Background Workers Registered')
   }

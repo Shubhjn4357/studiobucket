@@ -12,9 +12,17 @@ const processor = new VideoProcessor()
 const transcriptionService = new TranscriptionService()
 const thumbnailService = new ThumbnailService()
 
+interface StudioJobData {
+  videoId: string
+  inputPath: string
+  outputPath: string
+  options?: any
+  type: "auto-cut" | "super-resolution" | "interpolation" | "transcribe" | "generate-thumbnails" | "render"
+}
+
 export const studioWorker = redisConnection ? new Worker(
   "studio-queue",
-  async (job: Job) => {
+  async (job: Job<StudioJobData>) => {
     const { videoId, inputPath, outputPath, options, type } = job.data
 
     try {
@@ -93,5 +101,13 @@ if (studioWorker) {
 
   studioWorker.on("failed", (job, err) => {
     logger.error(`Studio job ${job?.id} failed: ${err.message}`)
+  })
+
+  // Suppress connection spam
+  studioWorker.on("error", (err) => {
+    const error = err as NodeJS.ErrnoException
+    if (error.code !== "ECONNREFUSED") {
+      logger.error({ err }, "Worker unexpected error:")
+    }
   })
 }
