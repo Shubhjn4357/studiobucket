@@ -1,5 +1,10 @@
-<!-- BEGIN:nextjs-agent-rules -->
-# This is NOT the Next.js you know
+# rules for programming
 
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
-<!-- END:nextjs-agent-rules -->
+1. always use typescript
+2. always use tailwindcss for styling
+3. always use shadcn/ui for components
+4. always use lucide-react for icons
+5. always use nextjs for server-side rendering
+6. always use server components for fast service and use Client components only for interactive elements
+7. dont Create Demo and simulated data always use real data
+8. always use dark mode with light mode

@@ -1,36 +1,90 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# StudioBucket: Infinite Space for YouTube Automation
 
-## Getting Started
+StudioBucket is a professional-grade, industrial-scale YouTube automation platform. It provides a minimalist, immersive "Infinite Space" environment for creators to manage content empires with zero friction.
 
-First, run the development server:
+## 🌌 Core Product Vision
+- **Immersive Design**: A high-performance, dark-mode-first aesthetic with obsidian tones and glassmorphic interfaces.
+- **Mission Control**: A centralized telemetry dashboard for real-time channel analytics and queue monitoring.
+- **Integrated Video Studio**: A non-destructive, browser-based multi-track editor for 4K ProRes pipelines.
+- **Autonomous Intelligence**: AI-driven metadata generation and strategic content planning.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## 🚀 Features
+- **Batch Upload**: High-speed parallel transmissions with real-time status tracking.
+- **Multi-Track Timeline**: Layer video, audio, and text with precision transformation controls.
+- **Strategic Planner**: Calendar-based scheduling for global audience synchronization.
+- **Advanced Downloader**: Extract high-quality assets from any source for repurposing.
+- **Adaptive Infrastructure**: Designed to run anywhere—from local dev environments to distributed background workers.
+
+## 🗺️ App Sitemap
+- **(Landing)**: `/` (High-impact 3D hero, features, pricing)
+- **Dashboard**: `/dashboard` (Mission Control)
+- **Studio**: `/dashboard/studio` (Integrated Editor)
+- **Downloader**: `/dashboard/downloader` (Asset Extraction)
+- **Queue**: `/dashboard/queue` (Transmission Telemetry)
+- **Analytics**: `/dashboard/analytics` (Performance Metrics)
+- **Settings**: `/dashboard/settings` (System Configuration)
+
+## 📂 Folder Structure
+```text
+src/
+├── app/               # Next.js App Router (Routing & Pages)
+│   ├── (landing)/     # Public landing pages
+│   └── dashboard/     # Protected dashboard sub-applications
+├── components/        # UI Component Library
+│   ├── dashboard/     # Sub-app specific components
+│   ├── landing/       # Landing page specific components
+│   └── ui/            # Shadcn/UI primitives
+├── lib/               # Core System Logic
+│   ├── db/            # Drizzle ORM Schema & DB Client
+│   ├── queue/         # Background Processing (BullMQ)
+│   ├── services/      # Data Access Layer & Business Logic
+│   └── youtube/       # Google/YouTube API Integration
+└── server/            # Server Actions & API Utilities
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🛠️ Setup Instructions
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 1. Prerequisites
+- **Node.js**: v20+ 
+- **PNPM**: Fast, disk space efficient package manager.
+- **Database**: Turso (SQLite) or local SQLite.
+- **Redis (Optional)**: Required only for background worker queues.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 2. Installation
+```bash
+# Clone the repository
+git clone https://github.com/shubhjn4357/studiobucket.git
 
-## Learn More
+# Install dependencies
+pnpm install
 
-To learn more about Next.js, take a look at the following resources:
+# Setup environment variables
+cp .env.example .env
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 3. Database Initialization
+```bash
+# Push schema to database
+pnpm db:push
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 4. Launch Development
+```bash
+pnpm dev
+```
 
-## Deploy on Vercel
+## ✅ Recently Finalized
+1. **Production Workers**: Full `ffmpeg` and `yt-dlp` integration implemented in `src/lib/queue/workers/`.
+2. **YouTube API**: Core upload, scheduling, and metadata management fully wired via `YouTubeService`.
+3. **Local Asset Engine**: Optimized for local-only storage (no cloud required). All assets persist in `public/uploads`.
+4. **AI Core**: Metadata and strategy engine connected to LLM orchestration.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## ⚙️ Architecture Note: Optional Redis & Workers
+StudioBucket is designed to be lightweight by default.
+- **Standalone Mode**: If `REDIS_URL` is missing, the app operates in standalone mode. Queues are bypassed, and operations happen synchronously.
+- **Distributed Mode**: Provide a `REDIS_URL` and run `pnpm worker` to enable robust background processing for high-volume rendering and upload pipelines.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🏗️ What's Remaining
+1. **Advanced AI Transitions**: Implementing the actual "Auto-cut" frame detection in the studio worker.
+2. **Global Telemetry**: Real-time WebSocket updates for queue progress (currently uses polling/revalidation).
+3. **Multi-Channel Pro**: Enhanced UI for managing 50+ channels simultaneously.
