@@ -1,280 +1,264 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState } from "react"
 import { Icons } from "@/components/ui/icons"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
-
-import { updateVideoMetadata, createRenderJob } from "@/app/dashboard/studio/actions"
+import { updateVideoMetadata, triggerAutoCut } from "@/app/dashboard/studio/actions"
 import { toast } from "sonner"
 import { Track } from "@/types/video"
+import { motion, AnimatePresence } from "framer-motion"
 
-type StudioTab = "edit" | "filters" | "audio" | "ai"
+type StudioTab = "details" | "editor" | "analytics" | "editor-v2"
 
-export function VideoStudio({ videoId = "default-project" }: { videoId?: string }) {
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [currentTime, setCurrentTime] = useState(0)
-  const [duration, setDuration] = useState(60) // 1 minute default
-  const [zoom, setZoom] = useState(1)
-  const [activeTab, setActiveTab] = useState<StudioTab>("edit")
+interface VideoStudioProps {
+  videoId: string
+  initialData?: {
+    tracks: Track[]
+    duration: number
+  }
+  title?: string
+}
+
+export function VideoStudio({ videoId, initialData, title = "Untitled Project" }: VideoStudioProps) {
+  const [activeTab, setActiveTab] = useState<StudioTab>("details")
   const [isSaving, setIsSaving] = useState(false)
-  const [isRendering, setIsRendering] = useState(false)
-  
-  const videoRef = useRef<HTMLVideoElement>(null)
-  const timelineRef = useRef<HTMLDivElement>(null)
+ 
+  // Metadata state
+  const [metadata, setMetadata] = useState({
+    title: title,
+    description: "",
+    tags: "",
+    privacy: "private" as "public" | "private" | "unlisted",
+  })
 
-  const tracks: Track[] = [
-    { id: "v1", name: "Video 1", type: "video", clips: [{ id: "c1", start: 0, end: 15, duration: 15, color: "bg-primary/20" }, { id: "c2", start: 20, end: 45, duration: 25, color: "bg-primary/40" }] },
-    { id: "a1", name: "Audio 1", type: "audio", clips: [{ id: "c3", start: 0, end: 60, duration: 60, color: "bg-emerald-500/20" }] },
-    { id: "t1", name: "Captions", type: "text", clips: [{ id: "c4", start: 5, end: 10, duration: 5, color: "bg-amber-500/20" }] },
-  ]
+  const [tracks,setTracks] = useState<Track[]>(initialData?.tracks || [
+    { id: "v1", name: "Video", type: "video", clips: [{ id: "c1", start: 0, end: 30, duration: 30, color: "bg-primary/20" }] },
+    { id: "a1", name: "Audio", type: "audio", clips: [{ id: "c3", start: 0, end: 60, duration: 60, color: "bg-emerald-500/20" }] },
+  ])
 
   const handleSave = async () => {
     setIsSaving(true)
     try {
-      await updateVideoMetadata(videoId, { tracks, duration })
-      toast.success("Project saved successfully")
+      await updateVideoMetadata(videoId, { tracks, ...metadata })
+      toast.success("Changes saved")
     } catch {
-      toast.error("Failed to save project")
+      toast.error("Failed to save changes")
     } finally {
       setIsSaving(false)
     }
   }
 
-  const handleRender = async () => {
-    setIsRendering(true)
-    try {
-      await createRenderJob(videoId, { tracks, duration })
-      toast.success("Render job submitted to queue")
-    } catch {
-      toast.error("Failed to start render")
-    } finally {
-      setIsRendering(false)
-    }
-  }
-
-  const togglePlay = () => setIsPlaying(!isPlaying)
-
-  useEffect(() => {
-    let interval: NodeJS.Timeout
-    if (isPlaying) {
-      interval = setInterval(() => {
-        setCurrentTime((prev) => (prev >= duration ? 0 : prev + 0.1))
-      }, 100)
-    }
-    return () => clearInterval(interval)
-  }, [isPlaying, duration])
-
-  return (
-    <div className="flex flex-col h-full gap-6">
-      {/* Studio Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
-            <Icons.scissors className="h-5 w-5 text-primary" />
+  const renderDetails = () => (
+    <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
+      <div className="xl:col-span-8 space-y-8">
+        <div className="space-y-6">
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Title (required)</label>
+            <div className="relative group">
+              <textarea
+                value={metadata.title}
+                onChange={(e) => setMetadata({ ...metadata, title: e.target.value })}
+                className="w-full bg-muted/30 border border-border rounded-xl p-4 text-sm font-bold uppercase tracking-tight focus:border-primary/50 outline-none transition-all resize-none h-20"
+                placeholder="Enter a title that describes your video"
+              />
+              <span className="absolute bottom-3 right-3 text-[9px] font-black text-muted-foreground">{metadata.title.length}/100</span>
+            </div>
           </div>
-          <div>
-            <h2 className="text-xl font-black text-white uppercase tracking-tight italic">Project: Alpha Strike</h2>
-            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">4K • 60 FPS • ProRes Pipeline</p>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Description</label>
+            <div className="relative group">
+              <textarea
+                value={metadata.description}
+                onChange={(e) => setMetadata({ ...metadata, description: e.target.value })}
+                className="w-full bg-muted/30 border border-border rounded-xl p-4 text-sm font-medium focus:border-primary/50 outline-none transition-all resize-none h-48"
+                placeholder="Tell viewers about your video"
+              />
+              <span className="absolute bottom-3 right-3 text-[9px] font-black text-muted-foreground">{metadata.description.length}/5000</span>
+            </div>
           </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button 
-            onClick={handleSave}
-            disabled={isSaving}
-            variant="outline" 
-            className="cyber-card h-10 border-white/5 bg-white/5 text-[10px] font-black uppercase tracking-widest px-6"
-          >
-            {isSaving ? <Icons.refreshCw className="h-3 w-3 animate-spin mr-2" /> : null}
-            Save Project
-          </Button>
-          <Button 
-            onClick={handleRender}
-            disabled={isRendering}
-            className="h-10 bg-primary text-white hover:opacity-90 rounded-xl px-8 text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/20"
-          >
-            {isRendering ? <Icons.refreshCw className="h-3 w-3 animate-spin mr-2" /> : null}
-            Render Final
-          </Button>
+
+          <div className="space-y-4">
+            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Thumbnail</label>
+            <div className="grid grid-cols-4 gap-4">
+              <div className="aspect-video rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center gap-2 hover:border-primary/30 cursor-pointer transition-colors bg-muted/20">
+                <Icons.imagePlus className="h-5 w-5 text-muted-foreground" />
+                <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground text-center px-2">Upload Thumbnail</span>
+              </div>
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="aspect-video rounded-xl bg-slate-900 border border-border animate-pulse" />
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 min-h-[500px]">
-        {/* Left Toolbar */}
-        <div className="lg:col-span-1 flex flex-col gap-4">
-          {[
-            { id: "edit", icon: Icons.scissors },
-            { id: "filters", icon: Icons.sparkles },
-            { id: "audio", icon: Icons.mic },
-            { id: "ai", icon: Icons.brain },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as StudioTab)}
-              className={cn(
-                "h-14 w-full rounded-2xl flex items-center justify-center transition-all duration-300 border",
-                activeTab === tab.id 
-                  ? "bg-primary border-primary shadow-lg shadow-primary/20 text-white" 
-                  : "bg-white/5 border-white/5 text-slate-500 hover:text-white hover:bg-white/10"
-              )}
-            >
-              <tab.icon className="h-6 w-6" />
-            </button>
+      <div className="xl:col-span-4 space-y-6">
+        <Card className="cyber-card border-border bg-card/50 overflow-hidden sticky top-24">
+          <div className="aspect-video bg-slate-950 flex items-center justify-center relative group">
+            <Icons.play className="h-10 w-10 text-white/20 group-hover:text-primary transition-all scale-100 group-hover:scale-110" />
+            <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
+              <span className="bg-black/60 backdrop-blur-md px-2 py-1 rounded text-[9px] font-black text-white uppercase">0:00 / 0:00</span>
+            </div>
+          </div>
+          <CardContent className="p-6 space-y-6">
+            <div className="space-y-1">
+              <p className="text-[9px] text-muted-foreground font-black uppercase tracking-widest">Video Link</p>
+              <div className="flex items-center gap-2 text-primary font-bold text-xs truncate">
+                https://studiobucket.app/v/{videoId}
+                <Icons.copy className="h-3 w-3 cursor-pointer hover:text-white" />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <p className="text-[9px] text-muted-foreground font-black uppercase tracking-widest">Filename</p>
+              <p className="text-xs font-bold text-foreground truncate uppercase">{title}.mp4</p>
+            </div>
+            <div className="space-y-4 pt-4 border-t border-border">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Visibility</label>
+                <select 
+                  value={metadata.privacy}
+                  onChange={(e) => setMetadata({ ...metadata, privacy: e.target.value as "public" | "private" | "unlisted" })}
+                  className="w-full bg-muted border border-border rounded-lg px-3 h-10 text-xs font-black uppercase tracking-widest outline-none focus:border-primary/50"
+                >
+                  <option value="private">Private</option>
+                  <option value="unlisted">Unlisted</option>
+                  <option value="public">Public</option>
+                </select>
+              </div>
+              <Button onClick={handleSave} disabled={isSaving} className="w-full bg-primary text-white font-black uppercase tracking-widest text-[10px] h-10 rounded-xl shadow-lg shadow-primary/20">
+                {isSaving ? <Icons.refreshCw className="h-3 w-3 animate-spin mr-2" /> : <Icons.save className="h-3 w-3 mr-2" />}
+                Save Changes
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  )
+
+  const renderEditor = () => (
+    <div className="space-y-6">
+      <div className="h-[400px] bg-slate-950 rounded-2xl border border-border flex items-center justify-center relative">
+        <Icons.video className="h-20 w-20 text-white/5" />
+        <div className="absolute inset-0 flex items-center justify-center">
+           <Button className="rounded-full h-16 w-16 bg-white/10 hover:bg-white/20 backdrop-blur-xl border border-white/20">
+              <Icons.play className="h-8 w-8 text-white fill-white" />
+           </Button>
+        </div>
+      </div>
+      
+      <Card className="cyber-card border-border bg-card/50 p-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+             <Button 
+               size="icon" 
+               variant="ghost" 
+               className="h-9 w-9 rounded-xl hover:bg-muted text-primary"
+               onClick={async () => {
+                 toast.promise(
+                   (async () => {
+                     const { jobId } = await triggerAutoCut(videoId)
+                     return jobId
+                   })(),
+                   {
+                     loading: "Detecting scene cuts...",
+                     success: (jobId) => `AI Detection initiated (Job: ${jobId})`,
+                     error: "Detection failed"
+                   }
+                 )
+               }}
+             >
+               <Icons.sparkles className="h-4 w-4" />
+             </Button>
+             <div className="h-4 w-px bg-border mx-2" />
+             <Button size="icon" variant="ghost" className="h-9 w-9 rounded-xl hover:bg-muted"><Icons.undo className="h-4 w-4" /></Button>
+             <Button size="icon" variant="ghost" className="h-9 w-9 rounded-xl hover:bg-muted"><Icons.redo className="h-4 w-4" /></Button>
+             <div className="h-4 w-px bg-border mx-2" />
+             <Button size="icon" variant="ghost" className="h-9 w-9 rounded-xl hover:bg-muted"><Icons.scissors className="h-4 w-4" /></Button>
+             <Button size="icon" variant="ghost" className="h-9 w-9 rounded-xl hover:bg-muted text-primary"><Icons.plus className="h-4 w-4" /></Button>
+          </div>
+          <div className="flex items-center gap-4">
+             <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                <Icons.zoomIn className="h-3 w-3" />
+                <Slider className="w-32" defaultValue={[50]} />
+             </div>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          {tracks.map((track) => (
+            <div key={track.id} className="h-14 border-b border-border flex items-center relative group">
+              <div className="w-32 flex items-center gap-3 px-3 shrink-0">
+                {track.type === "video" ? <Icons.video className="h-3 w-3 text-primary" /> : <Icons.music className="h-3 w-3 text-emerald-500" />}
+                <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">{track.name}</span>
+              </div>
+              <div className="flex-1 h-10 bg-muted/30 rounded-lg relative overflow-hidden">
+                {track.clips.map(clip => (
+                  <div 
+                    key={clip.id} 
+                    className={cn("absolute h-full rounded-md border border-white/5", clip.color)}
+                    style={{ left: `${(clip.start / 60) * 100}%`, width: `${(clip.duration / 60) * 100}%` }}
+                  />
+                ))}
+              </div>
+            </div>
           ))}
         </div>
+      </Card>
+    </div>
+  )
 
-        {/* Video Preview */}
-        <div className="lg:col-span-7 flex flex-col gap-4">
-          <Card className="cyber-card border-white/5 bg-black/40 overflow-hidden flex-1 relative group">
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-full aspect-video bg-slate-900 flex items-center justify-center">
-                <Icons.playCircle className="h-20 w-20 text-white/10 group-hover:text-primary/40 transition-colors duration-500" />
-              </div>
-            </div>
-            
-            {/* Control Overlay */}
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-6 px-8 py-3 rounded-2xl bg-black/60 backdrop-blur-xl border border-white/5">
-              <button className="text-slate-400 hover:text-white transition-colors">
-                <Icons.skipBack className="h-5 w-5" />
-              </button>
-              <button onClick={togglePlay} className="h-10 w-10 rounded-full bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/20 hover:scale-110 transition-transform">
-                {isPlaying ? <Icons.pause className="h-5 w-5" /> : <Icons.play className="h-5 w-5 ml-0.5" />}
-              </button>
-              <button className="text-slate-400 hover:text-white transition-colors">
-                <Icons.skipForward className="h-5 w-5" />
-              </button>
-            </div>
-          </Card>
-        </div>
-
-        {/* Right Properties */}
-        <div className="lg:col-span-4 space-y-6">
-          <Card className="cyber-card border-white/5 bg-white/5">
-            <CardContent className="p-6 space-y-6">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xs font-black text-white uppercase tracking-widest">Transform</h3>
-                <Icons.settings className="h-4 w-4 text-slate-500" />
-              </div>
-              
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
-                    <span>Opacity</span>
-                    <span>100%</span>
-                  </div>
-                  <Slider defaultValue={[100]} max={100} step={1} />
-                </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
-                    <span>Saturation</span>
-                    <span>1.2x</span>
-                  </div>
-                  <Slider defaultValue={[60]} max={100} step={1} />
-                </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
-                    <span>Rotation</span>
-                    <span>0°</span>
-                  </div>
-                  <Slider defaultValue={[0]} max={360} step={1} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="cyber-card border-white/5 bg-white/5">
-            <CardContent className="p-6 space-y-4">
-              <h3 className="text-xs font-black text-white uppercase tracking-widest">AI Subtitles</h3>
-              <div className="p-4 rounded-xl bg-white/5 border border-white/5 space-y-2">
-                <p className="text-[11px] text-slate-300 italic">&quot;Welcome back to the channel, today we are looking at...&quot;</p>
-                <div className="flex items-center gap-2">
-                  <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-                  <span className="text-[9px] font-black text-primary uppercase tracking-widest">Confidence 98%</span>
-                </div>
-              </div>
-              <Button className="w-full bg-white/5 border border-white/10 text-white hover:bg-white/10 h-10 text-[10px] font-black uppercase tracking-widest">
-                Regenerate AI
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+  return (
+    <div className="space-y-8">
+      <div className="flex border-b border-border">
+        {[
+          { id: "details", label: "Details", icon: Icons.edit3 },
+          { id: "editor", label: "Editor", icon: Icons.scissors },
+          { id: "analytics", label: "Analytics", icon: Icons.barChart },
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id as StudioTab)}
+            className={cn(
+              "flex items-center gap-2 px-8 py-4 text-[10px] font-black uppercase tracking-[0.2em] transition-all relative group",
+              activeTab === tab.id ? "text-primary" : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <tab.icon className={cn("h-4 w-4", activeTab === tab.id ? "text-primary" : "text-muted-foreground group-hover:text-foreground")} />
+            {tab.label}
+            {activeTab === tab.id && (
+              <motion.div layoutId="studio-tab" className="absolute bottom-0 left-0 right-0 h-1 bg-primary" />
+            )}
+          </button>
+        ))}
       </div>
 
-      {/* Timeline Section */}
-      <Card className="cyber-card border-white/5 bg-white/5 h-[300px] flex flex-col overflow-hidden">
-        {/* Timeline Toolbar */}
-        <div className="h-12 border-b border-white/5 flex items-center justify-between px-6 bg-black/20">
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2">
-              <Icons.clock className="h-4 w-4 text-primary" />
-              <span className="text-xs font-black text-white italic tabular-nums">
-                {currentTime.toFixed(1)}s / {duration.toFixed(1)}s
-              </span>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={activeTab}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.2 }}
+        >
+          {activeTab === "details" && renderDetails()}
+          {activeTab === "editor" && renderEditor()}
+          {activeTab === "analytics" && (
+            <div className="py-20 text-center border border-dashed border-border rounded-2xl">
+               <div className="flex flex-col items-center gap-4">
+                  <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center">
+                    <Icons.barChart className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground italic">Analytics processing in progress...</p>
+               </div>
             </div>
-            <div className="h-4 w-px bg-white/10" />
-            <div className="flex items-center gap-2">
-              <Icons.search className="h-4 w-4 text-slate-500" />
-              <Slider 
-                value={[zoom]} 
-                onValueChange={([v]) => setZoom(v)} 
-                max={5} 
-                min={0.5} 
-                step={0.1} 
-                className="w-32"
-              />
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-white/10">
-              <Icons.plus className="h-4 w-4 text-white" />
-            </Button>
-          </div>
-        </div>
-
-        {/* Tracks Area */}
-        <div className="flex-1 overflow-auto custom-scrollbar relative" ref={timelineRef}>
-          {/* Playhead */}
-          <div 
-            className="absolute top-0 bottom-0 w-px bg-primary z-20 pointer-events-none"
-            style={{ left: `${(currentTime / duration) * 100}%` }}
-          >
-            <div className="h-3 w-3 rounded-full bg-primary -ml-1.5 -mt-1 shadow-lg shadow-primary/40" />
-          </div>
-
-          <div className="min-w-full space-y-px p-4">
-            {tracks.map((track) => (
-              <div key={track.id} className="h-14 flex gap-4 items-center group">
-                <div className="w-24 shrink-0 flex items-center gap-2">
-                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest truncate group-hover:text-white transition-colors">
-                    {track.name}
-                  </span>
-                </div>
-                <div className="flex-1 h-10 bg-white/5 rounded-lg border border-white/5 relative overflow-hidden">
-                  {track.clips.map((clip) => (
-                    <div
-                      key={clip.id}
-                      className={cn(
-                        "absolute top-0 bottom-0 rounded-md border border-white/10 flex items-center px-3 cursor-move hover:brightness-125 transition-all",
-                        clip.color
-                      )}
-                      style={{ 
-                        left: `${(clip.start / duration) * 100}%`,
-                        width: `${(clip.duration / duration) * 100}%`
-                      }}
-                    >
-                      <span className="text-[9px] font-black text-white uppercase tracking-tighter truncate">
-                        Clip_{clip.id}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </Card>
+          )}
+        </motion.div>
+      </AnimatePresence>
     </div>
   )
 }

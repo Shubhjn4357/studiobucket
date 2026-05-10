@@ -13,9 +13,9 @@ async function startWorkers() {
   
   process.on("SIGTERM", async () => {
     logger.info("Shutting down workers...")
-    await uploadWorker.close()
-    await downloadWorker.close()
-    await studioWorker.close()
+    if (uploadWorker) await uploadWorker.close()
+    if (downloadWorker) await downloadWorker.close()
+    if (studioWorker) await studioWorker.close()
     process.exit(0)
   })
 

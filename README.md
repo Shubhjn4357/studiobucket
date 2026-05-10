@@ -84,7 +84,4 @@ StudioBucket is designed to be lightweight by default.
 - **Standalone Mode**: If `REDIS_URL` is missing, the app operates in standalone mode. Queues are bypassed, and operations happen synchronously.
 - **Distributed Mode**: Provide a `REDIS_URL` and run `pnpm worker` to enable robust background processing for high-volume rendering and upload pipelines.
 
-## 🏗️ What's Remaining
-1. **Advanced AI Transitions**: Implementing the actual "Auto-cut" frame detection in the studio worker.
-2. **Global Telemetry**: Real-time WebSocket updates for queue progress (currently uses polling/revalidation).
-3. **Multi-Channel Pro**: Enhanced UI for managing 50+ channels simultaneously.
+

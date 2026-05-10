@@ -111,6 +111,14 @@ import {
   Tag,
   Check,
   Layers,
+  Book,
+  Music,
+  ZoomIn,
+  Edit3,
+  ImagePlus,
+  Undo,
+  Redo,
+  Lightbulb,
 } from "lucide-react"
 
 export const Icons = {
@@ -122,6 +130,7 @@ export const Icons = {
   settings: Settings,
   menu: Menu,
   x: X,
+  book:Book,
   playCircle: PlayCircle,
   youtube: Tv,
   clock: Clock,
@@ -227,4 +236,22 @@ export const Icons = {
   tag: Tag,
   check: Check,
   layers: Layers,
+  music: Music,
+  zoomIn: ZoomIn,
+  edit3: Edit3,
+  imagePlus: ImagePlus,
+  undo: Undo,
+  redo: Redo,
+  lightbulb: Lightbulb,
+  google: (props: React.SVGProps<SVGSVGElement>) => (
+    <svg
+      role="img"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      xmlns="http://www.w3.org/2000/svg"
+      {...props}
+    >
+      <path d="M12.48 10.92v3.28h7.84c-.24 1.84-.908 3.152-1.928 4.176-1.288 1.288-3.312 2.696-7.84 2.696-7.144 0-12.824-5.784-12.824-12.928s5.68-12.928 12.824-12.928c3.856 0 6.64 1.536 8.752 3.536l2.336-2.336c-2.816-2.656-6.496-4.664-11.088-4.664-9.352 0-17.024 7.672-17.024 17.024s7.672 17.024 17.024 17.024c5.032 0 8.752-1.656 11.696-4.72 2.944-2.944 3.88-7.12 3.88-10.432 0-1.008-.08-1.936-.24-2.736h-15.336z" />
+    </svg>
+  ),
 } as const

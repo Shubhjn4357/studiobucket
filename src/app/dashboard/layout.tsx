@@ -23,12 +23,21 @@ export default function DashboardLayout({
       <div className="flex-1 flex flex-col overflow-hidden relative">
         <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
         <main className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar">
-          <div className="mx-auto max-w-7xl space-y-8">
+          <motion.div
+            key={usePathname()}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            className="mx-auto max-w-7xl space-y-8"
+          >
             {children}
-          </div>
+          </motion.div>
           <Footer />
         </main>
       </div>
     </div>
   )
 }
+
+import { usePathname } from "next/navigation"
+import { motion } from "framer-motion"

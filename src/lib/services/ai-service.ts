@@ -16,12 +16,10 @@ export class AIService {
 
   async generateMetadata(prompt: string): Promise<AISuggestion> {
     if (!this.apiKey) {
-      logger.warn("AI_API_KEY not set. Returning mock AI suggestion.")
-      return this.getMockSuggestion(prompt)
+      throw new Error("AI Operational Protocol Failure: API Key missing in environment.")
     }
 
     try {
-      // Example call to an OpenAI-compatible API
       const response = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -29,11 +27,11 @@ export class AIService {
           "Authorization": `Bearer ${this.apiKey}`,
         },
         body: JSON.stringify({
-          model: "gpt-4-turbo",
+          model: "gpt-4o",
           messages: [
             {
               role: "system",
-              content: "You are an expert YouTube strategist. Generate high-engagement metadata based on the provided video description or prompt. Return ONLY JSON with fields: title, description, tags (array), suggestedSchedule (ISO string).",
+              content: "Generate high-engagement YouTube metadata. Return ONLY JSON: {title, description, tags, suggestedSchedule}.",
             },
             {
               role: "user",
@@ -45,20 +43,10 @@ export class AIService {
       })
 
       const data = await response.json()
-      const suggestion = JSON.parse(data.choices[0].message.content)
-      return suggestion
+      return JSON.parse(data.choices[0].message.content)
     } catch (error) {
       logger.error(error, "AI Generation failed:")
-      return this.getMockSuggestion(prompt)
-    }
-  }
-
-  private getMockSuggestion(prompt: string): AISuggestion {
-    return {
-      title: `${prompt.substring(0, 30)}... | Ultimate Guide 2026`,
-      description: `In this video, we explore ${prompt}. \n\n🚀 Subscribe for more automation content!\n\n#Automation #YouTube #StudioBucket`,
-      tags: ["automation", "content creation", "ai", "productivity"],
-      suggestedSchedule: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      throw error
     }
   }
 }

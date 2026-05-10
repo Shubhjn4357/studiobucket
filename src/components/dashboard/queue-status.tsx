@@ -6,6 +6,8 @@ import { Progress } from "@/components/ui/progress"
 import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
 
+import { useTelemetry } from "@/hooks/use-telemetry"
+
 interface QueueData {
   active: number
   completed: number
@@ -13,12 +15,60 @@ interface QueueData {
   waiting: number
 }
 
-const activeJobs = [
-  { id: "1", name: "Modern Architecture.mp4", progress: 65, status: "uploading", eta: "2m remaining" },
-  { id: "2", name: "SaaS Blueprint.mov", progress: 30, status: "processing", eta: "5m remaining" },
-]
+interface ActiveJob {
+  id: string
+  status: string
+  progress: number
+  data?: string | Record<string, unknown> | null
+}
 
-export function QueueStatus({ initialData }: { initialData?: QueueData }) {
+function JobRow({ job }: { job: ActiveJob }) {
+  const liveData = useTelemetry(job.id)
+  const currentProgress = liveData?.progress ?? job.progress
+  const currentStatus = liveData?.status ?? job.status
+
+  let jobName = "Processing Job"
+  try {
+    if (job.data) {
+      const parsed = typeof job.data === "string" ? JSON.parse(job.data) : job.data
+      jobName = parsed.title || parsed.fileName || jobName
+    }
+  } catch {
+    // Fallback
+  }
+
+  return (
+    <div className="space-y-2 p-3 rounded-xl bg-muted/50 border border-border group hover:border-primary/20 transition-all">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="h-8 w-8 rounded-lg bg-background border border-border flex items-center justify-center">
+            <Icons.video className="h-4 w-4 text-primary" />
+          </div>
+          <span className="text-[10px] font-black text-foreground truncate max-w-[120px] uppercase tracking-tight italic">{jobName}</span>
+        </div>
+        <span className="text-[9px] font-black text-primary uppercase tracking-widest animate-pulse">{currentStatus}</span>
+      </div>
+      <div className="space-y-2">
+        <Progress value={currentProgress} className="h-1 bg-muted" />
+        <div className="flex justify-between text-[9px] font-black uppercase tracking-widest">
+          <span className="text-foreground">{currentProgress}% Complete</span>
+          <span className="text-muted-foreground flex items-center gap-1">
+             <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+             Live
+          </span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export function QueueStatus({ 
+  initialData, 
+  activeJobs = [] 
+}: { 
+  initialData?: QueueData, 
+  activeJobs?: ActiveJob[] 
+}) {
   const stats = [
     { label: "Active", value: initialData?.active || 0, icon: Icons.activity, color: "text-primary", bg: "bg-primary/10" },
     { label: "Waiting", value: initialData?.waiting || 0, icon: Icons.clock, color: "text-amber-400", bg: "bg-amber-400/10" },
@@ -27,17 +77,17 @@ export function QueueStatus({ initialData }: { initialData?: QueueData }) {
   ]
 
   return (
-    <Card className="cyber-card border-white/5 overflow-hidden flex flex-col h-full">
+    <Card className="cyber-card border-border overflow-hidden flex flex-col h-full">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
-            <CardTitle className="flex items-center gap-3 text-xl font-black uppercase tracking-tighter text-white">
+            <CardTitle className="flex items-center gap-3 text-xl font-black uppercase tracking-tighter text-foreground italic">
               <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20">
                 <Icons.list className="h-5 w-5 text-primary" />
               </div>
               Queue Monitor
             </CardTitle>
-            <CardDescription className="text-slate-400 font-medium text-xs">Live monitoring of the processing engine.</CardDescription>
+            <CardDescription className="text-muted-foreground font-medium uppercase tracking-widest text-[9px]">Live monitoring of the processing engine.</CardDescription>
           </div>
         </div>
       </CardHeader>
@@ -49,14 +99,14 @@ export function QueueStatus({ initialData }: { initialData?: QueueData }) {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: i * 0.05 }}
-              className="p-3 rounded-xl bg-white/5 border border-white/5 flex items-center gap-3 group hover:border-white/10 transition-colors"
+              className="p-3 rounded-xl bg-muted/30 border border-border flex items-center gap-3 group hover:border-primary/20 transition-all"
             >
               <div className={cn("h-8 w-8 rounded-lg flex items-center justify-center", stat.bg)}>
                 <stat.icon className={cn("h-4 w-4", stat.color)} />
               </div>
               <div>
-                <p className="text-lg font-black text-white leading-none">{stat.value}</p>
-                <p className="text-[9px] uppercase font-black text-slate-500 tracking-widest mt-1">{stat.label}</p>
+                <p className="text-lg font-black text-foreground leading-none italic">{stat.value}</p>
+                <p className="text-[9px] uppercase font-black text-muted-foreground tracking-widest mt-1">{stat.label}</p>
               </div>
             </motion.div>
           ))}
@@ -64,29 +114,18 @@ export function QueueStatus({ initialData }: { initialData?: QueueData }) {
 
         <div className="space-y-4">
           <div className="flex items-center justify-between px-2">
-            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Active Transmissions</span>
+            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Active Transmissions</span>
           </div>
           <div className="space-y-4">
-            {activeJobs.map((job) => (
-              <div key={job.id} className="space-y-2 p-3 rounded-xl bg-white/5 border border-white/5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-lg bg-slate-900 border border-white/10 flex items-center justify-center">
-                      <Icons.video className="h-4 w-4 text-primary" />
-                    </div>
-                    <span className="text-xs font-bold text-white truncate max-w-[120px] uppercase tracking-tight">{job.name}</span>
-                  </div>
-                  <span className="text-[9px] font-black text-primary uppercase tracking-widest">{job.status}</span>
-                </div>
-                <div className="space-y-2">
-                  <Progress value={job.progress} className="h-1 bg-white/5" />
-                  <div className="flex justify-between text-[9px] font-black uppercase tracking-widest">
-                    <span className="text-white">{job.progress}% Complete</span>
-                    <span className="text-slate-500">{job.eta}</span>
-                  </div>
-                </div>
+            {activeJobs.length === 0 ? (
+              <div className="text-center py-8 border border-dashed border-border rounded-xl">
+                <p className="text-[10px] font-black text-muted-foreground/50 uppercase tracking-widest">No Active Tasks</p>
               </div>
-            ))}
+            ) : (
+              activeJobs.map((job) => (
+                <JobRow key={job.id} job={job} />
+              ))
+            )}
           </div>
         </div>
       </CardContent>

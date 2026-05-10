@@ -45,16 +45,16 @@ export function Sidebar({ open, onClose, items }: SidebarProps) {
           width: open ? 280 : 80,
         }}
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex flex-col glass-dark lg:static lg:translate-x-0 border-r border-white/5 transition-all duration-500 ease-in-out overflow-hidden"
+          "fixed inset-y-0 left-0 z-50 flex flex-col bg-card/80 backdrop-blur-2xl lg:static lg:translate-x-0 border-r border-border transition-all duration-500 ease-in-out overflow-hidden"
         )}
       >
         {/* Logo Section */}
-        <div className="flex h-20 items-center justify-between px-6 border-b border-white/5">
+        <div className="flex h-20 items-center justify-between px-6 border-b border-border">
           <Link href={ROUTES.dashboard} className="flex items-center gap-3 group">
             <div className="relative">
               <div className="absolute -inset-1 bg-linear-to-r from-primary to-accent rounded-xl blur opacity-25 group-hover:opacity-75 transition duration-500" />
-              <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 border border-white/10 group-hover:border-primary/50 transition-colors">
-                <Icons.logo className="h-6 w-6 text-primary group-hover:text-white transition-colors" />
+              <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-background border border-border group-hover:border-primary/50 transition-colors">
+                <Icons.logo className="h-6 w-6 text-primary group-hover:text-foreground transition-colors" />
               </div>
             </div>
             <AnimatePresence mode="wait">
@@ -63,7 +63,7 @@ export function Sidebar({ open, onClose, items }: SidebarProps) {
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -10 }}
-                  className="text-lg font-black tracking-tighter text-white uppercase"
+                  className="text-lg font-black tracking-tighter text-foreground uppercase italic"
                 >
                   Studio<span className="text-primary">Bucket</span>
                 </motion.span>
@@ -75,7 +75,7 @@ export function Sidebar({ open, onClose, items }: SidebarProps) {
               variant="ghost"
               size="icon"
               onClick={onClose}
-              className="lg:hidden text-white/50 hover:text-white hover:bg-white/5"
+              className="lg:hidden text-muted-foreground hover:text-foreground hover:bg-muted"
             >
               <Icons.x className="h-5 w-5" />
             </Button>
@@ -96,24 +96,24 @@ export function Sidebar({ open, onClose, items }: SidebarProps) {
                   className={cn(
                     "group relative flex items-center gap-3 rounded-xl px-3 py-3 transition-all duration-300",
                     isActive
-                      ? "bg-white/5 text-white"
-                      : "text-slate-400 hover:text-white hover:bg-white/5"
+                      ? "bg-primary/5 text-foreground"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
                   )}
                 >
                   {isActive && (
                     <motion.div
                       layoutId="sidebar-active"
-                      className="absolute inset-0 rounded-xl bg-linear-to-r from-primary/20 to-accent/20 border border-white/10 shadow-[0_0_20px_-5px_rgba(255,0,0,0.2)]"
+                      className="absolute inset-0 rounded-xl bg-linear-to-r from-primary/10 to-accent/10 border border-primary/20 shadow-[0_0_20px_-5px_rgba(255,0,0,0.1)]"
                       transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                     />
                   )}
                   
                   <div
                     className={cn(
-                      "relative flex h-10 w-10 items-center justify-center rounded-lg transition-all duration-300",
+                      "relative flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-300 font-black",
                       isActive 
                         ? "bg-primary text-white shadow-lg shadow-primary/20" 
-                        : "bg-white/5 group-hover:bg-white/10 text-slate-400 group-hover:text-white"
+                        : "bg-muted group-hover:bg-muted-foreground/10 text-muted-foreground group-hover:text-foreground"
                     )}
                   >
                     <Icon className={cn("h-5 w-5 transition-transform duration-300", !isActive && "group-hover:scale-110")} />
@@ -125,7 +125,7 @@ export function Sidebar({ open, onClose, items }: SidebarProps) {
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: -10 }}
-                        className="relative text-sm font-semibold tracking-wide"
+                        className="relative text-[10px] font-black uppercase tracking-widest"
                       >
                         {item.title}
                       </motion.span>
@@ -144,34 +144,7 @@ export function Sidebar({ open, onClose, items }: SidebarProps) {
           </nav>
         </ScrollArea>
 
-        {/* Footer Card */}
-        <div className="p-4 border-t border-white/5">
-          <div className="relative group">
-            <div className="absolute -inset-0.5 bg-linear-to-r from-primary/50 to-accent/50 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-1000" />
-            <div className="relative bg-slate-900/50 backdrop-blur-md rounded-2xl p-4 border border-white/5">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-linear-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/20">
-                  <Icons.zap className="h-5 w-5 text-white animate-pulse" />
-                </div>
-                {open && (
-                  <motion.div 
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="flex-1 overflow-hidden"
-                  >
-                    <p className="text-xs font-black text-white uppercase tracking-widest">Enterprise</p>
-                    <p className="text-[10px] text-slate-400 font-medium">Unlimited Power</p>
-                  </motion.div>
-                )}
-              </div>
-              {open && (
-                <Button className="w-full mt-4 bg-white text-black hover:bg-white/90 rounded-xl h-9 text-[10px] font-black tracking-widest transition-transform hover:scale-[1.02] active:scale-[0.98]">
-                  VIEW PLANS
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
+        {/* Footer info removed as per request */}
       </motion.aside>
     </>
   )

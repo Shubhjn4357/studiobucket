@@ -5,432 +5,235 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Icons } from "@/components/ui/icons"
 import { cn } from "@/lib/utils"
+import { signIn } from "next-auth/react"
+import { User, Channel } from "@/schemas"
+import { updateGeneralSettings } from "@/app/dashboard/settings/actions"
+import { toast } from "sonner"
+import { motion, AnimatePresence } from "framer-motion"
 
-const Settings = Icons.settings
-const Save = Icons.save
-const RefreshCw = Icons.refreshCw
-const Bell = Icons.bell
+interface SettingsManagerProps {
+  initialUser?: User
+  initialChannels?: Channel[]
+}
 
-export function SettingsManager() {
-  const [activeTab, setActiveTab] = useState("general")
-  const [settings, setSettings] = useState({
-    general: {
-      appName: "StudioBucket",
-      timezone: "UTC",
-      language: "English",
-      theme: "dark",
-    },
-    account: {
-      email: "user@example.com",
-      name: "John Doe",
-      avatar: "",
-      notifications: true,
-    },
-    youtube: {
-      connected: true,
-      channelName: "My Channel",
-      channelId: "UC1234567890",
-      defaultPrivacy: "public",
-      defaultCategory: "Technology",
-    },
-    notifications: {
-      email: true,
-      push: true,
-      uploadComplete: true,
-      uploadFailed: true,
-      queueEmpty: false,
-      weeklyReport: true,
-    },
-    api: {
-      enabled: true,
-      key: "sk_test_1234567890",
-      webhookUrl: "",
-      rateLimit: 1000,
-    },
-    advanced: {
-      logLevel: "info",
-      maxConcurrentUploads: 3,
-      retryAttempts: 3,
-      cleanupDays: 30,
-    },
+export function SettingsManager({ initialUser, initialChannels = [] }: SettingsManagerProps) {
+  const [activeTab, setActiveTab] = useState("account")
+  const [isSaving, setIsSaving] = useState(false)
+  const [formData, setFormData] = useState({
+    name: initialUser?.name || "",
+    email: initialUser?.email || "",
   })
 
   const tabs = [
-    { id: "general", label: "General", icon: Settings },
     { id: "account", label: "Account", icon: Icons.user },
     { id: "youtube", label: "YouTube", icon: Icons.youtube },
-    { id: "notifications", label: "Notifications", icon: Bell },
-    { id: "api", label: "API", icon: Icons.shield },
-    { id: "advanced", label: "Advanced", icon: Icons.database },
+    { id: "notifications", label: "Alerts", icon: Icons.bell },
+    { id: "api", label: "Protocol", icon: Icons.shield },
   ]
 
-  const renderGeneralSettings = () => (
-    <div className="space-y-6">
-      <div>
-        <label className="text-sm font-medium">Application Name</label>
-        <input
-          type="text"
-          value={settings.general.appName}
-          onChange={(e) => setSettings(prev => ({
-            ...prev,
-            general: { ...prev.general, appName: e.target.value }
-          }))}
-          className="w-full mt-1 px-3 py-2 border rounded-md"
-        />
-      </div>
-      <div>
-        <label className="text-sm font-medium">Timezone</label>
-        <select
-          value={settings.general.timezone}
-          onChange={(e) => setSettings(prev => ({
-            ...prev,
-            general: { ...prev.general, timezone: e.target.value }
-          }))}
-          className="w-full mt-1 px-3 py-2 border rounded-md"
-        >
-          <option value="UTC">UTC</option>
-          <option value="EST">EST</option>
-          <option value="PST">PST</option>
-        </select>
-      </div>
-      <div>
-        <label className="text-sm font-medium">Language</label>
-        <select
-          value={settings.general.language}
-          onChange={(e) => setSettings(prev => ({
-            ...prev,
-            general: { ...prev.general, language: e.target.value }
-          }))}
-          className="w-full mt-1 px-3 py-2 border rounded-md"
-        >
-          <option value="English">English</option>
-          <option value="Spanish">Spanish</option>
-          <option value="French">French</option>
-        </select>
-      </div>
-      <div>
-        <label className="text-sm font-medium">Theme</label>
-        <select
-          value={settings.general.theme}
-          onChange={(e) => setSettings(prev => ({
-            ...prev,
-            general: { ...prev.general, theme: e.target.value }
-          }))}
-          className="w-full mt-1 px-3 py-2 border rounded-md"
-        >
-          <option value="light">Light</option>
-          <option value="dark">Dark</option>
-          <option value="system">System</option>
-        </select>
-      </div>
-    </div>
-  )
-
-  const renderAccountSettings = () => (
-    <div className="space-y-6">
-      <div>
-        <label className="text-sm font-medium">Email</label>
-        <input
-          type="email"
-          value={settings.account.email}
-          onChange={(e) => setSettings(prev => ({
-            ...prev,
-            account: { ...prev.account, email: e.target.value }
-          }))}
-          className="w-full mt-1 px-3 py-2 border rounded-md"
-        />
-      </div>
-      <div>
-        <label className="text-sm font-medium">Name</label>
-        <input
-          type="text"
-          value={settings.account.name}
-          onChange={(e) => setSettings(prev => ({
-            ...prev,
-            account: { ...prev.account, name: e.target.value }
-          }))}
-          className="w-full mt-1 px-3 py-2 border rounded-md"
-        />
-      </div>
-      <div>
-        <label className="text-sm font-medium">Avatar</label>
-        <input
-          type="file"
-          accept="image/*"
-          className="w-full mt-1 px-3 py-2 border rounded-md"
-        />
-      </div>
-      <div className="flex items-center gap-2">
-        <input
-          type="checkbox"
-          checked={settings.account.notifications}
-          onChange={(e) => setSettings(prev => ({
-            ...prev,
-            account: { ...prev.account, notifications: e.target.checked }
-          }))}
-        />
-        <label className="text-sm font-medium">Enable notifications</label>
-      </div>
-    </div>
-  )
-
-  const renderYouTubeSettings = () => (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h4 className="font-medium">YouTube Connection</h4>
-          <p className="text-sm text-muted-foreground">
-            {settings.youtube.connected ? "Connected" : "Not connected"}
-          </p>
-        </div>
-        <Button variant={settings.youtube.connected ? "destructive" : "default"}>
-          {settings.youtube.connected ? "Disconnect" : "Connect"}
-        </Button>
-      </div>
-
-      {settings.youtube.connected && (
-        <>
-          <div>
-            <label className="text-sm font-medium">Channel Name</label>
-            <input
-              type="text"
-              value={settings.youtube.channelName}
-              onChange={(e) => setSettings(prev => ({
-                ...prev,
-                youtube: { ...prev.youtube, channelName: e.target.value }
-              }))}
-              className="w-full mt-1 px-3 py-2 border rounded-md"
-            />
-          </div>
-          <div>
-            <label className="text-sm font-medium">Default Privacy</label>
-            <select
-              value={settings.youtube.defaultPrivacy}
-              onChange={(e) => setSettings(prev => ({
-                ...prev,
-                youtube: { ...prev.youtube, defaultPrivacy: e.target.value }
-              }))}
-              className="w-full mt-1 px-3 py-2 border rounded-md"
-            >
-              <option value="public">Public</option>
-              <option value="private">Private</option>
-              <option value="unlisted">Unlisted</option>
-            </select>
-          </div>
-          <div>
-            <label className="text-sm font-medium">Default Category</label>
-            <select
-              value={settings.youtube.defaultCategory}
-              onChange={(e) => setSettings(prev => ({
-                ...prev,
-                youtube: { ...prev.youtube, defaultCategory: e.target.value }
-              }))}
-              className="w-full mt-1 px-3 py-2 border rounded-md"
-            >
-              <option value="Technology">Technology</option>
-              <option value="Education">Education</option>
-              <option value="Entertainment">Entertainment</option>
-            </select>
-          </div>
-        </>
-      )}
-    </div>
-  )
-
-  const renderNotificationSettings = () => (
-    <div className="space-y-4">
-      {Object.entries(settings.notifications).map(([key, value]) => (
-        <div key={key} className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={value}
-            onChange={(e) => setSettings(prev => ({
-              ...prev,
-              notifications: { ...prev.notifications, [key]: e.target.checked }
-            }))}
-          />
-          <label className="text-sm font-medium capitalize">
-            {key.replace(/([A-Z])/g, ' $1').trim()}
-          </label>
-        </div>
-      ))}
-    </div>
-  )
-
-  const renderAPISettings = () => (
-    <div className="space-y-6">
-      <div className="flex items-center gap-2">
-        <input
-          type="checkbox"
-          checked={settings.api.enabled}
-          onChange={(e) => setSettings(prev => ({
-            ...prev,
-            api: { ...prev.api, enabled: e.target.checked }
-          }))}
-        />
-        <label className="text-sm font-medium">Enable API</label>
-      </div>
-      <div>
-        <label className="text-sm font-medium">API Key</label>
-        <div className="flex items-center gap-2">
-          <input
-            type="password"
-            value={settings.api.key}
-            onChange={(e) => setSettings(prev => ({
-              ...prev,
-              api: { ...prev.api, key: e.target.value }
-            }))}
-            className="flex-1 mt-1 px-3 py-2 border rounded-md"
-          />
-          <Button variant="outline" size="sm">
-            <RefreshCw className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-      <div>
-        <label className="text-sm font-medium">Webhook URL</label>
-        <input
-          type="url"
-          value={settings.api.webhookUrl}
-          onChange={(e) => setSettings(prev => ({
-            ...prev,
-            api: { ...prev.api, webhookUrl: e.target.value }
-          }))}
-          className="w-full mt-1 px-3 py-2 border rounded-md"
-        />
-      </div>
-      <div>
-        <label className="text-sm font-medium">Rate Limit (requests/hour)</label>
-        <input
-          type="number"
-          value={settings.api.rateLimit}
-          onChange={(e) => setSettings(prev => ({
-            ...prev,
-            api: { ...prev.api, rateLimit: parseInt(e.target.value) }
-          }))}
-          className="w-full mt-1 px-3 py-2 border rounded-md"
-        />
-      </div>
-    </div>
-  )
-
-  const renderAdvancedSettings = () => (
-    <div className="space-y-6">
-      <div>
-        <label className="text-sm font-medium">Log Level</label>
-        <select
-          value={settings.advanced.logLevel}
-          onChange={(e) => setSettings(prev => ({
-            ...prev,
-            advanced: { ...prev.advanced, logLevel: e.target.value }
-          }))}
-          className="w-full mt-1 px-3 py-2 border rounded-md"
-        >
-          <option value="debug">Debug</option>
-          <option value="info">Info</option>
-          <option value="warn">Warning</option>
-          <option value="error">Error</option>
-        </select>
-      </div>
-      <div>
-        <label className="text-sm font-medium">Max Concurrent Uploads</label>
-        <input
-          type="number"
-          value={settings.advanced.maxConcurrentUploads}
-          onChange={(e) => setSettings(prev => ({
-            ...prev,
-            advanced: { ...prev.advanced, maxConcurrentUploads: parseInt(e.target.value) }
-          }))}
-          className="w-full mt-1 px-3 py-2 border rounded-md"
-        />
-      </div>
-      <div>
-        <label className="text-sm font-medium">Retry Attempts</label>
-        <input
-          type="number"
-          value={settings.advanced.retryAttempts}
-          onChange={(e) => setSettings(prev => ({
-            ...prev,
-            advanced: { ...prev.advanced, retryAttempts: parseInt(e.target.value) }
-          }))}
-          className="w-full mt-1 px-3 py-2 border rounded-md"
-        />
-      </div>
-      <div>
-        <label className="text-sm font-medium">Cleanup Days</label>
-        <input
-          type="number"
-          value={settings.advanced.cleanupDays}
-          onChange={(e) => setSettings(prev => ({
-            ...prev,
-            advanced: { ...prev.advanced, cleanupDays: parseInt(e.target.value) }
-          }))}
-          className="w-full mt-1 px-3 py-2 border rounded-md"
-        />
-      </div>
-    </div>
-  )
-
-  const renderContent = () => {
-    switch (activeTab) {
-      case "general":
-        return renderGeneralSettings()
-      case "account":
-        return renderAccountSettings()
-      case "youtube":
-        return renderYouTubeSettings()
-      case "notifications":
-        return renderNotificationSettings()
-      case "api":
-        return renderAPISettings()
-      case "advanced":
-        return renderAdvancedSettings()
-      default:
-        return renderGeneralSettings()
+  const handleApply = async () => {
+    setIsSaving(true)
+    try {
+      await updateGeneralSettings({ name: formData.name })
+      toast.success("System parameters updated")
+    } catch {
+      toast.error("Update failed")
+    } finally {
+      setIsSaving(false)
     }
   }
 
+  const renderAccountSettings = () => (
+    <div className="space-y-8">
+      <div className="flex flex-col md:flex-row items-center gap-8 p-8 rounded-2xl bg-muted/30 border border-border">
+        <div className="h-32 w-32 rounded-3xl bg-background border border-border overflow-hidden relative group">
+          {initialUser?.image ? (
+            <img src={initialUser.image} alt="Avatar" className="h-full w-full object-cover" />
+          ) : (
+            <div className="h-full w-full flex items-center justify-center">
+              <Icons.user className="h-12 w-12 text-muted-foreground" />
+            </div>
+          )}
+          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+            <Icons.camera className="h-6 w-6 text-white" />
+          </div>
+        </div>
+        <div className="flex-1 space-y-4 text-center md:text-left">
+          <div>
+            <h4 className="text-2xl font-black text-foreground uppercase tracking-tighter italic">{initialUser?.name}</h4>
+            <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest mt-1">{initialUser?.email}</p>
+          </div>
+          <div className="flex flex-wrap gap-3 justify-center md:justify-start">
+             <div className="px-3 py-1.5 rounded-lg bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-widest">
+               Rank: Commander
+             </div>
+             <div className="px-3 py-1.5 rounded-lg bg-muted border border-border text-[9px] font-black text-foreground uppercase tracking-widest">
+               ID: {initialUser?.id.slice(0, 8)}
+             </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-2">
+          <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Display Name</label>
+          <input
+            type="text"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            className="w-full bg-muted/50 border border-border rounded-xl px-4 h-12 text-sm font-bold uppercase focus:border-primary/50 outline-none transition-all"
+          />
+        </div>
+        <div className="space-y-2">
+          <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Interface Email</label>
+          <input
+            type="email"
+            value={formData.email}
+            disabled
+            className="w-full bg-muted/20 border border-border rounded-xl px-4 h-12 text-sm font-medium text-muted-foreground outline-none cursor-not-allowed"
+          />
+        </div>
+      </div>
+    </div>
+  )
+
+  const [channelSearch, setChannelSearch] = useState("")
+  const filteredChannels = initialChannels.filter(c => 
+    c.channelName?.toLowerCase().includes(channelSearch.toLowerCase())
+  )
+
+  const renderYouTubeSettings = () => (
+    <div className="space-y-8">
+      <div className="p-8 rounded-2xl bg-linear-to-br from-primary/10 to-accent/10 border border-primary/20 flex flex-col lg:flex-row items-center justify-between gap-6">
+        <div className="flex items-center gap-6">
+          <div className="h-16 w-16 rounded-2xl bg-background flex items-center justify-center border border-border shadow-xl">
+            <Icons.youtube className="h-8 w-8 text-red-500" />
+          </div>
+          <div>
+            <h4 className="text-lg font-black text-foreground uppercase tracking-tight italic">Global Command Integration</h4>
+            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest mt-1">
+              {initialChannels.length} Linked Nodes • {initialChannels.reduce((acc, c) => acc + (c.subscriberCount || 0), 0).toLocaleString()} Total Units
+            </p>
+          </div>
+        </div>
+        <div className="flex gap-3">
+          <div className="relative group hidden md:block">
+            <Icons.search className="absolute left-3 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+            <input 
+              type="text" 
+              placeholder="Search Nodes..."
+              value={channelSearch}
+              onChange={(e) => setChannelSearch(e.target.value)}
+              className="bg-background/50 border border-border rounded-xl pl-9 pr-4 h-10 text-[10px] font-black uppercase tracking-widest outline-none focus:border-primary/50 w-48"
+            />
+          </div>
+          <Button 
+            onClick={() => signIn("google", { callbackUrl: "/dashboard/settings" })}
+            className="h-10 rounded-xl px-6 text-[10px] font-black uppercase tracking-[0.2em] bg-primary text-white hover:opacity-90 shadow-lg shadow-primary/20"
+          >
+            Authorize New Node
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {filteredChannels.map((channel) => (
+          <div key={channel.id} className="p-4 rounded-2xl bg-muted/30 border border-border flex items-center justify-between group hover:border-primary/20 transition-all">
+            <div className="flex items-center gap-4 overflow-hidden">
+              <div className="h-12 w-12 rounded-xl bg-background border border-border overflow-hidden shrink-0">
+                {channel.thumbnailUrl && <img src={channel.thumbnailUrl} alt={channel.channelName} className="h-full w-full object-cover" />}
+              </div>
+              <div className="overflow-hidden">
+                <p className="text-[10px] font-black text-foreground uppercase tracking-tight italic truncate">{channel.channelName}</p>
+                <p className="text-[8px] text-muted-foreground font-bold uppercase tracking-widest">{channel.subscriberCount?.toLocaleString()} Sub-units</p>
+              </div>
+            </div>
+            <div className="flex flex-col items-end gap-1">
+              <div className="flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full shrink-0">
+                <div className="h-1 w-1 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[7px] font-black text-emerald-500 uppercase tracking-widest">Live</span>
+              </div>
+              <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground hover:text-foreground">
+                <Icons.settings className="h-3 w-3" />
+              </Button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Settings</h1>
-        <Button>
-          <Save className="h-4 w-4 mr-2" />
-          Save Changes
+        <div className="flex items-center gap-3">
+          <div className="h-12 w-12 rounded-2xl bg-linear-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/20">
+            <Icons.settings className="h-6 w-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-black text-foreground uppercase tracking-tighter leading-none italic">System Config</h1>
+            <p className="text-muted-foreground font-bold uppercase tracking-[0.2em] text-[10px] mt-1">Operational Preferences • Global Tuning</p>
+          </div>
+        </div>
+        <Button 
+          onClick={handleApply}
+          disabled={isSaving}
+          className="h-11 bg-primary text-white hover:opacity-90 rounded-xl px-8 text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 transition-transform hover:scale-105 active:scale-95"
+        >
+          {isSaving ? <Icons.refreshCw className="h-4 w-4 mr-2 animate-spin" /> : <Icons.save className="h-4 w-4 mr-2" />}
+          Commit Changes
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <Card>
-          <CardContent className="p-4">
-            <nav className="space-y-2">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <Card className="lg:col-span-3 cyber-card border-border bg-card/50 h-fit">
+          <CardContent className="p-3">
+            <nav className="space-y-1">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={cn(
-                    "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors",
+                    "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-300 relative group",
                     activeTab === tab.id
-                      ? "bg-primary text-primary-foreground"
-                      : "hover:bg-muted"
+                      ? "text-primary bg-primary/10"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
                   )}
                 >
-                  <tab.icon className="h-4 w-4" />
-                  <span className="text-sm font-medium">{tab.label}</span>
+                  {activeTab === tab.id && <motion.div layoutId="tab-active" className="absolute left-0 top-2 bottom-2 w-1 bg-primary rounded-full" />}
+                  <tab.icon className={cn("h-4 w-4 transition-colors", activeTab === tab.id ? "text-primary" : "text-muted-foreground group-hover:text-foreground")} />
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em]">{tab.label}</span>
                 </button>
               ))}
             </nav>
           </CardContent>
         </Card>
 
-        <Card className="lg:col-span-3">
-          <CardHeader>
-            <CardTitle className="capitalize">
-              {tabs.find(tab => tab.id === activeTab)?.label} Settings
+        <Card className="lg:col-span-9 cyber-card border-border bg-card/50 overflow-hidden">
+          <CardHeader className="border-b border-border bg-muted/30 px-8 py-6">
+            <CardTitle className="text-sm font-black text-foreground uppercase tracking-[0.3em] italic">
+              {tabs.find(tab => tab.id === activeTab)?.label} Command
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            {renderContent()}
+          <CardContent className="p-8">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                transition={{ duration: 0.2 }}
+              >
+                {activeTab === "account" && renderAccountSettings()}
+                {activeTab === "youtube" && renderYouTubeSettings()}
+                {(activeTab === "notifications" || activeTab === "api") && (
+                  <div className="py-20 text-center border border-dashed border-border rounded-2xl">
+                     <Icons.activity className="h-10 w-10 text-muted-foreground mx-auto mb-4" />
+                     <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest italic">Section under active deployment</p>
+                  </div>
+                )}
+              </motion.div>
+            </AnimatePresence>
           </CardContent>
         </Card>
       </div>

@@ -121,6 +121,35 @@ export class VideoProcessor {
         .on("error", (err: Error) => reject(err))
     })
   }
+
+  /**
+   * Advanced AI-powered scene detection
+   * Detects frames where visual continuity breaks significantly.
+   */
+  async detectScenes(inputPath: string, threshold = 0.3): Promise<number[]> {
+    return new Promise((resolve, reject) => {
+      const sceneCuts: number[] = []
+      
+      ffmpeg(inputPath)
+        .videoFilters(`scdet=s=${threshold}:t=1`)
+        .on("start", (cmd) => logger.info(`Scene detection started: ${cmd}`))
+        .on("stderr", (line: string) => {
+          // scdet outputs to stderr when a scene is detected
+          // Typical line: [Parsed_scdet_0 @ 0x...] lavfi.scdet.pts: 12.345
+          const match = line.match(/lavfi\.scdet\.pts:\s+([\d.]+)/)
+          if (match) {
+            sceneCuts.push(parseFloat(match[1]))
+          }
+        })
+        .on("error", (err) => reject(err))
+        .on("end", () => {
+          logger.info(`Detected ${sceneCuts.length} scene cuts`)
+          resolve(sceneCuts)
+        })
+        .format("null")
+        .save("-") // Null output to just process filters
+    })
+  }
 }
 
 export const videoProcessor = new VideoProcessor()

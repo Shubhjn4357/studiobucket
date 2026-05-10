@@ -36,12 +36,12 @@ export function CTA() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8">
             <Link href="/dashboard">
               <Button size="lg" className="h-14 px-10 rounded-2xl bg-primary text-white hover:opacity-90 font-black uppercase tracking-widest text-xs transition-transform hover:scale-105 active:scale-95 shadow-lg shadow-primary/20">
-                Start Free Trial
+                Deploy Now
               </Button>
             </Link>
-            <Link href="/dashboard/settings">
+            <Link href="/docs">
               <Button size="lg" variant="outline" className="h-14 px-10 rounded-2xl border-white/10 bg-white/5 text-white hover:bg-white/10 font-black uppercase tracking-widest text-xs transition-transform hover:scale-105 active:scale-95">
-                Contact Sales
+                View Manual
               </Button>
             </Link>
           </div>

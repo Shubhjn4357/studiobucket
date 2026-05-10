@@ -1,17 +1,22 @@
 import { db } from "@/lib/db"
 import { videos, videoSchedules, uploadJobs, analytics, channels } from "@/lib/db/schema"
-import { eq, and, desc, asc, count, sum } from "drizzle-orm"
+import { eq, and, desc, asc, count, sum, like } from "drizzle-orm"
 
 export class VideoService {
-  async getUserVideos(userId: string, status?: string, limit = 50) {
+  async getUserVideos(userId: string, status?: string, query?: string, limit = 50) {
     const conditions = [eq(videos.userId, userId)]
     if (status) {
       conditions.push(eq(videos.status, status))
     }
+    if (query) {
+      // Simple like search for title
+      const { like } = require("drizzle-orm")
+      conditions.push(like(videos.title, `%${query}%`))
+    }
 
-    const query = db.select().from(videos).where(and(...conditions))
+    const videoQuery = db.select().from(videos).where(and(...conditions))
 
-    const userVideos = await query
+    const userVideos = await videoQuery
       .limit(limit)
       .orderBy(desc(videos.createdAt))
 
@@ -64,6 +69,15 @@ export class VideoService {
     }
   }
 
+  async getActiveJobs(userId: string, limit = 5) {
+    return await db
+      .select()
+      .from(uploadJobs)
+      .where(and(eq(uploadJobs.userId, userId), eq(uploadJobs.status, "active")))
+      .limit(limit)
+      .orderBy(desc(uploadJobs.updatedAt))
+  }
+
   async getAnalyticsData(userId: string) {
     const userChannels = await db
       .select({ id: channels.id })
@@ -96,10 +110,43 @@ export class VideoService {
       .where(eq(videos.userId, userId))
 
     return {
-      totalViews: Number(analyticsData?.totalViews || 0),
-      totalLikes: Number(analyticsData?.totalLikes || 0),
-      totalComments: Number(analyticsData?.totalComments || 0),
+      totalViews: analyticsData?.totalViews ? Number(analyticsData.totalViews) : 0,
+      totalLikes: analyticsData?.totalLikes ? Number(analyticsData.totalLikes) : 0,
+      totalComments: analyticsData?.totalComments ? Number(analyticsData.totalComments) : 0,
       totalVideos: videoCount?.count || 0,
+    }
+  }
+
+  async getChannels(userId: string) {
+    return await db
+      .select()
+      .from(channels)
+      .where(eq(channels.userId, userId))
+  }
+
+  async getHealth() {
+    try {
+      await db.select({ count: count() }).from(videos).limit(1)
+      const { redis } = require("@/lib/redis")
+      return {
+        status: "operational",
+        services: {
+          database: "connected",
+          queue: redis ? "active" : "offline",
+          storage: "available",
+        },
+        timestamp: Date.now()
+      }
+    } catch {
+      return {
+        status: "degraded",
+        services: {
+          database: "disconnected",
+          queue: "unknown",
+          storage: "unknown",
+        },
+        timestamp: Date.now()
+      }
     }
   }
 }

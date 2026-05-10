@@ -1,6 +1,5 @@
 import { Hero3D } from "@/components/landing/hero-3d"
 import { FeatureGrid } from "@/components/landing/feature-grid"
-import { Pricing } from "@/components/landing/pricing"
 import { CTA } from "@/components/landing/cta"
 import { Footer } from "@/components/dashboard/footer"
 import { ThemeToggle } from "@/components/ui/theme-toggle"
@@ -25,15 +24,15 @@ export default function LandingPage() {
             <Link href="#features" className="text-[10px] font-black text-slate-400 hover:text-white uppercase tracking-widest transition-colors">
               Features
             </Link>
-            <Link href="#pricing" className="text-[10px] font-black text-slate-400 hover:text-white uppercase tracking-widest transition-colors">
-              Pricing
-            </Link>
             <Link href="/dashboard/studio" className="text-[10px] font-black text-slate-400 hover:text-white uppercase tracking-widest transition-colors">
               Studio
             </Link>
           </div>
           <div className="h-6 w-px bg-white/10 hidden md:block" />
           <ThemeToggle />
+          <Link href="/auth/signin" className="text-[10px] font-black text-slate-400 hover:text-white uppercase tracking-widest transition-colors hidden md:block">
+            Sign In
+          </Link>
           <Link href="/dashboard">
             <Button size="sm" className="bg-white text-black hover:bg-slate-200 rounded-xl px-6 text-[10px] font-black uppercase tracking-widest h-10">
               Access Dashboard
@@ -47,9 +46,6 @@ export default function LandingPage() {
       </section>
       <section id="features">
         <FeatureGrid />
-      </section>
-      <section id="pricing">
-        <Pricing />
       </section>
       <CTA />
       <Footer />

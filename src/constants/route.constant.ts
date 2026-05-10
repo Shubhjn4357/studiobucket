@@ -8,6 +8,7 @@ export const ROUTES = {
   settings: "/dashboard/settings",
   studio: "/dashboard/studio",
   downloader: "/dashboard/downloader",
+  content: "/dashboard/content",
   
   // Auth routes
   login: "/auth/login",
@@ -36,6 +37,16 @@ export const NAVIGATION_ITEMS = [
     icon: "layoutDashboard",
   },
   {
+    title: "Content",
+    href: ROUTES.content,
+    icon: "play",
+  },
+  {
+    title: "Analytics",
+    href: ROUTES.analytics,
+    icon: "barChart",
+  },
+  {
     title: "Upload",
     href: ROUTES.upload,
     icon: "upload",
@@ -51,11 +62,6 @@ export const NAVIGATION_ITEMS = [
     icon: "list",
   },
   {
-    title: "Analytics",
-    href: ROUTES.analytics,
-    icon: "barChart",
-  },
-  {
     title: "Downloader",
     href: ROUTES.downloader,
     icon: "download",
@@ -63,7 +69,7 @@ export const NAVIGATION_ITEMS = [
   {
     title: "Studio",
     href: ROUTES.studio,
-    icon: "video",
+    icon: "scissors",
   },
   {
     title: "Settings",

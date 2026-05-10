@@ -4,24 +4,24 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   
-  --color-primary: #ff0000;
-  --color-primary-foreground: #ffffff;
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
   
-  --color-secondary: #0f172a;
-  --color-secondary-foreground: #f8fafc;
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
   
-  --color-accent: #d946ef;
-  --color-accent-foreground: #ffffff;
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
   
-  --color-muted: #1e293b;
-  --color-muted-foreground: #94a3b8;
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
   
-  --color-card: #020617;
-  --color-card-foreground: #f8fafc;
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
   
-  --color-border: rgba(255, 255, 255, 0.05);
-  --color-input: rgba(255, 255, 255, 0.05);
-  --color-ring: #ff0000;
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
 
   --radius-xl: 1.5rem;
   --radius-lg: 1rem;
@@ -40,11 +40,49 @@
 :root {
   --background: #ffffff;
   --foreground: #020617;
+  
+  --primary: #ff0000;
+  --primary-foreground: #ffffff;
+  
+  --secondary: #f1f5f9;
+  --secondary-foreground: #0f172a;
+  
+  --accent: #d946ef;
+  --accent-foreground: #ffffff;
+  
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  
+  --card: #ffffff;
+  --card-foreground: #020617;
+  
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #ff0000;
 }
 
 .dark {
   --background: #020617;
   --foreground: #f8fafc;
+  
+  --primary: #ff0000;
+  --primary-foreground: #ffffff;
+  
+  --secondary: #0f172a;
+  --secondary-foreground: #f8fafc;
+  
+  --accent: #d946ef;
+  --accent-foreground: #ffffff;
+  
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  
+  --card: #020617;
+  --card-foreground: #f8fafc;
+  
+  --border: rgba(255, 255, 255, 0.05);
+  --input: rgba(255, 255, 255, 0.05);
+  --ring: #ff0000;
 }
 
 @layer base {
@@ -54,9 +92,9 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
     background-image: 
-      radial-gradient(at 0% 0%, hsla(0, 100%, 50%, 0.05) 0, transparent 50%),
-      radial-gradient(at 100% 0%, hsla(300, 100%, 50%, 0.05) 0, transparent 50%),
-      radial-gradient(at 50% 100%, hsla(220, 100%, 50%, 0.02) 0, transparent 50%);
+      radial-gradient(at 0% 0%, hsla(0, 100%, 50%, 0.03) 0, transparent 50%),
+      radial-gradient(at 100% 0%, hsla(300, 100%, 50%, 0.03) 0, transparent 50%),
+      radial-gradient(at 50% 100%, hsla(220, 100%, 50%, 0.01) 0, transparent 50%);
   }
 }
 
@@ -74,7 +112,7 @@
   }
 
   .cyber-card {
-    @apply relative overflow-hidden rounded-xl border border-white/5 bg-slate-950/40 backdrop-blur-xl transition-all duration-300 hover:border-primary/30 hover:shadow-[0_0_30px_-10px_rgba(255,0,0,0.2)];
+    @apply relative overflow-hidden rounded-xl border border-border bg-card backdrop-blur-xl transition-all duration-300 hover:border-primary/30 hover:shadow-[0_0_30px_-10px_rgba(255,0,0,0.2)];
   }
 
   .animate-glow {
@@ -88,7 +126,7 @@
     background: transparent;
   }
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    @apply bg-white/10 rounded-full hover:bg-white/20;
+    @apply bg-foreground/10 rounded-full hover:bg-foreground/20;
   }
 }
 
