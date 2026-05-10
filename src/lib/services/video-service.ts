@@ -3,24 +3,35 @@ import { videos, videoSchedules, uploadJobs, analytics, channels } from "@/lib/d
 import { eq, and, desc, asc, count, sum, like } from "drizzle-orm"
 
 export class VideoService {
-  async getUserVideos(userId: string, status?: string, query?: string, limit = 50) {
+  async getUserVideos(userId: string, status?: string, query?: string, limitValue = 50) {
+    const { sql } = require("drizzle-orm")
     const conditions = [eq(videos.userId, userId)]
     if (status) {
       conditions.push(eq(videos.status, status))
     }
     if (query) {
-      // Simple like search for title
-      const { like } = require("drizzle-orm")
       conditions.push(like(videos.title, `%${query}%`))
     }
 
-    const videoQuery = db.select().from(videos).where(and(...conditions))
-
-    const userVideos = await videoQuery
-      .limit(limit)
+    return await db
+      .select({
+        id: videos.id,
+        title: videos.title,
+        description: videos.description,
+        thumbnailPath: videos.thumbnailPath,
+        status: videos.status,
+        privacy: videos.privacy,
+        createdAt: videos.createdAt,
+        youtubeVideoId: videos.youtubeVideoId,
+        views: sql<number>`COALESCE(SUM(${analytics.views}), 0)`,
+        likes: sql<number>`COALESCE(SUM(${analytics.likes}), 0)`,
+      })
+      .from(videos)
+      .leftJoin(analytics, eq(videos.id, analytics.videoId))
+      .where(and(...conditions))
+      .groupBy(videos.id)
       .orderBy(desc(videos.createdAt))
-
-    return userVideos
+      .limit(limitValue)
   }
 
   async getScheduledVideos(userId: string, limit = 50) {
@@ -122,6 +133,49 @@ export class VideoService {
       .select()
       .from(channels)
       .where(eq(channels.userId, userId))
+  }
+
+  async getDailyStats(userId: string, days = 7) {
+    const cutoffDate = new Date()
+    cutoffDate.setDate(cutoffDate.getDate() - days)
+    
+    return await db
+      .select({
+        date: analytics.date,
+        views: sum(analytics.views),
+        likes: sum(analytics.likes),
+      })
+      .from(analytics)
+      .where(eq(analytics.userId, userId))
+      .groupBy(analytics.date)
+      .orderBy(asc(analytics.date))
+      .limit(days)
+  }
+
+  async getNotifications(userId: string, limit = 10) {
+    const { notifications } = require("@/lib/db/schema")
+    return await db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.userId, userId))
+      .limit(limit)
+      .orderBy(desc(notifications.createdAt))
+  }
+
+  async markNotificationRead(userId: string, notificationId: string) {
+    const { notifications } = require("@/lib/db/schema")
+    return await db
+      .update(notifications)
+      .set({ isRead: true })
+      .where(and(eq(notifications.userId, userId), eq(notifications.id, notificationId)))
+  }
+
+  async markAllNotificationsRead(userId: string) {
+    const { notifications } = require("@/lib/db/schema")
+    return await db
+      .update(notifications)
+      .set({ isRead: true })
+      .where(eq(notifications.userId, userId))
   }
 
   async getHealth() {

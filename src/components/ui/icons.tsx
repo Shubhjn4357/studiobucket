@@ -119,9 +119,11 @@ import {
   Undo,
   Redo,
   Lightbulb,
+  AlertTriangle,
 } from "lucide-react"
 
 export const Icons = {
+  alertTriangle: AlertTriangle,
   layoutDashboard: LayoutDashboard,
   upload: Upload,
   calendar: Calendar,

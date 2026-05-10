@@ -2,6 +2,9 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { VideoService } from "@/lib/services/video-service"
+import { db } from "@/lib/db"
+import { analytics } from "@/lib/db/schema"
+import { eq, sum } from "drizzle-orm"
 import { UploadCenter } from "@/components/dashboard/upload-center"
 import { QueueStatus } from "@/components/dashboard/queue-status"
 import { Analytics } from "@/components/dashboard/analytics"
@@ -44,6 +47,14 @@ export default async function DashboardPage() {
     scheduledVideos = s
     activeJobs = j
     latestVideo = v[0] || null
+    
+    if (latestVideo) {
+      const latestStats = await db.select({
+        views: sum(analytics.views),
+      }).from(analytics).where(eq(analytics.videoId, latestVideo.id))
+      // @ts-ignore - sum returns string
+      latestVideo.views = Number(latestStats[0]?.views || 0)
+    }
   } catch (error) {
     console.error("Dashboard data fetch failed:", error)
   }
@@ -103,15 +114,15 @@ export default async function DashboardPage() {
                     <div className="grid grid-cols-3 gap-4 border-t border-border pt-4">
                       <div className="space-y-1">
                         <p className="text-[9px] text-muted-foreground font-black uppercase tracking-widest">Ranking</p>
-                        <p className="text-lg font-black text-foreground italic">1 / 10</p>
+                        <p className="text-lg font-black text-foreground italic">-- / 10</p>
                       </div>
                       <div className="space-y-1">
                         <p className="text-[9px] text-muted-foreground font-black uppercase tracking-widest">Views</p>
-                        <p className="text-lg font-black text-foreground italic">0</p>
+                        <p className="text-lg font-black text-foreground italic">{(latestVideo as any).views || 0}</p>
                       </div>
                       <div className="space-y-1">
-                        <p className="text-[9px] text-muted-foreground font-black uppercase tracking-widest">Ctr</p>
-                        <p className="text-lg font-black text-emerald-500 italic">0.0%</p>
+                        <p className="text-[9px] text-muted-foreground font-black uppercase tracking-widest">Stability</p>
+                        <p className="text-lg font-black text-emerald-500 italic">100%</p>
                       </div>
                     </div>
                   </div>

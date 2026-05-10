@@ -2,10 +2,14 @@ import { Worker, Job } from "bullmq"
 import Redis from "ioredis"
 import { UploadJobSchema } from "../index"
 import { db } from "@/lib/db"
-import { videos, uploadJobs, users } from "@/lib/db/schema"
+import { videos, uploadJobs, users, notifications } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
 import { google } from "googleapis"
 import pino from "pino"
+import { videoProcessor } from "@/lib/editor/ffmpeg"
+import path from "path"
+import fs from "fs"
+import crypto from "crypto"
 
 const logger = pino({ level: "info" })
 const connection = new Redis(process.env.REDIS_URL || "redis://localhost:6379")
@@ -138,6 +142,36 @@ export class UploadWorker {
           updatedAt: Date.now(),
         })
         .where(eq(videos.id, data.videoId))
+
+      // Post-processing: Generate thumbnail
+      try {
+        const thumbnailDir = path.join(process.cwd(), "public", "thumbnails")
+        if (!fs.existsSync(thumbnailDir)) {
+          fs.mkdirSync(thumbnailDir, { recursive: true })
+        }
+        const thumbName = `${data.videoId}.jpg`
+        const thumbnailPath = path.join(thumbnailDir, thumbName)
+        const publicThumbnailPath = `/thumbnails/${thumbName}`
+        
+        await videoProcessor.generateThumbnail(data.filePath, thumbnailPath)
+        await db.update(videos)
+          .set({ thumbnailPath: publicThumbnailPath })
+          .where(eq(videos.id, data.videoId))
+          
+        logger.info(`Generated thumbnail for video: ${data.videoId}`)
+      } catch (thumbError) {
+        logger.error(`Thumbnail generation failed for ${data.videoId}: ${thumbError}`)
+      }
+
+      // Create Success Notification
+      await db.insert(notifications).values({
+        id: crypto.randomUUID(),
+        userId: data.userId,
+        title: "Upload Successful",
+        description: `Video "${data.title}" has been uploaded to YouTube.`,
+        type: "success",
+        createdAt: Date.now(),
+      })
 
       // Update job status
       await db.update(uploadJobs)

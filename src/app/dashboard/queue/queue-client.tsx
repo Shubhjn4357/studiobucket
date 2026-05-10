@@ -8,14 +8,11 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { cn } from "@/lib/utils"
 import { useTelemetry } from "@/hooks/use-telemetry"
+import { UploadJob } from "@/schemas"
 
-interface Job {
-  id: string
-  status: string
-  progress: number
-  queueName?: string
-  data?: any
-  createdAt: number
+interface Job extends Omit<UploadJob, "data" | "result" | "error" | "status"> {
+  status: "waiting" | "active" | "completed" | "failed" | "delayed"
+  data?: string | Record<string, any> | null
 }
 
 function JobCard({ job }: { job: Job }) {
@@ -103,7 +100,10 @@ function JobCard({ job }: { job: Job }) {
   )
 }
 
-export function QueueClient({ initialJobs, initialStats }: { initialJobs: any[], initialStats: any }) {
+export function QueueClient({ initialJobs, initialStats }: { 
+  initialJobs: Job[], 
+  initialStats: { active: number, completed: number, failed: number, waiting: number } 
+}) {
   const [jobs] = useState(initialJobs)
 
   return (

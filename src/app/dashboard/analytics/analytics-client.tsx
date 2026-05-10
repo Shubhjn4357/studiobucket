@@ -21,7 +21,21 @@ interface VideoRow {
   retention: string
 }
 
-export function AnalyticsClient({ metrics, recentVideos }: { metrics: Metric[], recentVideos: VideoRow[] }) {
+interface DailyStat {
+  date: string
+  views: number | null
+  likes: number | null
+}
+
+export function AnalyticsClient({ 
+  metrics, 
+  recentVideos, 
+  dailyStats 
+}: { 
+  metrics: Metric[], 
+  recentVideos: VideoRow[], 
+  dailyStats: DailyStat[] 
+}) {
   return (
     <div className="space-y-12 pb-20">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
@@ -78,24 +92,33 @@ export function AnalyticsClient({ metrics, recentVideos }: { metrics: Metric[], 
             <CardTitle className="text-sm font-black uppercase tracking-widest text-white italic">Operational Trajectory</CardTitle>
           </CardHeader>
           <CardContent className="h-80 flex items-end gap-3 pb-8 px-8 pt-12">
-            {Array.from({ length: 12 }).map((_, i) => {
-              const height = [40, 60, 30, 80, 95, 70, 50, 85, 45, 90, 65, 100][i]
-              return (
-                <div key={i} className="flex-1 flex flex-col items-center gap-4 group">
-                  <motion.div 
-                    initial={{ height: 0 }}
-                    animate={{ height: `${height}%` }}
-                    transition={{ delay: i * 0.05, duration: 0.8, ease: "backOut" }}
-                    className="w-full bg-linear-to-t from-primary to-accent rounded-t-xl transition-all duration-300 group-hover:brightness-125 relative shadow-lg shadow-primary/10"
-                  >
-                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-all bg-white text-black text-[9px] font-black px-2 py-1 rounded-lg shadow-2xl whitespace-nowrap translate-y-2 group-hover:translate-y-0">
-                      {height}K UNITS
-                    </div>
-                  </motion.div>
-                  <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest">{['J','F','M','A','M','J','J','A','S','O','N','D'][i]}</span>
-                </div>
-              )
-            })}
+            {dailyStats.length === 0 ? (
+              <div className="w-full h-full flex items-center justify-center">
+                <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em] italic">No trajectory data available</p>
+              </div>
+            ) : (
+              dailyStats.map((stat, i) => {
+                const maxViews = Math.max(...dailyStats.map(s => Number(s.views || 0)), 10)
+                const height = ((Number(stat.views || 0)) / maxViews) * 100
+                const day = new Date(stat.date).toLocaleDateString('en-US', { weekday: 'short' })[0]
+                
+                return (
+                  <div key={i} className="flex-1 flex flex-col items-center gap-4 group">
+                    <motion.div 
+                      initial={{ height: 0 }}
+                      animate={{ height: `${Math.max(height, 5)}%` }}
+                      transition={{ delay: i * 0.05, duration: 0.8, ease: "backOut" }}
+                      className="w-full bg-linear-to-t from-primary to-accent rounded-t-xl transition-all duration-300 group-hover:brightness-125 relative shadow-lg shadow-primary/10"
+                    >
+                      <div className="absolute -top-10 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-all bg-white text-black text-[9px] font-black px-2 py-1 rounded-lg shadow-2xl whitespace-nowrap translate-y-2 group-hover:translate-y-0">
+                        {Number(stat.views || 0).toLocaleString()} UNITS
+                      </div>
+                    </motion.div>
+                    <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest">{day}</span>
+                  </div>
+                )
+              })
+            )}
           </CardContent>
         </Card>
 

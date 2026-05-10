@@ -2,6 +2,8 @@ import { NextAuthOptions } from "next-auth"
 import { DrizzleAdapter } from "@auth/drizzle-adapter"
 import GoogleProvider from "next-auth/providers/google"
 import { db } from "@/lib/db"
+import { channels } from "@/lib/db/schema"
+import { eq } from "drizzle-orm"
 
 export const authOptions: NextAuthOptions = {
   adapter: DrizzleAdapter(db),
@@ -20,6 +22,48 @@ export const authOptions: NextAuthOptions = {
     })
   ],
   callbacks: {
+    async signIn({ account, user }) {
+      if (account?.provider === "google" && account.access_token) {
+        try {
+          const res = await fetch(`https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&mine=true`, {
+            headers: {
+              Authorization: `Bearer ${account.access_token}`
+            }
+          })
+          const data = await res.json()
+          if (data.items?.[0]) {
+            const ytChannel = data.items[0]
+            await db.insert(channels).values({
+              id: ytChannel.id,
+              channelId: ytChannel.id,
+              userId: user.id,
+              channelName: ytChannel.snippet.title,
+              thumbnailUrl: ytChannel.snippet.thumbnails.default.url,
+              subscriberCount: Number(ytChannel.statistics.subscriberCount),
+              accessToken: account.access_token,
+              refreshToken: account.refresh_token,
+              expiresAt: account.expires_at ? account.expires_at * 1000 : null,
+              createdAt: Date.now(),
+              updatedAt: Date.now()
+            }).onConflictDoUpdate({
+              target: channels.id,
+              set: {
+                channelName: ytChannel.snippet.title,
+                thumbnailUrl: ytChannel.snippet.thumbnails.default.url,
+                subscriberCount: Number(ytChannel.statistics.subscriberCount),
+                accessToken: account.access_token,
+                refreshToken: account.refresh_token,
+                expiresAt: account.expires_at ? account.expires_at * 1000 : null,
+                updatedAt: Date.now()
+              }
+            })
+          }
+        } catch (error) {
+          console.error("Failed to sync YouTube channel:", error)
+        }
+      }
+      return true
+    },
     session: ({ session, token }) => ({
       ...session,
       user: {

@@ -75,9 +75,12 @@ export default async function ContentPage({
                     <tr key={video.id} className="group hover:bg-muted/20 transition-colors">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-4">
-                          <div className="h-16 w-24 rounded-lg bg-slate-900 border border-border overflow-hidden relative group/thumb">
-                            <Icons.play className="absolute inset-0 m-auto h-6 w-6 text-white/20 group-hover/thumb:text-primary transition-colors" />
-                            {/* In reality, use video thumbnail if available */}
+                          <div className="h-16 w-24 rounded-lg bg-slate-900 border border-border overflow-hidden relative group/thumb flex items-center justify-center">
+                            {video.thumbnailPath ? (
+                              <img src={video.thumbnailPath} alt={video.title} className="h-full w-full object-cover" />
+                            ) : (
+                              <Icons.video className="h-6 w-6 text-white/20 group-hover/thumb:text-primary transition-colors" />
+                            )}
                           </div>
                           <div className="flex flex-col gap-1 max-w-[240px]">
                             <span className="text-sm font-black text-foreground truncate uppercase italic tracking-tight">{video.title}</span>
@@ -106,10 +109,10 @@ export default async function ContentPage({
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="text-[10px] font-black text-foreground uppercase tracking-widest">0</span>
+                        <span className="text-[10px] font-black text-foreground uppercase tracking-widest">{(video as any).views.toLocaleString()}</span>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="text-[10px] font-black text-foreground uppercase tracking-widest">0</span>
+                        <span className="text-[10px] font-black text-foreground uppercase tracking-widest">{(video as any).likes.toLocaleString()}</span>
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-2">

@@ -14,7 +14,7 @@ export default async function QueuePage() {
 
   return (
     <QueueClient 
-      initialJobs={activeJobs} 
+      initialJobs={activeJobs as any} 
       initialStats={stats} 
     />
   )

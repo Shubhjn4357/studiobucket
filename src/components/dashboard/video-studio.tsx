@@ -34,10 +34,7 @@ export function VideoStudio({ videoId, initialData, title = "Untitled Project" }
     privacy: "private" as "public" | "private" | "unlisted",
   })
 
-  const [tracks,setTracks] = useState<Track[]>(initialData?.tracks || [
-    { id: "v1", name: "Video", type: "video", clips: [{ id: "c1", start: 0, end: 30, duration: 30, color: "bg-primary/20" }] },
-    { id: "a1", name: "Audio", type: "audio", clips: [{ id: "c3", start: 0, end: 60, duration: 60, color: "bg-emerald-500/20" }] },
-  ])
+  const [tracks, setTracks] = useState<Track[]>(initialData?.tracks || [])
 
   const handleSave = async () => {
     setIsSaving(true)

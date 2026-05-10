@@ -50,6 +50,9 @@ export const channels = sqliteTable("channels", {
   thumbnailUrl: text("thumbnail_url"),
   subscriberCount: integer("subscriber_count"),
   videoCount: integer("video_count"),
+  accessToken: text("access_token"),
+  refreshToken: text("refresh_token"),
+  expiresAt: integer("expires_at"),
   isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
   createdAt: integer("created_at").notNull(),
   updatedAt: integer("updated_at").notNull(),
@@ -183,6 +186,17 @@ export const analytics = sqliteTable("analytics", {
   updatedAt: integer("updated_at").notNull(),
 })
 
+// Notifications table
+export const notifications = sqliteTable("notifications", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  type: text("type").notNull().default("info"), // info, success, warning, error
+  isRead: integer("is_read", { mode: "boolean" }).notNull().default(false),
+  createdAt: integer("created_at").notNull(),
+})
+
 // Activity logs
 export const activityLogs = sqliteTable("activity_logs", {
   id: text("id").primaryKey(),
@@ -207,6 +221,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   userSettings: many(userSettings),
   analytics: many(analytics),
   activityLogs: many(activityLogs),
+  notifications: many(notifications),
 }))
 
 export const accountsRelations = relations(accounts, ({ one }) => ({
@@ -309,6 +324,13 @@ export const analyticsRelations = relations(analytics, ({ one }) => ({
 export const activityLogsRelations = relations(activityLogs, ({ one }) => ({
   user: one(users, {
     fields: [activityLogs.userId],
+    references: [users.id],
+  }),
+}))
+
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  user: one(users, {
+    fields: [notifications.userId],
     references: [users.id],
   }),
 }))

@@ -187,3 +187,15 @@ export const PaginatedResponseSchema = z.object({
         pages: z.number(),
     }),
 })
+
+export const NotificationSchema = z.object({
+    id: z.string(),
+    userId: z.string(),
+    title: z.string(),
+    description: z.string(),
+    type: z.enum(["info", "success", "warning", "error"]),
+    isRead: z.boolean(),
+    createdAt: z.number(),
+})
+
+export type Notification = z.infer<typeof NotificationSchema>

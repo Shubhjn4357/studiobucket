@@ -18,8 +18,10 @@ interface SystemStatus {
 export default function StatusPage() {
   const [data, setData] = useState<SystemStatus | null>(null)
   const [loading, setLoading] = useState(true)
+  const [latencyHeights, setLatencyHeights] = useState<number[]>([])
 
   useEffect(() => {
+    setLatencyHeights(Array.from({ length: 60 }).map(() => Math.random() * 80 + 20))
     const fetchStatus = async () => {
       try {
         const res = await fetch("/api/health")
@@ -85,11 +87,11 @@ export default function StatusPage() {
            Latency Protocol
          </h2>
          <div className="h-24 w-full bg-white/5 rounded-2xl border border-white/5 flex items-end p-4 gap-1 overflow-hidden">
-            {Array.from({ length: 60 }).map((_, i) => (
+            {latencyHeights.map((height, i) => (
               <div
                 key={i}
                 className="flex-1 bg-primary/20 rounded-t-sm hover:bg-primary transition-colors cursor-help"
-                style={{ height: `${Math.random() * 80 + 20}%` }}
+                style={{ height: `${height}%` }}
               />
             ))}
          </div>

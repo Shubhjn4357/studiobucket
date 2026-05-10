@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Icons } from "@/components/ui/icons"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -41,18 +41,59 @@ export function Header({ onMenuClick }: HeaderProps) {
   const { data: session } = useSession()
   const [isSearchFocused, setIsSearchFocused] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
+  const [notifications, setNotifications] = useState<any[]>([])
   const router = useRouter()
 
-  const notifications = [
-    { id: 1, title: "System Ready", description: "Node synchronized with YouTube API.", time: "2m ago", icon: Icons.checkCircle, color: "text-emerald-500" },
-    { id: 2, title: "Engine Alert", description: "Processing task #451 completed.", time: "15m ago", icon: Icons.zap, color: "text-primary" },
-  ]
+  const { getNotificationsAction, markAsReadAction, markAllAsReadAction } = require("@/app/dashboard/actions")
+
+  const fetchNotifications = async () => {
+    try {
+      const data = await getNotificationsAction()
+      setNotifications(data)
+    } catch (err) {
+      console.error("Failed to fetch notifications:", err)
+    }
+  }
+
+  useEffect(() => {
+    fetchNotifications()
+    const interval = setInterval(fetchNotifications, 60000) // Every minute
+    return () => clearInterval(interval)
+  }, [])
+
+  const getIconForType = (type: string) => {
+    switch (type) {
+      case "success": return Icons.checkCircle
+      case "warning": return Icons.alertTriangle
+      case "error": return Icons.alertCircle
+      default: return Icons.bell
+    }
+  }
+
+  const getColorForType = (type: string) => {
+    switch (type) {
+      case "success": return "text-emerald-500"
+      case "warning": return "text-amber-500"
+      case "error": return "text-red-500"
+      default: return "text-primary"
+    }
+  }
+
+  const getTimeAgo = (ts: number) => {
+    const seconds = Math.floor((Date.now() - ts) / 1000)
+    if (seconds < 60) return "Just now"
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`
+    return `${Math.floor(seconds / 86400)}d ago`
+  }
 
   const handleSearch = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && searchQuery.trim()) {
       router.push(`/dashboard/content?q=${encodeURIComponent(searchQuery)}`)
     }
   }
+
+  const hasUnread = notifications.some(n => !n.isRead)
 
   return (
     <header className="sticky top-0 z-30 flex h-20 w-full items-center justify-between px-4 md:px-8 bg-background/50 backdrop-blur-xl border-b border-border">
@@ -129,7 +170,7 @@ export function Header({ onMenuClick }: HeaderProps) {
           <PopoverTrigger asChild>
             <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground hover:bg-muted relative transition-colors">
               <Icons.bell className="h-5 w-5" />
-              <span className="absolute top-2.5 right-2.5 h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+              {hasUnread && <span className="absolute top-2.5 right-2.5 h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />}
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-80 bg-card border-border p-2 mt-2" align="end">
@@ -137,22 +178,43 @@ export function Header({ onMenuClick }: HeaderProps) {
               <p className="text-[10px] font-black uppercase tracking-widest text-foreground">Operational Intelligence</p>
             </div>
             <div className="p-1 space-y-1">
-              {notifications.map((n) => (
-                <div key={n.id} className="p-3 rounded-lg hover:bg-muted transition-colors cursor-pointer group">
-                  <div className="flex items-start gap-3">
-                    <div className={cn("h-7 w-7 rounded-lg bg-background border border-border flex items-center justify-center shrink-0", n.color)}>
-                      <n.icon className="h-4 w-4" />
-                    </div>
-                    <div className="space-y-0.5">
-                      <p className="text-[10px] font-black uppercase tracking-tight text-foreground">{n.title}</p>
-                      <p className="text-[9px] text-muted-foreground font-medium tracking-tight line-clamp-2">{n.description}</p>
-                      <p className="text-[8px] text-primary font-bold uppercase tracking-widest mt-1">{n.time}</p>
-                    </div>
-                  </div>
+              {notifications.length === 0 ? (
+                <div className="py-8 text-center">
+                  <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest italic">No new signals</p>
                 </div>
-              ))}
+              ) : (
+                notifications.map((n) => {
+                  const Icon = getIconForType(n.type)
+                  return (
+                    <div 
+                      key={n.id} 
+                      onClick={() => markAsReadAction(n.id).then(fetchNotifications)}
+                      className={cn(
+                        "p-3 rounded-lg hover:bg-muted transition-colors cursor-pointer group relative",
+                        !n.isRead && "bg-primary/5"
+                      )}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className={cn("h-7 w-7 rounded-lg bg-background border border-border flex items-center justify-center shrink-0", getColorForType(n.type))}>
+                          <Icon className="h-4 w-4" />
+                        </div>
+                        <div className="space-y-0.5">
+                          <p className="text-[10px] font-black uppercase tracking-tight text-foreground">{n.title}</p>
+                          <p className="text-[9px] text-muted-foreground font-medium tracking-tight line-clamp-2">{n.description}</p>
+                          <p className="text-[8px] text-primary font-bold uppercase tracking-widest mt-1">{getTimeAgo(n.createdAt)}</p>
+                        </div>
+                        {!n.isRead && <div className="absolute top-3 right-3 h-1.5 w-1.5 rounded-full bg-primary" />}
+                      </div>
+                    </div>
+                  )
+                })
+              )}
             </div>
-            <Button variant="ghost" className="w-full h-8 text-[9px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground mt-1">
+            <Button 
+              variant="ghost" 
+              onClick={() => markAllAsReadAction().then(fetchNotifications)}
+              className="w-full h-8 text-[9px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground mt-1"
+            >
               Clear Signal
             </Button>
           </PopoverContent>

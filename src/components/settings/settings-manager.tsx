@@ -226,10 +226,40 @@ export function SettingsManager({ initialUser, initialChannels = [] }: SettingsM
               >
                 {activeTab === "account" && renderAccountSettings()}
                 {activeTab === "youtube" && renderYouTubeSettings()}
-                {(activeTab === "notifications" || activeTab === "api") && (
-                  <div className="py-20 text-center border border-dashed border-border rounded-2xl">
-                     <Icons.activity className="h-10 w-10 text-muted-foreground mx-auto mb-4" />
-                     <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest italic">Section under active deployment</p>
+                {activeTab === "notifications" && (
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30 border border-border">
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-foreground">Global Alerts</p>
+                        <p className="text-[9px] text-muted-foreground font-medium uppercase tracking-tight">System-wide operational notifications</p>
+                      </div>
+                      <div className="h-6 w-11 bg-primary rounded-full relative cursor-pointer">
+                        <div className="absolute right-1 top-1 h-4 w-4 bg-white rounded-full" />
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30 border border-border opacity-50">
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-foreground">Email Uplink</p>
+                        <p className="text-[9px] text-muted-foreground font-medium uppercase tracking-tight">Critical failure reports via SMTP</p>
+                      </div>
+                      <div className="h-6 w-11 bg-muted rounded-full relative cursor-pointer">
+                        <div className="absolute left-1 top-1 h-4 w-4 bg-slate-400 rounded-full" />
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {activeTab === "api" && (
+                  <div className="space-y-6">
+                     <div className="p-6 rounded-xl bg-muted/30 border border-border space-y-4">
+                        <h4 className="text-[10px] font-black uppercase tracking-widest text-primary">Integration Protocol</h4>
+                        <div className="space-y-2">
+                           <p className="text-[9px] text-muted-foreground font-bold uppercase">YouTube API Status</p>
+                           <div className="flex items-center gap-2">
+                              <div className="h-2 w-2 rounded-full bg-emerald-500" />
+                              <span className="text-[10px] font-black text-foreground uppercase tracking-tight">Operational • v3 Protocol</span>
+                           </div>
+                        </div>
+                     </div>
                   </div>
                 )}
               </motion.div>

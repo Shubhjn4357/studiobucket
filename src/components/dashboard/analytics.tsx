@@ -8,10 +8,10 @@ import { motion } from "framer-motion"
 
 export function Analytics({ initialData }: { initialData?: { totalViews: number, totalLikes: number, totalComments: number, totalVideos: number } }) {
   const displayStats = [
-    { label: "Views", value: initialData?.totalViews || 0, growth: "+12%", icon: Icons.eye, color: "text-blue-500", bg: "bg-blue-500/10" },
-    { label: "Likes", value: initialData?.totalLikes || 0, growth: "+8%", icon: Icons.heart, color: "text-primary", bg: "bg-primary/10" },
-    { label: "Comments", value: initialData?.totalComments || 0, growth: "+5%", icon: Icons.messageCircle, color: "text-accent", bg: "bg-accent/10" },
-    { label: "Videos", value: initialData?.totalVideos || 0, growth: "+2", icon: Icons.video, color: "text-emerald-500", bg: "bg-emerald-500/10" },
+    { label: "Views", value: initialData?.totalViews || 0, icon: Icons.eye, color: "text-blue-500", bg: "bg-blue-500/10" },
+    { label: "Likes", value: initialData?.totalLikes || 0, icon: Icons.heart, color: "text-primary", bg: "bg-primary/10" },
+    { label: "Comments", value: initialData?.totalComments || 0, icon: Icons.messageCircle, color: "text-accent", bg: "bg-accent/10" },
+    { label: "Videos", value: initialData?.totalVideos || 0, icon: Icons.video, color: "text-emerald-500", bg: "bg-emerald-500/10" },
   ]
 
   return (
@@ -46,9 +46,6 @@ export function Analytics({ initialData }: { initialData?: { totalViews: number,
                 <div className={cn("h-8 w-8 rounded-lg flex items-center justify-center", stat.bg)}>
                   <stat.icon className={cn("h-4 w-4", stat.color)} />
                 </div>
-                <span className="text-[9px] font-black text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                  {stat.growth}
-                </span>
               </div>
               <div>
                 <p className="text-2xl font-black text-foreground tracking-tighter italic">
