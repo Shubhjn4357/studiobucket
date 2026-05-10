@@ -8,16 +8,25 @@ import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
 
+import { Video } from "@/schemas"
+import Image from "next/image"
+
+interface VideoWithStats extends Video {
+  views: number
+  likes: number
+}
+
 export default async function ContentPage({
   searchParams,
 }: {
-  searchParams: { q?: string }
+  searchParams: Promise<{ q?: string }>
 }) {
+  const { q } = await searchParams
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) redirect("/auth/login")
 
   const videoService = new VideoService()
-  const videos = await videoService.getUserVideos(session.user.id, undefined, searchParams.q)
+  const videos = await videoService.getUserVideos(session.user.id, undefined, q) as unknown as VideoWithStats[]
 
   return (
     <div className="space-y-8 pb-12">
@@ -77,7 +86,7 @@ export default async function ContentPage({
                         <div className="flex items-center gap-4">
                           <div className="h-16 w-24 rounded-lg bg-slate-900 border border-border overflow-hidden relative group/thumb flex items-center justify-center">
                             {video.thumbnailPath ? (
-                              <img src={video.thumbnailPath} alt={video.title} className="h-full w-full object-cover" />
+                              <Image unoptimized fill src={video.thumbnailPath} alt={video.title} className="h-full w-full object-cover" />
                             ) : (
                               <Icons.video className="h-6 w-6 text-white/20 group-hover/thumb:text-primary transition-colors" />
                             )}
@@ -109,10 +118,10 @@ export default async function ContentPage({
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="text-[10px] font-black text-foreground uppercase tracking-widest">{(video as any).views.toLocaleString()}</span>
+                        <span className="text-[10px] font-black text-foreground uppercase tracking-widest">{video.views.toLocaleString()}</span>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="text-[10px] font-black text-foreground uppercase tracking-widest">{(video as any).likes.toLocaleString()}</span>
+                        <span className="text-[10px] font-black text-foreground uppercase tracking-widest">{video.likes.toLocaleString()}</span>
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-2">

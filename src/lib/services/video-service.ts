@@ -1,10 +1,11 @@
 import { db } from "@/lib/db"
-import { videos, videoSchedules, uploadJobs, analytics, channels } from "@/lib/db/schema"
+import { videos, videoSchedules, uploadJobs, analytics, channels, notifications } from "@/lib/db/schema"
 import { eq, and, desc, asc, count, sum, like } from "drizzle-orm"
+import { sql } from "drizzle-orm/sql"
+import { redis } from "../redis"
 
 export class VideoService {
   async getUserVideos(userId: string, status?: string, query?: string, limitValue = 50) {
-    const { sql } = require("drizzle-orm")
     const conditions = [eq(videos.userId, userId)]
     if (status) {
       conditions.push(eq(videos.status, status))
@@ -16,13 +17,32 @@ export class VideoService {
     return await db
       .select({
         id: videos.id,
+        userId: videos.userId,
+        channelId: videos.channelId,
         title: videos.title,
         description: videos.description,
+        tags: videos.tags,
+        categoryId: videos.categoryId,
+        language: videos.language,
+        privacy: videos.privacy,
+        license: videos.license,
+        location: videos.location,
+        recordingDate: videos.recordingDate,
+        filePath: videos.filePath,
+        fileSize: videos.fileSize,
+        duration: videos.duration,
         thumbnailPath: videos.thumbnailPath,
         status: videos.status,
-        privacy: videos.privacy,
-        createdAt: videos.createdAt,
         youtubeVideoId: videos.youtubeVideoId,
+        publishAt: videos.publishAt,
+        scheduledAt: videos.scheduledAt,
+        uploadedAt: videos.uploadedAt,
+        publishedAt: videos.publishedAt,
+        retryCount: videos.retryCount,
+        errorMessage: videos.errorMessage,
+        metadata: videos.metadata,
+        createdAt: videos.createdAt,
+        updatedAt: videos.updatedAt,
         views: sql<number>`COALESCE(SUM(${analytics.views}), 0)`,
         likes: sql<number>`COALESCE(SUM(${analytics.likes}), 0)`,
       })
@@ -153,7 +173,6 @@ export class VideoService {
   }
 
   async getNotifications(userId: string, limit = 10) {
-    const { notifications } = require("@/lib/db/schema")
     return await db
       .select()
       .from(notifications)
@@ -163,7 +182,6 @@ export class VideoService {
   }
 
   async markNotificationRead(userId: string, notificationId: string) {
-    const { notifications } = require("@/lib/db/schema")
     return await db
       .update(notifications)
       .set({ isRead: true })
@@ -171,7 +189,6 @@ export class VideoService {
   }
 
   async markAllNotificationsRead(userId: string) {
-    const { notifications } = require("@/lib/db/schema")
     return await db
       .update(notifications)
       .set({ isRead: true })
@@ -181,7 +198,6 @@ export class VideoService {
   async getHealth() {
     try {
       await db.select({ count: count() }).from(videos).limit(1)
-      const { redis } = require("@/lib/redis")
       return {
         status: "operational",
         services: {

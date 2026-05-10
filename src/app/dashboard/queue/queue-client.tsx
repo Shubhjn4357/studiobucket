@@ -10,9 +10,15 @@ import { cn } from "@/lib/utils"
 import { useTelemetry } from "@/hooks/use-telemetry"
 import { UploadJob } from "@/schemas"
 
+interface JobData {
+  title?: string
+  fileName?: string
+  [key: string]: unknown
+}
+
 interface Job extends Omit<UploadJob, "data" | "result" | "error" | "status"> {
   status: "waiting" | "active" | "completed" | "failed" | "delayed"
-  data?: string | Record<string, any> | null
+  data?: string | JobData | null
 }
 
 function JobCard({ job }: { job: Job }) {

@@ -2,7 +2,7 @@
 
 import { signIn } from "next-auth/react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Icons } from "@/components/ui/icons"
 import { motion } from "framer-motion"
 import { useSearchParams } from "next/navigation"

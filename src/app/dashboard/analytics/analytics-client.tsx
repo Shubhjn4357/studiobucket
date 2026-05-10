@@ -1,6 +1,6 @@
 "use client"
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Icons } from "@/components/ui/icons"
 import { Button } from "@/components/ui/button"
 import { motion } from "framer-motion"
@@ -88,7 +88,7 @@ export function AnalyticsClient({
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <Card className="lg:col-span-2 cyber-card border-white/5 bg-slate-950/40">
-          <CardHeader className="border-b border-white/5 bg-white/[0.02]">
+          <CardHeader className="border-b border-white/5 bg-white/2">
             <CardTitle className="text-sm font-black uppercase tracking-widest text-white italic">Operational Trajectory</CardTitle>
           </CardHeader>
           <CardContent className="h-80 flex items-end gap-3 pb-8 px-8 pt-12">
@@ -123,7 +123,7 @@ export function AnalyticsClient({
         </Card>
 
         <Card className="lg:col-span-1 cyber-card border-white/5 bg-slate-950/40">
-          <CardHeader className="border-b border-white/5 bg-white/[0.02]">
+          <CardHeader className="border-b border-white/5 bg-white/2">
             <CardTitle className="text-sm font-black uppercase tracking-widest text-white italic">Unit Retention</CardTitle>
           </CardHeader>
           <CardContent className="p-8 space-y-8">
@@ -154,7 +154,7 @@ export function AnalyticsClient({
 
       {/* Video Performance Table */}
       <Card className="cyber-card border-white/5 bg-slate-950/40 overflow-hidden">
-        <CardHeader className="border-b border-white/5 bg-white/[0.02]">
+        <CardHeader className="border-b border-white/5 bg-white/2">
           <CardTitle className="text-sm font-black uppercase tracking-widest text-white italic">Mission Log • Recent Assets</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
@@ -178,10 +178,10 @@ export function AnalyticsClient({
                   </tr>
                 ) : (
                   recentVideos.map((video) => (
-                    <tr key={video.id} className="hover:bg-white/[0.03] transition-colors group">
+                    <tr key={video.id} className="hover:bg-white/3 transition-colors group">
                       <td className="px-8 py-6">
                         <div className="flex items-center gap-4">
-                          <div className="h-10 w-16 rounded-lg bg-slate-900 border border-white/5 flex-shrink-0 group-hover:border-primary/30 transition-all" />
+                          <div className="h-10 w-16 rounded-lg bg-slate-900 border border-white/5 shrink-0 group-hover:border-primary/30 transition-all" />
                           <span className="text-[11px] font-black text-white uppercase italic tracking-tight truncate max-w-[240px]">{video.title}</span>
                         </div>
                       </td>

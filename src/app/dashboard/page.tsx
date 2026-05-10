@@ -10,13 +10,17 @@ import { QueueStatus } from "@/components/dashboard/queue-status"
 import { Analytics } from "@/components/dashboard/analytics"
 import { Icons } from "@/components/ui/icons"
 import { Video, Schedule, UploadJob } from "@/schemas"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 
 interface ScheduledVideo {
   video: Video
   schedule: Schedule
+}
+
+interface VideoWithViews extends Video {
+  views?: number
 }
 
 export default async function DashboardPage() {
@@ -32,7 +36,7 @@ export default async function DashboardPage() {
   let analyticsData = { totalViews: 0, totalLikes: 0, totalComments: 0, totalVideos: 0 }
   let scheduledVideos: ScheduledVideo[] = []
   let activeJobs: UploadJob[] = []
-  let latestVideo: Video | null = null
+  let latestVideo: VideoWithViews | null = null
 
   try {
     const [q, a, s, j, v] = await Promise.all([
@@ -40,7 +44,7 @@ export default async function DashboardPage() {
       videoService.getAnalyticsData(session.user.id),
       videoService.getScheduledVideos(session.user.id) as Promise<ScheduledVideo[]>,
       videoService.getActiveJobs(session.user.id) as Promise<UploadJob[]>,
-      videoService.getUserVideos(session.user.id, undefined, undefined, 1) as Promise<Video[]>
+      videoService.getUserVideos(session.user.id, undefined, undefined, 1) as Promise<VideoWithViews[]>
     ])
     queueData = q
     analyticsData = a
@@ -52,7 +56,6 @@ export default async function DashboardPage() {
       const latestStats = await db.select({
         views: sum(analytics.views),
       }).from(analytics).where(eq(analytics.videoId, latestVideo.id))
-      // @ts-ignore - sum returns string
       latestVideo.views = Number(latestStats[0]?.views || 0)
     }
   } catch (error) {
@@ -118,7 +121,7 @@ export default async function DashboardPage() {
                       </div>
                       <div className="space-y-1">
                         <p className="text-[9px] text-muted-foreground font-black uppercase tracking-widest">Views</p>
-                        <p className="text-lg font-black text-foreground italic">{(latestVideo as any).views || 0}</p>
+                        <p className="text-lg font-black text-foreground italic">{latestVideo.views || 0}</p>
                       </div>
                       <div className="space-y-1">
                         <p className="text-[9px] text-muted-foreground font-black uppercase tracking-widest">Stability</p>
