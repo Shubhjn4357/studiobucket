@@ -37,7 +37,7 @@ export async function getDailyStatsAction(days = 7) {
     if (!session?.user?.id) return []
     return await videoService.getDailyStats(session.user.id, days)
   } catch {
-    return []k
+    return []
   }
 }
 

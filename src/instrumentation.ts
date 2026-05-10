@@ -21,7 +21,7 @@ export async function register() {
         console.error('Instrumentation Redis Error:', err)
       }
     })
-k
+
     // Upload Worker
     const uploadWorker = new Worker('upload-queue', async (job) => {
       logger.info(`Processing upload job ${job.id}`)
