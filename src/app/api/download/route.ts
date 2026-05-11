@@ -42,15 +42,12 @@ export async function POST(request: NextRequest) {
         const newDownloadJob = await db
             .insert(downloadJobs)
             .values({
-                id: downloadJobId,
                 userId: session.user.id,
                 sourceUrl: sourceUrl,
                 sourceType: sourceType,
                 outputPath: outputPath,
                 status: "pending",
                 progress: 0,
-                createdAt: now,
-                updatedAt: now,
             })
             .returning()
 

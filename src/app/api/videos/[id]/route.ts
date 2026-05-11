@@ -78,7 +78,7 @@ export async function PUT(
             .update(videos)
             .set({
                 ...validated,
-                updatedAt: now,
+                updatedAt: Date.now(),
             })
             .where(
                 and(

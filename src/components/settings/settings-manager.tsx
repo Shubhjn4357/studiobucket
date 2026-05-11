@@ -154,11 +154,11 @@ export function SettingsManager({ initialUser, initialChannels = [] }: SettingsM
           <div key={channel.id} className="p-4 rounded-2xl bg-muted/30 border border-border flex items-center justify-between group hover:border-primary/20 transition-all">
             <div className="flex items-center gap-4 overflow-hidden">
               <div className="h-12 w-12 rounded-xl bg-background border border-border overflow-hidden shrink-0">
-                {channel.thumbnailUrl && <img src={channel.thumbnailUrl} alt={channel.channelName} className="h-full w-full object-cover" />}
+                {channel.thumbnailUrl && <img src={channel.thumbnailUrl} alt={channel.channelName || "Node"} className="h-full w-full object-cover" />}
               </div>
               <div className="overflow-hidden">
-                <p className="text-[10px] font-black text-foreground uppercase tracking-tight italic truncate">{channel.channelName}</p>
-                <p className="text-[8px] text-muted-foreground font-bold uppercase tracking-widest">{channel.subscriberCount?.toLocaleString()} Sub-units</p>
+                <p className="text-[10px] font-black text-foreground uppercase tracking-tight italic truncate">{channel.channelName || "Unnamed Node"}</p>
+                <p className="text-[8px] text-muted-foreground font-bold uppercase tracking-widest">{channel.subscriberCount?.toLocaleString() || 0} Sub-units</p>
               </div>
             </div>
             <div className="flex flex-col items-end gap-1">

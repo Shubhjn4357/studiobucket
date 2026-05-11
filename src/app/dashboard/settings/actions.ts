@@ -40,8 +40,8 @@ export async function inviteTeamMember(email: string, role: "viewer" | "editor" 
     ownerId: session.user.id,
     userId: userToInvite.id,
     role,
-    createdAt: Math.floor(Date.now() / 1000),
-    updatedAt: Math.floor(Date.now() / 1000),
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
   })
 
   revalidatePath("/dashboard/settings")

@@ -122,7 +122,7 @@ export async function PUT(request: NextRequest) {
                     apiSettings: apiSettings
                         ? JSON.stringify(apiSettings)
                         : existingSettings[0].apiSettings,
-                    updatedAt: now,
+                    updatedAt: Date.now(),
                 })
                 .where(eq(userSettings.userId, session.user.id))
                 .returning()
@@ -130,7 +130,6 @@ export async function PUT(request: NextRequest) {
             result = await db
                 .insert(userSettings)
                 .values({
-                    id: randomUUID(),
                     userId: session.user.id,
                     theme: theme || "system",
                     language: language || "en",
@@ -141,8 +140,8 @@ export async function PUT(request: NextRequest) {
                         ? JSON.stringify(scheduleSettings)
                         : "{}",
                     apiSettings: apiSettings ? JSON.stringify(apiSettings) : "{}",
-                    createdAt: now,
-                    updatedAt: now,
+                    createdAt: Date.now(),
+                    updatedAt: Date.now(),
                 })
                 .returning()
         }

@@ -101,7 +101,6 @@ export async function POST(request: NextRequest) {
         const newAnalytics = await db
             .insert(analytics)
             .values({
-                id: `analytics_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
                 userId: session.user.id,
                 videoId: videoId,
                 channelId: channelId,
@@ -114,8 +113,6 @@ export async function POST(request: NextRequest) {
                 subscribers: subscribers || 0,
                 revenue: revenue || 0,
                 engagementRate: engagementRate,
-                createdAt: now,
-                updatedAt: now,
             })
             .returning()
 

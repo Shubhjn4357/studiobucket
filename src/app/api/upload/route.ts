@@ -49,15 +49,15 @@ export async function POST(request: NextRequest) {
         description: description,
         tags: tags,
         categoryId: categoryId,
-        privacy: privacy as "public" | "private" | "unlisted",
+        privacyStatus: privacy as "public" | "private" | "unlisted",
         filePath: filePath,
         fileSize: file.size,
-        status: "pending",
+        status: "queued",
         publishAt: publishAt
-          ? Math.floor(new Date(publishAt).getTime() / 1000)
+          ? new Date(publishAt).getTime()
           : undefined,
-        createdAt: now,
-        updatedAt: now,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
       })
       .returning()
 

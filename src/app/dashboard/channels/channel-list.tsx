@@ -11,7 +11,7 @@ import { useState } from "react"
 
 interface Channel {
   id: string
-  channelName: string
+  channelName: string | null | undefined
   channelId: string
   thumbnailUrl: string | null
   subscriberCount: number | null
@@ -69,11 +69,11 @@ export function ChannelList({ initialChannels }: { initialChannels: Channel[] })
                   )}>
                     <AvatarImage src={channel.thumbnailUrl || ""} />
                     <AvatarFallback className="bg-primary/10 text-primary font-black uppercase">
-                      {channel.channelName[0]}
+                      {(channel.channelName || "U")[0]}
                     </AvatarFallback>
                   </Avatar>
                   <div className="space-y-1">
-                    <h3 className="text-sm font-black text-foreground uppercase tracking-tight italic">{channel.channelName}</h3>
+                    <h3 className="text-sm font-black text-foreground uppercase tracking-tight italic">{channel.channelName || "Unnamed Channel"}</h3>
                     <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest">{channel.channelId}</p>
                   </div>
                 </div>

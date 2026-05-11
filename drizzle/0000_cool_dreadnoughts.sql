@@ -1,9 +1,8 @@
 CREATE TABLE `accounts` (
-	`id` text PRIMARY KEY NOT NULL,
-	`user_id` text NOT NULL,
+	`userId` text NOT NULL,
 	`type` text NOT NULL,
 	`provider` text NOT NULL,
-	`provider_account_id` text NOT NULL,
+	`providerAccountId` text NOT NULL,
 	`refresh_token` text,
 	`access_token` text,
 	`expires_at` integer,
@@ -11,9 +10,8 @@ CREATE TABLE `accounts` (
 	`scope` text,
 	`id_token` text,
 	`session_state` text,
-	`created_at` integer NOT NULL,
-	`updated_at` integer NOT NULL,
-	FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE cascade
+	PRIMARY KEY(`provider`, `providerAccountId`),
+	FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
 CREATE TABLE `activity_logs` (
@@ -59,6 +57,9 @@ CREATE TABLE `channels` (
 	`thumbnail_url` text,
 	`subscriber_count` integer,
 	`video_count` integer,
+	`access_token` text,
+	`refresh_token` text,
+	`expires_at` integer,
 	`is_active` integer DEFAULT true NOT NULL,
 	`created_at` integer NOT NULL,
 	`updated_at` integer NOT NULL,
@@ -85,6 +86,17 @@ CREATE TABLE `download_jobs` (
 	FOREIGN KEY (`queue_job_id`) REFERENCES `upload_jobs`(`id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
+CREATE TABLE `notifications` (
+	`id` text PRIMARY KEY NOT NULL,
+	`user_id` text NOT NULL,
+	`title` text NOT NULL,
+	`description` text NOT NULL,
+	`type` text DEFAULT 'info' NOT NULL,
+	`is_read` integer DEFAULT false NOT NULL,
+	`created_at` integer NOT NULL,
+	FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
 CREATE TABLE `queue_logs` (
 	`id` text PRIMARY KEY NOT NULL,
 	`job_id` text,
@@ -96,16 +108,23 @@ CREATE TABLE `queue_logs` (
 );
 --> statement-breakpoint
 CREATE TABLE `sessions` (
-	`id` text PRIMARY KEY NOT NULL,
-	`session_token` text NOT NULL,
-	`user_id` text NOT NULL,
+	`sessionToken` text PRIMARY KEY NOT NULL,
+	`userId` text NOT NULL,
 	`expires` integer NOT NULL,
-	`created_at` integer NOT NULL,
-	`updated_at` integer NOT NULL,
+	FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE TABLE `team_members` (
+	`id` text PRIMARY KEY NOT NULL,
+	`owner_id` text NOT NULL,
+	`user_id` text NOT NULL,
+	`role` text DEFAULT 'editor' NOT NULL,
+	`created_at` integer DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	`updated_at` integer DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	FOREIGN KEY (`owner_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE cascade,
 	FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
-CREATE UNIQUE INDEX `sessions_session_token_unique` ON `sessions` (`session_token`);--> statement-breakpoint
 CREATE TABLE `upload_jobs` (
 	`id` text PRIMARY KEY NOT NULL,
 	`user_id` text NOT NULL,
@@ -140,22 +159,34 @@ CREATE TABLE `user_settings` (
 	`upload_settings` text NOT NULL,
 	`schedule_settings` text NOT NULL,
 	`api_settings` text NOT NULL,
+	`selected_channel_id` text,
 	`created_at` integer NOT NULL,
 	`updated_at` integer NOT NULL,
-	FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE cascade
+	FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`selected_channel_id`) REFERENCES `channels`(`id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
 CREATE TABLE `users` (
 	`id` text PRIMARY KEY NOT NULL,
-	`name` text NOT NULL,
+	`name` text,
 	`email` text NOT NULL,
-	`email_verified` integer DEFAULT false NOT NULL,
+	`emailVerified` integer,
 	`image` text,
-	`created_at` integer NOT NULL,
-	`updated_at` integer NOT NULL
+	`plan` text DEFAULT 'alpha' NOT NULL,
+	`stripeCustomerId` text,
+	`subscriptionId` text,
+	`createdAt` integer NOT NULL,
+	`updatedAt` integer NOT NULL
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX `users_email_unique` ON `users` (`email`);--> statement-breakpoint
+CREATE TABLE `verification_tokens` (
+	`identifier` text NOT NULL,
+	`token` text NOT NULL,
+	`expires` integer NOT NULL,
+	PRIMARY KEY(`identifier`, `token`)
+);
+--> statement-breakpoint
 CREATE TABLE `video_schedules` (
 	`id` text PRIMARY KEY NOT NULL,
 	`video_id` text NOT NULL,

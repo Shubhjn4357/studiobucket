@@ -13,9 +13,17 @@ export default async function SchedulePage() {
     ...item,
     video: {
       ...item.video,
-      privacy: item.video.privacy as "public" | "private" | "unlisted",
-      status: item.video.status as "pending" | "processing" | "uploaded" | "scheduled" | "published" | "failed",
-      license: item.video.license as "youtube" | "creativeCommon" | null
+      privacyStatus: item.video.privacyStatus as "public" | "private" | "unlisted",
+      status: item.video.status as "draft" | "queued" | "processing" | "uploaded" | "scheduled" | "published" | "failed",
+      license: (item.video.license || "youtube") as "youtube" | "creativeCommon",
+      categoryId: item.video.categoryId || "22",
+      defaultLanguage: item.video.defaultLanguage || "en",
+      embeddable: !!item.video.embeddable,
+      publicStatsViewable: !!item.video.publicStatsViewable,
+      selfDeclaredMadeForKids: !!item.video.selfDeclaredMadeForKids,
+      containsSyntheticMedia: !!item.video.containsSyntheticMedia,
+      isShorts: !!item.video.isShorts,
+      retryCount: item.video.retryCount || 0
     }
   }))
 

@@ -74,12 +74,9 @@ export async function POST(request: NextRequest) {
         const now = Math.floor(Date.now() / 1000)
 
         const newVideo = await db.insert(videos).values({
-            id: videoId,
             ...validated,
             userId: session.user.id,
             status: "pending",
-            createdAt: now,
-            updatedAt: now,
         }).returning()
 
         logger.info(`Video created: ${videoId} for user ${session.user.id}`)

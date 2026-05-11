@@ -86,7 +86,7 @@ export function ScheduleManager({ initialSchedules = [] }: ScheduleManagerProps)
                 const isToday = date.toDateString() === new Date().toDateString()
                 
                 const daySchedules = schedules.filter(s => {
-                  const sDate = new Date(s.schedule.scheduledAt! * 1000)
+                  const sDate = new Date(s.schedule.scheduledAt)
                   return sDate.toDateString() === date.toDateString()
                 })
 
@@ -145,7 +145,7 @@ export function ScheduleManager({ initialSchedules = [] }: ScheduleManagerProps)
                       <div className="flex-1 overflow-hidden">
                         <p className="text-[10px] font-black text-foreground uppercase tracking-tight italic truncate">{item.video.title}</p>
                         <p className="text-[8px] text-muted-foreground font-bold uppercase tracking-widest">
-                          {new Date(item.schedule.scheduledAt! * 1000).toLocaleString()}
+                          {new Date(item.schedule.scheduledAt).toLocaleString()}
                         </p>
                       </div>
                     </div>

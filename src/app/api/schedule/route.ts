@@ -33,8 +33,7 @@ export async function POST(request: NextRequest) {
     }
 
     const scheduleId = randomUUID()
-    const now = Math.floor(Date.now() / 1000)
-    const scheduledTime = Math.floor(new Date(scheduledAt).getTime() / 1000)
+    const scheduledTime = new Date(scheduledAt).getTime()
 
     await db.insert(videoSchedules).values({
       id: scheduleId,
@@ -46,16 +45,16 @@ export async function POST(request: NextRequest) {
         ? JSON.stringify(recurrencePattern)
         : undefined,
       isActive: true,
-      createdAt: now,
-      updatedAt: now,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
     })
 
     await db
       .update(videos)
       .set({
         status: "scheduled",
-        scheduledAt: scheduledTime,
-        updatedAt: now,
+        publishAt: scheduledTime,
+        updatedAt: Date.now(),
       })
       .where(eq(videos.id, videoId))
 

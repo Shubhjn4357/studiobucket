@@ -99,12 +99,12 @@ export default async function ContentPage({
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
-                          {video.privacy === "public" ? (
+                          {video.privacyStatus === "public" ? (
                             <Icons.globe className="h-3 w-3 text-emerald-500" />
                           ) : (
                             <Icons.lock className="h-3 w-3 text-amber-500" />
                           )}
-                          <span className="text-[10px] font-black uppercase tracking-widest text-foreground">{video.privacy}</span>
+                          <span className="text-[10px] font-black uppercase tracking-widest text-foreground">{video.privacyStatus}</span>
                         </div>
                       </td>
                       <td className="px-6 py-4">

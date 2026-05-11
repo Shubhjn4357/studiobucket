@@ -22,8 +22,8 @@ export async function createRenderJob(videoId: string, projectData: VideoProject
     queueName: "render-queue",
     status: "waiting",
     data: JSON.stringify(projectData),
-    createdAt: Math.floor(Date.now() / 1000),
-    updatedAt: Math.floor(Date.now() / 1000),
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
   })
 
   // Optional background job
@@ -53,9 +53,9 @@ export async function updateVideoMetadata(videoId: string, data: {
     .set({
       title: title,
       description: description,
-      privacy: privacy,
+      privacyStatus: privacy,
       metadata: JSON.stringify(metadata),
-      updatedAt: Math.floor(Date.now() / 1000),
+      updatedAt: Date.now(),
     })
     .where(eq(videos.id, videoId))
 
@@ -90,8 +90,8 @@ export async function triggerAutoCut(videoId: string) {
     queueName: "studio-queue",
     status: "waiting",
     data: JSON.stringify({ type: "auto-cut", title: `Auto-cut: ${video.title}` }),
-    createdAt: Math.floor(Date.now() / 1000),
-    updatedAt: Math.floor(Date.now() / 1000),
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
   })
 
   await addStudioJob({
@@ -122,8 +122,8 @@ export async function triggerTranscription(videoId: string) {
     queueName: "studio-queue",
     status: "waiting",
     data: JSON.stringify({ type: "transcribe", title: `Transcription: ${video.title}` }),
-    createdAt: Math.floor(Date.now() / 1000),
-    updatedAt: Math.floor(Date.now() / 1000),
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
   })
 
   await addStudioJob({
@@ -154,8 +154,8 @@ export async function triggerThumbnailGen(videoId: string) {
     queueName: "studio-queue",
     status: "waiting",
     data: JSON.stringify({ type: "generate-thumbnails", title: `Thumbnails: ${video.title}` }),
-    createdAt: Math.floor(Date.now() / 1000),
-    updatedAt: Math.floor(Date.now() / 1000),
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
   })
 
   await addStudioJob({
