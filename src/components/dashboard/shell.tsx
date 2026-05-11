@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useSyncExternalStore } from "react"
 import { Sidebar } from "@/components/dashboard/sidebar"
 import { Header } from "@/components/dashboard/header"
 import { Footer } from "@/components/dashboard/footer"
@@ -20,25 +20,27 @@ interface DashboardShellProps {
   navigationItems: readonly NavigationItem[]
 }
 
+const subscribe = (callback: () => void) => {
+  window.addEventListener("resize", callback)
+  return () => window.removeEventListener("resize", callback)
+}
+
+const getSnapshot = () => window.innerWidth < 1024
+const getServerSnapshot = () => false
+
 export function DashboardShell({ children, navigationItems }: DashboardShellProps) {
+  const isMobile = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
   const [sidebarOpen, setSidebarOpen] = useState(true)
-  const [isMobile, setIsMobile] = useState(false)
   const pathname = usePathname()
 
-  useEffect(() => {
-    const checkMobile = () => {
-      const isWindowMobile = window.innerWidth < 1024 // Increased breakpoint for better layout
-      setIsMobile(isWindowMobile)
-      if (isWindowMobile) setSidebarOpen(false)
-      else setSidebarOpen(true)
-    }
-    
-    checkMobile()
-    window.addEventListener("resize", checkMobile)
-    return () => window.removeEventListener("resize", checkMobile)
-  }, [])
+  // Sync sidebar state with mobile state change
+  const [prevIsMobile, setPrevIsMobile] = useState(isMobile)
+  if (isMobile !== prevIsMobile) {
+    setPrevIsMobile(isMobile)
+    setSidebarOpen(!isMobile)
+  }
 
-  // Adjust state during render if pathname changed (replaces the useEffect)
+  // Adjust state during render if pathname changed
   const [prevPathname, setPrevPathname] = useState(pathname)
   if (pathname !== prevPathname) {
     setPrevPathname(pathname)

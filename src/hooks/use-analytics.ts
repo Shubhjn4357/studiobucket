@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { getDailyStatsAction } from "@/app/dashboard/actions"
 
 export interface DailyStat {
@@ -14,22 +14,25 @@ export function useAnalytics(days = 7) {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const loadData = async () => {
-    setIsLoading(true)
+  const loadData = useCallback(async (showLoading = true) => {
+    if (showLoading) setIsLoading(true)
     try {
       const stats = await getDailyStatsAction(days)
-      // stats is returned as an array of objects with string keys from Drizzle
       setData(stats as unknown as DailyStat[])
     } catch (err) {
       setError("Failed to load analytics data")
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [days])
 
   useEffect(() => {
-    loadData()
-  }, [days])
+    // Already loading by default on mount, so skip synchronous setState
+    const timeoutId = setTimeout(() => {
+      loadData(false)
+    }, 0)
+    return () => clearTimeout(timeoutId)
+  }, [loadData])
 
   return {
     data,

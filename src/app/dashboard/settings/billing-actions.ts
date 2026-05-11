@@ -23,6 +23,8 @@ export async function createCheckoutSession(planId: keyof typeof PLANS) {
   const plan = PLANS[planId]
   if (!plan.priceId) throw new Error("Plan price ID not configured")
 
+  if (!stripe) throw new Error("Stripe is not configured")
+
   const checkoutSession = await stripe.checkout.sessions.create({
     customer: user.stripeCustomerId || undefined,
     customer_email: user.stripeCustomerId ? undefined : session.user.email,
@@ -55,6 +57,8 @@ export async function createPortalSession() {
   })
 
   if (!user?.stripeCustomerId) throw new Error("No stripe customer found")
+
+  if (!stripe) throw new Error("Stripe is not configured")
 
   const portalSession = await stripe.billingPortal.sessions.create({
     customer: user.stripeCustomerId,

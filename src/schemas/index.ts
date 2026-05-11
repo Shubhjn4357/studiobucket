@@ -3,10 +3,11 @@ import { z } from "zod"
 // User schema
 export const UserSchema = z.object({
     id: z.string(),
-    name: z.string(),
+    name: z.string().nullable().optional(),
     email: z.string().email(),
-    emailVerified: z.boolean().nullable().optional(),
+    emailVerified: z.date().nullable().optional(),
     image: z.string().nullable().optional(),
+    plan: z.string().default("alpha"),
     createdAt: z.number(),
     updatedAt: z.number(),
 })

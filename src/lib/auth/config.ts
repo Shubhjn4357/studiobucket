@@ -1,9 +1,10 @@
 import { NextAuthOptions } from "next-auth"
 import { DrizzleAdapter } from "@auth/drizzle-adapter"
+import { Adapter } from "next-auth/adapters"
 import GoogleProvider from "next-auth/providers/google"
 import { db } from "@/lib/db"
 import { accounts, sessions, users, verificationTokens, channels } from "@/lib/db/schema"
-import { eq } from "drizzle-orm"
+
 import { SubscriptionService } from "@/lib/services/subscription-service"
 
 const subService = new SubscriptionService()
@@ -14,7 +15,7 @@ export const authOptions: NextAuthOptions = {
     accountsTable: accounts,
     sessionsTable: sessions,
     verificationTokensTable: verificationTokens,
-  }),
+  }) as Adapter,
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,

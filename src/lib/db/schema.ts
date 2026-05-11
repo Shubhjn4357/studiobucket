@@ -11,8 +11,8 @@ export const users = sqliteTable("users", {
   plan: text("plan").notNull().default("alpha"),
   stripeCustomerId: text("stripeCustomerId"),
   subscriptionId: text("subscriptionId"),
-  createdAt: integer("createdAt").default(sql`(strftime('%s', 'now') * 1000)`),
-  updatedAt: integer("updatedAt").default(sql`(strftime('%s', 'now') * 1000)`),
+  createdAt: integer("createdAt").notNull().default(sql`(cast(strftime('%s', 'now') as integer) * 1000)`),
+  updatedAt: integer("updatedAt").notNull().default(sql`(cast(strftime('%s', 'now') as integer) * 1000)`),
 })
 
 // Accounts table (for OAuth)
@@ -225,11 +225,10 @@ export const teamMembers = sqliteTable("team_members", {
   ownerId: text("owner_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   role: text("role").notNull().default("editor"), // viewer, editor, admin
-  createdAt: integer("created_at").notNull(),
-  updatedAt: integer("updated_at").notNull(),
+  createdAt: integer("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: integer("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 })
 
-// Relations
 export const usersRelations = relations(users, ({ many }) => ({
   accounts: many(accounts),
   sessions: many(sessions),

@@ -1,7 +1,7 @@
 import { Worker, Job } from "bullmq"
 import { redis as redisConnection } from "@/lib/redis"
 import { logger } from "@/lib/logger"
-import { VideoProcessor } from "@/lib/editor/ffmpeg"
+import { VideoProcessor, VideoTransformOptions } from "@/lib/editor/ffmpeg"
 import { TranscriptionService } from "@/lib/ai/transcription"
 import { ThumbnailService } from "@/lib/ai/thumbnail"
 import { db } from "@/lib/db"
@@ -16,7 +16,7 @@ interface StudioJobData {
   videoId: string
   inputPath: string
   outputPath: string
-  options?: any
+  options?: VideoTransformOptions
   type: "auto-cut" | "super-resolution" | "interpolation" | "transcribe" | "generate-thumbnails" | "render"
 }
 
@@ -71,7 +71,7 @@ export const studioWorker = redisConnection ? new Worker(
           await job.updateProgress(i)
           // Actually do the processing in chunks or just track the process
           if (i === 0) {
-             await processor.processVideo(inputPath, outputPath, options)
+             await processor.processVideo(inputPath, outputPath, options || {})
           }
           await new Promise(r => setTimeout(r, 500))
         }
