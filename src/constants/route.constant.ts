@@ -10,6 +10,8 @@ export const ROUTES = {
   downloader: "/dashboard/downloader",
   content: "/dashboard/content",
   channels: "/dashboard/channels",
+  playlists: "/dashboard/playlists",
+  interactions: "/dashboard/interactions",
   
   // Auth routes
   signin: "/auth/signin",
@@ -81,5 +83,15 @@ export const NAVIGATION_ITEMS = [
     title: "Settings",
     href: ROUTES.settings,
     icon: "settings",
+  },
+  {
+    title: "Playlists",
+    href: ROUTES.playlists,
+    icon: "playCircle",
+  },
+  {
+    title: "Community",
+    href: ROUTES.interactions,
+    icon: "messageSquare",
   },
 ] as const

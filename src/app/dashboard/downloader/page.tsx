@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Card, CardContent} from "@/components/ui/card"
 import { Icons } from "@/components/ui/icons"
 import { Input } from "@/components/ui/input"
 import { Progress } from "@/components/ui/progress"
@@ -20,6 +20,13 @@ interface DownloadJob {
   thumbnail?: string
 }
 
+interface RawDownloadJob {
+  id: string
+  sourceUrl: string
+  status: "pending" | "downloading" | "completed" | "failed"
+  progress: number | null
+}
+
 export default function DownloaderPage() {
   const [url, setUrl] = useState("")
   const [jobs, setJobs] = useState<DownloadJob[]>([])
@@ -30,43 +37,80 @@ export default function DownloaderPage() {
     setIsProcessing(true)
     
     try {
-      // Real API call to get video info would go here
-      // eslint-disable-next-line
-      const jobId = Date.now().toString(36)
-      const newJob: DownloadJob = {
-        id: jobId,
-        url,
-        title: "Fetching video info...",
-        status: "pending",
-        progress: 0,
-      }
-      setJobs(prev => [newJob, ...prev])
-      setUrl("")
-      toast.success("Download job added to queue")
+      const response = await fetch("/api/download", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          sourceUrl: url, 
+          sourceType: url.includes("list=") ? "playlist" : url.includes("channel") ? "channel" : "video" 
+        }),
+      })
+
+      if (!response.ok) throw new Error("Failed to queue download")
       
-      // Simulate real progress but it's wired to the UI
-      simulateDownload(newJob.id)
+      const { data } = await response.json()
+      
+      // Handle multiple jobs (playlists) or single job
+      const newJobs: DownloadJob[] = []
+      
+      if (data.jobs && Array.isArray(data.jobs)) {
+          data.jobs.forEach((job: RawDownloadJob) => {
+              newJobs.push({
+                  id: job.id,
+                  url: job.sourceUrl,
+                  title: "Initializing Node...",
+                  status: "pending",
+                  progress: 0,
+              })
+              pollJobStatus(job.id)
+          })
+      } else {
+          newJobs.push({
+              id: data.downloadJob.id,
+              url,
+              title: "Initializing Node...",
+              status: "pending",
+              progress: 0,
+          })
+          pollJobStatus(data.downloadJob.id)
+      }
+      
+      setJobs(prev => [...newJobs, ...prev])
+      setUrl("")
+      toast.success(newJobs.length > 1 ? `Deployment of ${newJobs.length} units initiated` : "Download protocol initiated")
     } catch (error: unknown) {
       console.error(error)
-      toast.error("Failed to add download. Please check the URL.")
+      toast.error("Handshake Failed. Check URL and try again.")
     } finally {
       setIsProcessing(false)
     }
   }
 
-  const simulateDownload = (id: string) => {
-    let progress = 0
-    const interval = setInterval(() => {
-      progress += 10
-      if (progress >= 100) {
-        progress = 100
-        clearInterval(interval)
-        setJobs(prev => prev.map(j => j.id === id ? { ...j, progress: 100, status: "completed", title: "Modern Web Design Guide.mp4" } : j))
-        toast.success("Download completed!")
-      } else {
-        setJobs(prev => prev.map(j => j.id === id ? { ...j, progress, status: "downloading" } : j))
+  const pollJobStatus = (id: string) => {
+    const interval = setInterval(async () => {
+      try {
+        const response = await fetch(`/api/download?id=${id}`)
+        const { data } = await response.json()
+        const job = data.find((j: RawDownloadJob) => j.id === id)
+
+        if (job) {
+          setJobs(prev => prev.map(j => j.id === id ? { 
+            ...j, 
+            status: job.status, 
+            progress: job.progress || 0,
+            title: job.status === "completed" ? "Archive Recovered" : j.title 
+          } : j))
+
+          if (job.status === "completed" || job.status === "failed") {
+            clearInterval(interval)
+            if (job.status === "completed") toast.success("Asset Recovered")
+            else toast.error("Asset Recovery Failed")
+          }
+        }
+      } catch (err) {
+        console.error("Polling error:", err)
       }
-    }, 500)
+    }, 2000)
   }
 
   return (

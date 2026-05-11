@@ -90,6 +90,10 @@ export class YouTubeService {
     filePath: string
     publishAt?: Date
     thumbnailPath?: string
+    location?: {
+      latitude: number
+      longitude: number
+    }
   }) {
     try {
       if (!fs.existsSync(data.filePath)) {
@@ -120,6 +124,15 @@ export class YouTubeService {
         media: {
           body: fileStream,
         },
+        // Location support
+        ...(data.location && {
+          recordingDetails: {
+            location: {
+              latitude: data.location.latitude,
+              longitude: data.location.longitude,
+            }
+          }
+        })
       })
 
       const videoId = response.data.id
@@ -143,6 +156,79 @@ export class YouTubeService {
       return response.data
     } catch (error) {
       logger.error(error, "Upload video error:")
+      throw error
+    }
+  }
+
+  async addVideoToPlaylist(videoId: string, playlistId: string) {
+    try {
+      const response = await this.youtube.playlistItems.insert({
+        part: ["snippet"],
+        requestBody: {
+          snippet: {
+            playlistId: playlistId,
+            resourceId: {
+              kind: "youtube#video",
+              videoId: videoId,
+            },
+          },
+        },
+      })
+      return response.data
+    } catch (error) {
+      logger.error(error, "Add video to playlist error:")
+      throw error
+    }
+  }
+
+  async getPlaylists(channelId?: string) {
+    try {
+      const response = await this.youtube.playlists.list({
+        part: ["snippet", "contentDetails", "status"],
+        mine: !channelId,
+        channelId: channelId,
+        maxResults: 50,
+      })
+      return response.data.items || []
+    } catch (error) {
+      logger.error(error, "Get playlists error:")
+      throw error
+    }
+  }
+
+  async listComments(videoId: string) {
+    try {
+      const response = await this.youtube.commentThreads.list({
+        part: ["snippet", "replies"],
+        videoId: videoId,
+        maxResults: 100,
+        order: "time",
+      })
+      return response.data.items || []
+    } catch (error) {
+      logger.error(error, "List comments error:")
+      throw error
+    }
+  }
+
+  async insertComment(videoId: string, text: string) {
+    try {
+      const response = await this.youtube.commentThreads.insert({
+        part: ["snippet"],
+        requestBody: {
+          snippet: {
+            videoId: videoId,
+            topLevelComment: {
+              snippet: {
+                textOriginal: text,
+              },
+            },
+          },
+        },
+      })
+      return response.data
+    } catch (error) {
+      logger.error(error, "Insert comment error:")
       throw error
     }
   }

@@ -53,16 +53,37 @@ export function UploadCenter() {
     
     try {
       for (const fileItem of files) {
-        const { jobId } = await createUploadJob({
-          title: fileItem.file.name,
-          fileSize: fileItem.file.size,
-          // In a real local setup, you'd handle file streaming/upload here
-        })
+        const formData = new FormData()
+        formData.append("file", fileItem.file)
+        formData.append("title", fileItem.file.name)
+
+        const xhr = new XMLHttpRequest()
         
-        setFiles(prev => prev.map(f => f.id === fileItem.id ? { ...f, status: "uploading", progress: 5 } : f))
+        const uploadPromise = new Promise((resolve, reject) => {
+          xhr.upload.addEventListener("progress", (event) => {
+            if (event.lengthComputable) {
+              const progress = Math.round((event.loaded / event.total) * 100)
+              setFiles(prev => prev.map(f => f.id === fileItem.id ? { ...f, progress, status: "uploading" } : f))
+            }
+          })
+
+          xhr.addEventListener("load", () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              setFiles(prev => prev.map(f => f.id === fileItem.id ? { ...f, status: "completed", progress: 100 } : f))
+              resolve(JSON.parse(xhr.responseText))
+            } else {
+              reject(new Error(xhr.responseText || "Upload failed"))
+            }
+          })
+
+          xhr.addEventListener("error", () => reject(new Error("Network error")))
+          xhr.open("POST", "/api/upload")
+          xhr.send(formData)
+        })
+
+        await uploadPromise
       }
       toast.success("Operational pipeline initialized")
-      // Optionally redirect to queue
     } catch (error) {
       logger.error(error, "Pipeline initialization failed:")
       toast.error("Pipeline initialization failed")

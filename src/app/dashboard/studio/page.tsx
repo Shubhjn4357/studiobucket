@@ -23,6 +23,8 @@ async function StudioContent({ videoId, userId }: { videoId: string, userId: str
       videoId={videoId} 
       initialData={initialVideo ? JSON.parse(initialVideo.metadata || "{}") : undefined}
       title={initialVideo?.title || "Alpha Strike"}
+      filePath={initialVideo?.filePath || undefined}
+      hlsPath={initialVideo?.hlsPath || undefined}
     />
   )
 }

@@ -6,7 +6,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { revalidatePath } from "next/cache"
 import { eq } from "drizzle-orm"
-import { addStudioJob, getJobStatus } from "@/lib/queue"
+import { addStudioJob, getJobStatus, addExportJob } from "@/lib/queue"
 import { VideoProject } from "@/types/video"
 
 export async function createRenderJob(videoId: string, projectData: VideoProject) {
@@ -41,7 +41,7 @@ export async function createRenderJob(videoId: string, projectData: VideoProject
 export async function updateVideoMetadata(videoId: string, data: {
   title: string
   description?: string | null
-  privacy: "public" | "private" | "unlisted"
+  privacy?: "public" | "private" | "unlisted"
   [key: string]: unknown
 }) {
   const session = await getServerSession(authOptions)
@@ -175,4 +175,10 @@ export async function getJobStatusAction(queueName: string, jobId: string) {
   if (!session?.user?.id) throw new Error("Unauthorized")
 
   return await getJobStatus(queueName, jobId)
+}
+export async function triggerExportAction(videoId: string, project: VideoProject) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) throw new Error("Unauthorized")
+
+  return await addExportJob({ videoId, project })
 }

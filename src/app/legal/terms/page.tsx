@@ -2,7 +2,15 @@ import { Icons } from "@/components/ui/icons"
 
 export default function TermsPage() {
   return (
-    <div className="max-w-4xl mx-auto py-20 px-6 space-y-12">
+    <div className="max-w-4xl mx-auto py-20 px-6 space-y-12 relative">
+      <a 
+        href="/dashboard" 
+        className="fixed top-8 left-8 md:top-12 md:left-12 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground hover:text-primary transition-colors group z-50"
+      >
+        <Icons.chevronLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+        Back to Interface
+      </a>
+
       <div className="space-y-4">
         <h1 className="text-4xl font-black text-foreground uppercase tracking-tighter italic">Operational Terms</h1>
         <p className="text-muted-foreground font-bold uppercase tracking-[0.2em] text-[10px]">Version 1.0.4 • Alpha Strike</p>

@@ -37,7 +37,15 @@ export default async function StatusPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white p-8 md:p-20 font-sans selection:bg-primary/30">
+    <div className="min-h-screen bg-[#050505] text-white p-8 md:p-20 font-sans selection:bg-primary/30 relative">
+      <a 
+        href="/dashboard" 
+        className="fixed top-8 left-8 md:top-12 md:left-12 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 hover:text-primary transition-colors group z-50 bg-black/50 backdrop-blur-md px-4 py-2 rounded-full border border-white/5"
+      >
+        <Icons.chevronLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+        Back to Interface
+      </a>
+
       <div className="max-w-4xl mx-auto space-y-16">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">

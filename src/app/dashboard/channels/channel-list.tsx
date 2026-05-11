@@ -5,9 +5,16 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
-import { switchChannelAction } from "@/app/dashboard/actions"
+import { switchChannelAction, syncChannelAction, disconnectChannelAction } from "@/app/dashboard/actions"
 import { toast } from "sonner"
 import { useState } from "react"
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu"
 
 interface Channel {
   id: string
@@ -35,6 +42,32 @@ export function ChannelList({ initialChannels }: { initialChannels: Channel[] })
       toast.success("Channel switched successfully")
     } catch {
       toast.error("Failed to switch channel")
+    } finally {
+      setIsPending(null)
+    }
+  }
+
+  const handleSync = async (id: string) => {
+    setIsPending(id)
+    try {
+      await syncChannelAction(id)
+      toast.success("Node telemetry updated")
+    } catch {
+      toast.error("Handshake Failed")
+    } finally {
+      setIsPending(null)
+    }
+  }
+
+  const handleDisconnect = async (id: string) => {
+    if (!confirm("Are you sure you want to disconnect this channel?")) return
+    setIsPending(id)
+    try {
+      await disconnectChannelAction(id)
+      setChannels(prev => prev.filter(ch => ch.id !== id))
+      toast.success("Operational link severed")
+    } catch {
+      toast.error("Disconnection Failed")
     } finally {
       setIsPending(null)
     }
@@ -113,9 +146,38 @@ export function ChannelList({ initialChannels }: { initialChannels: Channel[] })
                   ) : null}
                   {channel.isSelected ? "Active Channel" : "Switch To"}
                 </Button>
-                <Button size="icon" variant="ghost" className="h-9 w-9 rounded-xl hover:bg-muted text-muted-foreground hover:text-foreground">
-                  <Icons.settings className="h-4 w-4" />
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button size="icon" variant="ghost" className="h-9 w-9 rounded-xl hover:bg-muted text-muted-foreground hover:text-foreground">
+                      <Icons.settings className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48 cyber-card border-border bg-card/95 backdrop-blur-md p-1">
+                    <DropdownMenuItem 
+                      onClick={() => handleSync(channel.id)}
+                      disabled={isPending === channel.id}
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest cursor-pointer hover:bg-primary/10 hover:text-primary transition-all"
+                    >
+                      <Icons.refreshCw className={cn("h-3.5 w-3.5", isPending === channel.id && "animate-spin")} />
+                      Sync Node
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest cursor-pointer hover:bg-primary/10 hover:text-primary transition-all"
+                    >
+                      <Icons.link className="h-3.5 w-3.5" />
+                      View Channel
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator className="bg-border/50 my-1" />
+                    <DropdownMenuItem 
+                      onClick={() => handleDisconnect(channel.id)}
+                      disabled={isPending === channel.id}
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest cursor-pointer hover:bg-red-500/10 text-red-500 hover:text-red-400 transition-all"
+                    >
+                      <Icons.trash2 className="h-3.5 w-3.5" />
+                      Disconnect
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </CardContent>
           </Card>

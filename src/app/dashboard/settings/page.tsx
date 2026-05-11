@@ -20,7 +20,12 @@ export default async function SettingsPage() {
 
   return (
     <SettingsManager 
-      initialUser={user} 
+      initialUser={user ? {
+        ...user,
+        emailVerified: user.emailVerified || null,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+      } : undefined} 
       initialChannels={userChannels} 
     />
   )

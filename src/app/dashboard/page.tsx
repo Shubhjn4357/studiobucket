@@ -65,7 +65,7 @@ export default async function DashboardPage() {
               </Suspense>
            </section>
 
-           <InsightsSection />
+           <InsightsSection userId={session.user.id} />
         </div>
       </div>
     </div>

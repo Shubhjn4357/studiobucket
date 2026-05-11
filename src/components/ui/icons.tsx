@@ -1,5 +1,4 @@
 import * as React from "react"
-import Brandlogo from "@/assets/brand/logo.png"
 import {
   LayoutDashboard,
   Upload,
@@ -126,10 +125,12 @@ import {
   HardDrive,
   Cpu,
   ShieldCheck,
+  Sliders,
+  Type,
+  GripVertical,
 } from "lucide-react"
-import Image from "next/image"
-
 export const Icons = {
+  sliders:Sliders,
   alertTriangle: AlertTriangle,
   layoutDashboard: LayoutDashboard,
   upload: Upload,
@@ -239,8 +240,19 @@ export const Icons = {
   calendarSearch: CalendarSearch,
   calendarSync: CalendarSync,
   calendarClock: CalendarClock,
-  logo: (props: Omit<React.ComponentPropsWithoutRef<typeof Image>, "src" | "alt">) => (
-    <Image src={Brandlogo} alt="StudioBucket Logo" width={32} height={32} {...props} />
+  logo: (props: React.SVGProps<SVGSVGElement>) => (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <path d="M4 4h16l-2 16H6L4 4z" />
+      <path d="M10 9l5 3-5 3V9z" />
+    </svg>
   ),
   scissors: Scissors,
   maximize: Maximize,
@@ -258,6 +270,8 @@ export const Icons = {
   hardDrive: HardDrive,
   cpu: Cpu,
   shieldCheck: ShieldCheck,
+  type: Type,
+  gripVertical: GripVertical,
   google: (props: React.SVGProps<SVGSVGElement>) => (
     <svg
       role="img"

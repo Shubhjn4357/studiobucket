@@ -1,16 +1,15 @@
 import { Worker, Job } from "bullmq"
 import Redis from "ioredis"
-import { DownloadJobSchema } from "../index"
+import { DownloadJobSchema, addTranscodeJob } from "../index"
 import { db } from "@/lib/db"
-import { downloadJobs } from "@/lib/db/schema"
+import { downloadJobs, videos } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
+import { randomUUID } from "crypto"
 import pino from "pino"
-import { exec } from "child_process"
-import { promisify } from "util"
+import { spawn } from "child_process"
 import path from "path"
 import fs from "fs"
 
-const execAsync = promisify(exec)
 const logger = pino({ level: "info" })
 const connection = new Redis(process.env.REDIS_URL || "redis://localhost:6379")
 
@@ -57,31 +56,69 @@ export class DownloadWorker {
 
     try {
       await db.update(downloadJobs)
-        .set({ status: "downloading", updatedAt: Math.floor(Date.now() / 1000) })
+        .set({ status: "downloading", updatedAt: Date.now() })
         .where(eq(downloadJobs.id, job.id as string))
 
-      // Use yt-dlp to download
-      // Format: mp4, best quality
-      const command = `yt-dlp -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best" --merge-output-format mp4 -o "${outputPath}" "${data.sourceUrl}"`
-      
+      const args = [
+        "-f", "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best",
+        "--merge-output-format", "mp4",
+        "--newline",
+        "-o", outputPath,
+        data.sourceUrl
+      ]
+
       logger.info(`Starting download: ${data.sourceUrl}`)
-      
-      const { stdout, stderr } = await execAsync(command)
-      
-      if (stderr && !stdout) {
-        logger.warn(`yt-dlp warning: ${stderr}`)
+
+      const downloadProcess = spawn("yt-dlp", args)
+
+      downloadProcess.stdout.on("data", async (dataBuffer) => {
+        const output = dataBuffer.toString()
+        const progressMatch = output.match(/\[download\]\s+(\d+\.\d+)%/)
+        if (progressMatch) {
+          const progress = Math.round(parseFloat(progressMatch[1]))
+          await db.update(downloadJobs)
+            .set({ progress, updatedAt: Date.now() })
+            .where(eq(downloadJobs.id, job.id as string))
+        }
+      })
+
+      const exitCode = await new Promise((resolve) => {
+        downloadProcess.on("close", resolve)
+      })
+
+      if (exitCode !== 0) {
+        throw new Error(`yt-dlp exited with code ${exitCode}`)
       }
 
       await db.update(downloadJobs)
         .set({ 
           status: "completed", 
+          progress: 100,
           outputPath: `/uploads/${outputFileName}`,
-          updatedAt: Math.floor(Date.now() / 1000) 
+          updatedAt: Date.now() 
         })
         .where(eq(downloadJobs.id, job.id as string))
 
-      logger.info(`Download completed: ${outputPath}`)
-      return { outputPath: `/uploads/${outputFileName}` }
+      // Create a video record for the library
+      const videoId = randomUUID()
+      await db.insert(videos).values({
+        id: videoId,
+        userId: data.userId,
+        title: `Downloaded Asset ${job.id}`,
+        filePath: `uploads/${outputFileName}`,
+        status: "processing",
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      })
+
+      // Enqueue HLS Transcoding
+      await addTranscodeJob({
+        videoId: videoId,
+        filePath: `uploads/${outputFileName}`
+      })
+
+      logger.info(`Download completed: ${outputPath}. Transcode job queued.`)
+      return { videoId, outputPath: `/uploads/${outputFileName}` }
 
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error)
@@ -90,7 +127,7 @@ export class DownloadWorker {
         .set({ 
           status: "failed", 
           errorMessage,
-          updatedAt: Math.floor(Date.now() / 1000) 
+          updatedAt: Date.now() 
         })
         .where(eq(downloadJobs.id, job.id as string))
       throw error

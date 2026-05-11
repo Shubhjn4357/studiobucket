@@ -14,6 +14,11 @@ export async function createCheckoutSession(planId: keyof typeof PLANS) {
     throw new Error("Unauthorized")
   }
 
+  // Demo mode redirect
+  if (process.env.NEXT_PUBLIC_DEMO_MODE === "true" || !process.env.STRIPE_SECRET_KEY) {
+    return { url: `/dashboard/billing/demo?plan=${planId}` }
+  }
+
   const user = await db.query.users.findFirst({
     where: eq(users.id, session.user.id),
   })
@@ -48,9 +53,27 @@ export async function createCheckoutSession(planId: keyof typeof PLANS) {
   return { url: checkoutSession.url }
 }
 
+export async function completeDemoPurchase(planId: string) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) throw new Error("Unauthorized")
+
+  await db.update(users)
+    .set({ 
+      plan: planId,
+      updatedAt: new Date() // Keeping as Date since users table uses timestamp_ms mode
+    })
+    .where(eq(users.id, session.user.id))
+
+  return { success: true }
+}
+
 export async function createPortalSession() {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) throw new Error("Unauthorized")
+
+  if (process.env.NEXT_PUBLIC_DEMO_MODE === "true" || !process.env.STRIPE_SECRET_KEY) {
+    return { url: "/dashboard/settings" }
+  }
 
   const user = await db.query.users.findFirst({
     where: eq(users.id, session.user.id),

@@ -2,7 +2,7 @@ import { Worker, Job } from "bullmq"
 import Redis from "ioredis"
 import { UploadJobSchema } from "../index"
 import { db } from "@/lib/db"
-import { videos, uploadJobs, users, notifications } from "@/lib/db/schema"
+import { videos, uploadJobs, users, notifications, analytics } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
 import { google } from "googleapis"
 import pino from "pino"
@@ -171,6 +171,20 @@ export class UploadWorker {
         description: `Video "${data.title}" has been uploaded to YouTube.`,
         type: "success",
         createdAt: Date.now(),
+      })
+
+      // Create initial analytics record
+      await db.insert(analytics).values({
+        id: crypto.randomUUID(),
+        userId: data.userId,
+        channelId: data.channelId,
+        videoId: data.videoId,
+        date: new Date().toISOString().split("T")[0],
+        views: 0,
+        likes: 0,
+        comments: 0,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
       })
 
       // Update job status

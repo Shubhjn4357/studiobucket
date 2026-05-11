@@ -38,7 +38,50 @@ export async function POST(request: NextRequest) {
             `Download initiated: ${downloadJobId} for user ${session.user.id}`
         )
 
-        // Create download job record
+        // Handle Playlist Expansion
+        if (sourceType === "playlist") {
+            const { exec } = await import("child_process")
+            const { promisify } = await import("util")
+            const execAsync = promisify(exec)
+            
+            try {
+                const { stdout } = await execAsync(`yt-dlp --flat-playlist --get-id "${sourceUrl}"`)
+                const videoIds = stdout.trim().split("\n").filter(id => id.length > 0)
+                
+                const results = []
+                for (const id of videoIds) {
+                    const videoUrl = `https://www.youtube.com/watch?v=${id}`
+                    const newJob = await db.insert(downloadJobs).values({
+                        userId: session.user.id,
+                        sourceUrl: videoUrl,
+                        sourceType: "video",
+                        status: "pending",
+                        progress: 0,
+                    }).returning()
+                    
+                    await addDownloadJob({
+                        userId: session.user.id,
+                        sourceUrl: videoUrl,
+                        sourceType: "video",
+                    })
+                    results.push(newJob[0])
+                }
+
+                return NextResponse.json({
+                    success: true,
+                    data: {
+                        count: results.length,
+                        jobs: results
+                    }
+                }, { status: 201 })
+
+            } catch (err) {
+                logger.error(err, "Playlist expansion failed")
+                return NextResponse.json({ error: "Failed to expand playlist" }, { status: 500 })
+            }
+        }
+
+        // Single video download
         const newDownloadJob = await db
             .insert(downloadJobs)
             .values({
@@ -51,7 +94,6 @@ export async function POST(request: NextRequest) {
             })
             .returning()
 
-        // Add to queue
         const queueJob = await addDownloadJob({
             userId: session.user.id,
             sourceUrl: sourceUrl,

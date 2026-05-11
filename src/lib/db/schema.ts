@@ -106,6 +106,7 @@ export const videos = sqliteTable("videos", {
   fileSize: integer("file_size"),
   duration: integer("duration"), // in seconds
   thumbnailPath: text("thumbnail_path"),
+  hlsPath: text("hls_path"),
   
   // Tracking
   status: text("status").notNull().default("draft"), // draft, queued, processing, uploaded, scheduled, published, failed

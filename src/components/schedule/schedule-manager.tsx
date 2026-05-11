@@ -1,12 +1,14 @@
 "use client"
 
 import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Icons } from "@/components/ui/icons"
 import { cn } from "@/lib/utils"
-import { motion, AnimatePresence } from "framer-motion"
 import { Video, Schedule } from "@/schemas"
+import { DeploymentModal } from "./deployment-modal"
+import { deleteScheduleAction } from "@/app/dashboard/actions"
+import { toast } from "sonner"
 
 interface ScheduledItem {
   video: Video
@@ -42,10 +44,7 @@ export function ScheduleManager({ initialSchedules = [] }: ScheduleManagerProps)
             <p className="text-muted-foreground font-bold uppercase tracking-[0.2em] text-[10px] mt-1">Temporal Coordination • Automated Execution</p>
           </div>
         </div>
-        <Button className="h-11 bg-primary text-white hover:opacity-90 rounded-xl px-8 text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 transition-transform hover:scale-105 active:scale-95">
-          <Icons.plus className="h-4 w-4 mr-2" />
-          Schedule Deployment
-        </Button>
+        <DeploymentModal />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -153,7 +152,20 @@ export function ScheduleManager({ initialSchedules = [] }: ScheduleManagerProps)
                        <span className="text-[8px] font-black text-emerald-500 uppercase tracking-widest bg-emerald-500/10 px-2 py-0.5 rounded-full">
                          Ready for Deployment
                        </span>
-                       <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground hover:text-red-500">
+                       <Button 
+                         size="icon" 
+                         variant="ghost" 
+                         className="h-6 w-6 text-muted-foreground hover:text-red-500"
+                         onClick={async () => {
+                           if (!confirm("De-schedule this sortie?")) return
+                           try {
+                             await deleteScheduleAction(item.schedule.id)
+                             toast.success("Deployment aborted")
+                           } catch {
+                             toast.error("Abort Failed")
+                           }
+                         }}
+                       >
                          <Icons.trash2 className="h-3 w-3" />
                        </Button>
                     </div>

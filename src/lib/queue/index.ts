@@ -3,6 +3,33 @@ import { logger } from "@/lib/logger"
 import { redis as redisConnection } from "@/lib/redis"
 import { z } from "zod"
 
+export const exportQueue = redisConnection ? new Queue("export-queue", {
+  connection: redisConnection,
+  defaultJobOptions: {
+    removeOnComplete: true,
+    removeOnFail: false,
+  }
+}) : null
+
+import { VideoProject } from "@/types/video"
+
+export async function addExportJob(data: { videoId: string, project: VideoProject }) {
+  if (!exportQueue) {
+    logger.warn("Export queue not available (Redis missing). Skipping background job.")
+    return null
+  }
+  try {
+    const job = await exportQueue.add("render-video", data, {
+      attempts: 1,
+      priority: 1, // Exports take precedence
+    })
+    logger.info(`Export job added: ${job.id}`)
+    return job
+  } catch (error) {
+    logger.error({ error }, "Failed to add export job:")
+    throw error
+  }
+}
 export const UploadJobSchema = z.object({
   videoId: z.string(),
   userId: z.string(),
@@ -43,6 +70,14 @@ export const downloadQueue = redisConnection ? new Queue("download-queue", {
 }) : null
 
 export const studioQueue = redisConnection ? new Queue("studio-queue", {
+  connection: redisConnection,
+  defaultJobOptions: {
+    removeOnComplete: true,
+    removeOnFail: false,
+  }
+}) : null
+
+export const transcodeQueue = redisConnection ? new Queue("transcode-queue", {
   connection: redisConnection,
   defaultJobOptions: {
     removeOnComplete: true,
@@ -103,10 +138,30 @@ export async function addStudioJob(data: Record<string, unknown>) {
   }
 }
 
+export async function addTranscodeJob(data: { videoId: string, filePath: string }) {
+  if (!transcodeQueue) {
+    logger.warn("Transcode queue not available (Redis missing). Skipping background job.")
+    return null
+  }
+  try {
+    const job = await transcodeQueue.add("transcode-hls", data, {
+      attempts: 2,
+      priority: 10,
+    })
+    logger.info(`Transcode job added: ${job.id}`)
+    return job
+  } catch (error) {
+    logger.error({ error }, "Failed to add transcode job:")
+    throw error
+  }
+}
+
 export function getQueueByName(name: string) {
   if (name === "upload-queue") return uploadQueue
   if (name === "download-queue") return downloadQueue
   if (name === "studio-queue") return studioQueue
+  if (name === "transcode-queue") return transcodeQueue
+  if (name === "export-queue") return exportQueue
   throw new Error(`Unknown queue: ${name}`)
 }
 

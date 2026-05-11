@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
-import { addUploadJob } from "@/lib/queue"
+import { addUploadJob, addTranscodeJob } from "@/lib/queue"
 import { db } from "@/lib/db"
 import { videos } from "@/lib/db/schema"
 import { eq, desc, and } from "drizzle-orm"
 import { logger } from "@/lib/logger"
 import { randomUUID } from "crypto"
+import fs from "fs"
+import path from "path"
+import { StorageEngine } from "@/lib/storage"
 
 export const dynamic = "force-dynamic"
 
@@ -35,9 +38,21 @@ export async function POST(request: NextRequest) {
 
     const videoId = randomUUID()
     const fileName = `${Date.now()}-${file.name}`
-    const filePath = `/tmp/${fileName}`
+    
+    // Write the file to a temp location first
+    const tempPath = path.join(process.cwd(), "public", "uploads", `temp-${fileName}`)
+    const buffer = Buffer.from(await file.arrayBuffer())
+    fs.writeFileSync(tempPath, buffer)
 
-    logger.info(`Upload initiated: ${videoId} for user ${session.user.id}`)
+    // Upload to Storage Engine (R2 or Local Fallback)
+    const storedPath = await StorageEngine.uploadFile(tempPath, fileName, file.type)
+    
+    // Cleanup temp file if it's different from the stored path
+    if (tempPath !== path.join(process.cwd(), "public", storedPath)) {
+        fs.unlinkSync(tempPath)
+    }
+
+    logger.info(`Upload initiated: ${videoId} for user ${session.user.id}. File saved to ${storedPath}`)
 
     const now = Math.floor(Date.now() / 1000)
     const newVideo = await db
@@ -50,7 +65,7 @@ export async function POST(request: NextRequest) {
         tags: tags,
         categoryId: categoryId,
         privacyStatus: privacy as "public" | "private" | "unlisted",
-        filePath: filePath,
+        filePath: storedPath,
         fileSize: file.size,
         status: "queued",
         publishAt: publishAt
@@ -65,7 +80,7 @@ export async function POST(request: NextRequest) {
       videoId: videoId,
       userId: session.user.id,
       channelId: session.user.id,
-      filePath: filePath,
+      filePath: storedPath,
       title: title,
       description: description,
       tags: tags ? tags.split(",") : [],
@@ -74,6 +89,12 @@ export async function POST(request: NextRequest) {
       publishAt: publishAt
         ? Math.floor(new Date(publishAt).getTime() / 1000)
         : undefined,
+    })
+
+    // Enqueue HLS Transcoding
+    await addTranscodeJob({
+      videoId: videoId,
+      filePath: storedPath
     })
 
     if (job) {

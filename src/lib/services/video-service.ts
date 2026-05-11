@@ -1,8 +1,9 @@
 import { db } from "@/lib/db"
 import { videos, videoSchedules, uploadJobs, analytics, channels, notifications, userSettings } from "@/lib/db/schema"
-import { eq, and, desc, asc, count, sum, like } from "drizzle-orm"
-import { sql } from "drizzle-orm/sql"
+import { eq, and, desc, asc, count, sum, like, sql } from "drizzle-orm"
 import { redis } from "../redis"
+import path from "path"
+import fs from "fs"
 
 export class VideoService {
   async getUserVideos(userId: string, status?: string, query?: string, limitValue = 50) {
@@ -61,6 +62,27 @@ export class VideoService {
       .groupBy(videos.id)
       .orderBy(desc(videos.createdAt))
       .limit(limitValue)
+  }
+
+  async deleteVideo(userId: string, videoId: string) {
+    const [video] = await db
+      .select({ filePath: videos.filePath, thumbnailPath: videos.thumbnailPath })
+      .from(videos)
+      .where(and(eq(videos.id, videoId), eq(videos.userId, userId)))
+
+    if (!video) throw new Error("Video not found or unauthorized")
+
+    // Physically remove files if they exist
+    if (video.filePath) {
+      const fullPath = path.join(process.cwd(), "public", video.filePath)
+      if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath)
+    }
+    if (video.thumbnailPath) {
+      const fullPath = path.join(process.cwd(), "public", video.thumbnailPath)
+      if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath)
+    }
+
+    return await db.delete(videos).where(and(eq(videos.id, videoId), eq(videos.userId, userId)))
   }
 
   async getScheduledVideos(userId: string, limit = 50) {
@@ -168,6 +190,77 @@ export class VideoService {
       totalComments: analyticsData?.totalComments ? Number(analyticsData.totalComments) : 0,
       totalVideos: videoCount?.count || 0,
     }
+  }
+
+  async getGlobalTrends(userId: string) {
+    const now = new Date()
+    const last7Days = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+    const prev7Days = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000)
+
+    const [current] = await db
+      .select({
+        views: sum(analytics.views),
+        likes: sum(analytics.likes)
+      })
+      .from(analytics)
+      .where(and(eq(analytics.userId, userId), sql`${analytics.date} >= ${last7Days.toISOString()}`))
+
+    const [previous] = await db
+      .select({
+        views: sum(analytics.views),
+        likes: sum(analytics.likes)
+      })
+      .from(analytics)
+      .where(and(
+        eq(analytics.userId, userId), 
+        sql`${analytics.date} >= ${prev7Days.toISOString()}`,
+        sql`${analytics.date} < ${last7Days.toISOString()}`
+      ))
+
+    const calculateChange = (curr: number, prev: number) => {
+      if (prev === 0) return curr > 0 ? 100 : 0
+      return Math.round(((curr - prev) / prev) * 100)
+    }
+
+    return {
+      viewsChange: calculateChange(Number(current?.views || 0), Number(previous?.views || 0)),
+      likesChange: calculateChange(Number(current?.likes || 0), Number(previous?.likes || 0)),
+    }
+  }
+
+  async getChannelInsights(userId: string) {
+    const stats = await this.getAnalyticsData(userId)
+    const insights = []
+
+    if (stats.totalViews > 1000) {
+      insights.push({
+        title: "High Performance",
+        description: "Your content is gaining significant traction. Consider increasing upload frequency.",
+        type: "growth"
+      })
+    } else {
+      insights.push({
+        title: "Growth Opportunity",
+        description: "Consistency is key. Schedule 2 more videos this week to boost visibility.",
+        type: "growth"
+      })
+    }
+
+    if (stats.totalLikes / (stats.totalViews || 1) > 0.1) {
+      insights.push({
+        title: "Strong Engagement",
+        description: "Users love your style! Your like-to-view ratio is exceptional.",
+        type: "engagement"
+      })
+    } else {
+      insights.push({
+        title: "Engagement Tip",
+        description: "Try adding a Call to Action (CTA) in the first 30 seconds of your videos.",
+        type: "engagement"
+      })
+    }
+
+    return insights
   }
 
   async getChannels(userId: string) {

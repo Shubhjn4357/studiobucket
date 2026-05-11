@@ -13,6 +13,7 @@ import { toast } from "sonner"
 import { motion, AnimatePresence } from "framer-motion"
 import { createCheckoutSession, createPortalSession } from "@/app/dashboard/settings/billing-actions"
 import { inviteTeamMember, getTeamMembers } from "@/app/dashboard/settings/actions"
+import { syncAllChannelsAction, updateUserSettingsAction } from "@/app/dashboard/actions"
 
 interface SettingsManagerProps {
   initialUser?: User
@@ -27,6 +28,12 @@ export function SettingsManager({ initialUser, initialChannels = [] }: SettingsM
   const [formData, setFormData] = useState({
     name: initialUser?.name || "",
     email: initialUser?.email || "",
+  })
+
+  const [prefs, setPrefs] = useState({
+    globalAlerts: true,
+    emailUplink: false,
+    protocolV3: true
   })
 
   useEffect(() => {
@@ -47,13 +54,24 @@ export function SettingsManager({ initialUser, initialChannels = [] }: SettingsM
   const handleApply = async () => {
     setIsSaving(true)
     try {
-      await updateGeneralSettings({ name: formData.name })
-      toast.success("System parameters updated")
+      if (activeTab === "account") {
+        await updateGeneralSettings({ name: formData.name })
+      } else if (activeTab === "notifications" || activeTab === "api") {
+        await updateUserSettingsAction({
+          notifications: JSON.stringify({ globalAlerts: prefs.globalAlerts, emailUplink: prefs.emailUplink }),
+          apiSettings: JSON.stringify({ protocolV3: prefs.protocolV3 })
+        })
+      }
+      toast.success("System parameters committed")
     } catch {
-      toast.error("Update failed")
+      toast.error("Commit sequence failed")
     } finally {
       setIsSaving(false)
     }
+  }
+
+  const handleToggle = (key: keyof typeof prefs) => {
+    setPrefs(prev => ({ ...prev, [key]: !prev[key] }))
   }
 
   const renderAccountSettings = () => (
@@ -421,17 +439,35 @@ export function SettingsManager({ initialUser, initialChannels = [] }: SettingsM
                         <p className="text-[10px] font-black uppercase tracking-widest text-foreground">Global Alerts</p>
                         <p className="text-[9px] text-muted-foreground font-medium uppercase tracking-tight">System-wide operational notifications</p>
                       </div>
-                      <div className="h-6 w-11 bg-primary rounded-full relative cursor-pointer">
-                        <div className="absolute right-1 top-1 h-4 w-4 bg-white rounded-full" />
+                      <div 
+                        onClick={() => handleToggle("globalAlerts")}
+                        className={cn(
+                          "h-6 w-11 rounded-full relative cursor-pointer transition-colors duration-300",
+                          prefs.globalAlerts ? "bg-primary" : "bg-muted"
+                        )}
+                      >
+                        <div className={cn(
+                          "absolute top-1 h-4 w-4 bg-white rounded-full transition-all duration-300",
+                          prefs.globalAlerts ? "right-1" : "left-1"
+                        )} />
                       </div>
                     </div>
-                    <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30 border border-border opacity-50">
+                    <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30 border border-border">
                       <div>
                         <p className="text-[10px] font-black uppercase tracking-widest text-foreground">Email Uplink</p>
                         <p className="text-[9px] text-muted-foreground font-medium uppercase tracking-tight">Critical failure reports via SMTP</p>
                       </div>
-                      <div className="h-6 w-11 bg-muted rounded-full relative cursor-pointer">
-                        <div className="absolute left-1 top-1 h-4 w-4 bg-slate-400 rounded-full" />
+                      <div 
+                        onClick={() => handleToggle("emailUplink")}
+                        className={cn(
+                          "h-6 w-11 rounded-full relative cursor-pointer transition-colors duration-300",
+                          prefs.emailUplink ? "bg-primary" : "bg-muted"
+                        )}
+                      >
+                        <div className={cn(
+                          "absolute top-1 h-4 w-4 bg-white rounded-full transition-all duration-300",
+                          prefs.emailUplink ? "right-1" : "left-1"
+                        )} />
                       </div>
                     </div>
                   </div>
@@ -439,12 +475,28 @@ export function SettingsManager({ initialUser, initialChannels = [] }: SettingsM
                 {activeTab === "api" && (
                   <div className="space-y-6">
                      <div className="p-6 rounded-xl bg-muted/30 border border-border space-y-4">
-                        <h4 className="text-[10px] font-black uppercase tracking-widest text-primary">Integration Protocol</h4>
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-[10px] font-black uppercase tracking-widest text-primary">Integration Protocol</h4>
+                          <div 
+                            onClick={() => handleToggle("protocolV3")}
+                            className={cn(
+                              "h-6 w-11 rounded-full relative cursor-pointer transition-colors duration-300",
+                              prefs.protocolV3 ? "bg-emerald-500" : "bg-muted"
+                            )}
+                          >
+                            <div className={cn(
+                              "absolute top-1 h-4 w-4 bg-white rounded-full transition-all duration-300",
+                              prefs.protocolV3 ? "right-1" : "left-1"
+                            )} />
+                          </div>
+                        </div>
                         <div className="space-y-2">
                            <p className="text-[9px] text-muted-foreground font-bold uppercase">YouTube API Status</p>
                            <div className="flex items-center gap-2">
-                              <div className="h-2 w-2 rounded-full bg-emerald-500" />
-                              <span className="text-[10px] font-black text-foreground uppercase tracking-tight">Operational • v3 Protocol</span>
+                              <div className={cn("h-2 w-2 rounded-full", prefs.protocolV3 ? "bg-emerald-500" : "bg-amber-500")} />
+                              <span className="text-[10px] font-black text-foreground uppercase tracking-tight">
+                                {prefs.protocolV3 ? "Operational • v3 Protocol" : "Standby • Manual Override"}
+                              </span>
                            </div>
                         </div>
                      </div>
