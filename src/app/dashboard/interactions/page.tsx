@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { YouTubeComment, VideoWithStats } from "@/types/video"
+import Image from "next/image"
 
 export default function InteractionsPage() {
   const [videos, setVideos] = useState<VideoWithStats[]>([])
@@ -133,7 +134,13 @@ export default function InteractionsPage() {
                   >
                     <div className="h-16 w-24 rounded-2xl bg-black border border-white/10 overflow-hidden shrink-0 relative z-10">
                        {video.thumbnailPath ? (
-                         <img src={video.thumbnailPath} className="h-full w-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" />
+                         <Image 
+                           src={video.thumbnailPath} 
+                           alt={video.title}
+                           fill
+                           unoptimized
+                           className="h-full w-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" 
+                         />
                        ) : (
                          <div className="h-full w-full bg-[radial-gradient(circle_at_center,#ffffff05_1px,transparent_1px)] bg-[size:10px_10px]" />
                        )}
@@ -202,7 +209,13 @@ export default function InteractionsPage() {
 
                              <div className="h-14 w-14 rounded-2xl bg-black border border-white/10 shrink-0 overflow-hidden relative z-10 shadow-2xl">
                                 {comment.snippet.topLevelComment.snippet.authorProfileImageUrl && (
-                                  <img src={comment.snippet.topLevelComment.snippet.authorProfileImageUrl} className="h-full w-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+                                  <Image 
+                                    src={comment.snippet.topLevelComment.snippet.authorProfileImageUrl} 
+                                    alt={comment.snippet.topLevelComment.snippet.authorDisplayName}
+                                    fill
+                                    unoptimized
+                                    className="h-full w-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" 
+                                  />
                                 )}
                              </div>
                              <div className="space-y-4 min-w-0 relative z-10 flex-1">

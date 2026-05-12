@@ -8,6 +8,8 @@ import { Analytics } from "@/components/dashboard/analytics"
 import { QueueStatus } from "@/components/dashboard/queue-status"
 import { VideoCardSkeleton, StatsSkeleton, ListSkeleton } from "@/components/ui/skeleton-loader"
 
+import Image from "next/image"
+
 const videoService = new VideoService()
 
 interface VideoWithStats {
@@ -41,7 +43,13 @@ export async function LatestVideoSection({ userId }: { userId: string }) {
       <div className="flex flex-col md:flex-row p-8 gap-10 relative z-20">
         <div className="w-full md:w-[400px] aspect-video rounded-3xl bg-black relative group/thumb overflow-hidden shrink-0 border border-white/10 shadow-2xl">
            {video.thumbnailPath ? (
-             <img src={video.thumbnailPath} className="h-full w-full object-cover transition-transform duration-1000 group-hover/thumb:scale-110 opacity-80 group-hover/thumb:opacity-100" />
+             <Image 
+               src={video.thumbnailPath} 
+               alt={video.title}
+               fill
+               unoptimized
+               className="h-full w-full object-cover transition-transform duration-1000 group-hover/thumb:scale-110 opacity-80 group-hover/thumb:opacity-100" 
+             />
            ) : (
              <div className="absolute inset-0 flex items-center justify-center bg-white/[0.02]">
                 <Icons.video className="h-16 w-16 text-white/5" />

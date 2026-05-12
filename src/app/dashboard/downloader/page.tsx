@@ -58,8 +58,14 @@ export default function DownloaderPage() {
     
     try {
       let sourceType: "video" | "playlist" | "channel" = "video"
-      const normalizedUrl = url.trim()
+      let normalizedUrl = url.trim()
       
+      // Standardize youtu.be to youtube.com/watch?v= for consistency
+      if (normalizedUrl.includes("youtu.be/")) {
+        const id = normalizedUrl.split("youtu.be/")[1]?.split("?")[0]
+        if (id) normalizedUrl = `https://www.youtube.com/watch?v=${id}`
+      }
+
       if (normalizedUrl.includes("list=") || normalizedUrl.includes("/playlists")) sourceType = "playlist"
       else if (normalizedUrl.includes("/channel/") || normalizedUrl.includes("/@")) sourceType = "channel"
 

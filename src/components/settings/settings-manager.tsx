@@ -1,19 +1,19 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Icons } from "@/components/ui/icons"
 import { cn } from "@/lib/utils"
 import { signIn } from "next-auth/react"
 import { User, Channel } from "@/schemas"
 import { updateGeneralSettings } from "@/app/dashboard/settings/actions"
-import { ThemeToggle } from "@/components/ui/theme-toggle"
+
 import { toast } from "sonner"
 import { motion, AnimatePresence } from "framer-motion"
 import { createCheckoutSession, createPortalSession } from "@/app/dashboard/settings/billing-actions"
 import { inviteTeamMember, getTeamMembers } from "@/app/dashboard/settings/actions"
-import { syncAllChannelsAction, updateUserSettingsAction } from "@/app/dashboard/actions"
+import {  updateUserSettingsAction } from "@/app/dashboard/actions"
+import Image from "next/image"
 
 interface SettingsManagerProps {
   initialUser?: User
@@ -80,7 +80,13 @@ export function SettingsManager({ initialUser, initialChannels = [] }: SettingsM
         <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent,rgba(255,255,255,0.02))] pointer-events-none" />
         <div className="h-48 w-48 rounded-[2.5rem] bg-black border border-white/10 overflow-hidden relative group/avatar cursor-pointer shadow-2xl shrink-0">
           {initialUser?.image ? (
-            <img src={initialUser.image} alt="Avatar" className="h-full w-full object-cover opacity-60 group-hover/avatar:opacity-100 transition-all duration-700" />
+            <Image 
+              src={initialUser.image} 
+              alt="Avatar" 
+              width={192}
+              height={192}
+              className="h-full w-full object-cover opacity-60 group-hover/avatar:opacity-100 transition-all duration-700" 
+            />
           ) : (
             <div className="h-full w-full flex items-center justify-center bg-white/[0.02]">
               <Icons.user className="h-20 w-20 text-white/5" />
@@ -181,9 +187,14 @@ export function SettingsManager({ initialUser, initialChannels = [] }: SettingsM
           return (
             <div key={channel.id} className="p-8 rounded-[3rem] bg-white/[0.02] border border-white/5 flex flex-col gap-8 group hover:border-primary/40 transition-all duration-700 shadow-2xl relative overflow-hidden">
               <div className="flex items-center gap-8 overflow-hidden relative z-10">
-                <div className="h-20 w-20 rounded-[2rem] bg-black border border-white/10 overflow-hidden shrink-0 shadow-2xl group-hover:border-primary/20 transition-all duration-700">
+                <div className="h-20 w-20 rounded-[2rem] bg-black border border-white/10 overflow-hidden shrink-0 shadow-2xl group-hover:border-primary/20 transition-all duration-700 relative">
                   {channel.thumbnailUrl ? (
-                    <img src={channel.thumbnailUrl} alt={channel.channelName || "Node"} className="h-full w-full object-cover opacity-40 group-hover:opacity-100 transition-opacity duration-700" />
+                    <Image 
+                      src={channel.thumbnailUrl} 
+                      alt={channel.channelName || "Node"} 
+                      fill
+                      className="h-full w-full object-cover opacity-40 group-hover:opacity-100 transition-opacity duration-700" 
+                    />
                   ) : (
                     <div className="h-full w-full bg-[radial-gradient(circle_at_center,#ffffff05_1px,transparent_1px)] bg-[size:10px_10px]" />
                   )}
