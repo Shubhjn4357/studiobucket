@@ -6,7 +6,6 @@ import { stripe, PLANS } from "@/lib/stripe"
 import { db } from "@/lib/db"
 import { users } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
-import { redirect } from "next/navigation"
 
 export async function createCheckoutSession(planId: keyof typeof PLANS) {
   const session = await getServerSession(authOptions)

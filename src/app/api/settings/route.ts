@@ -5,7 +5,6 @@ import { db } from "@/lib/db"
 import { userSettings } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
 import { logger } from "@/lib/logger"
-import { randomUUID } from "crypto"
 
 export const dynamic = "force-dynamic"
 
@@ -93,7 +92,6 @@ export async function PUT(request: NextRequest) {
             apiSettings,
         } = body
 
-        const now = Math.floor(Date.now() / 1000)
 
         const existingSettings = await db
             .select()

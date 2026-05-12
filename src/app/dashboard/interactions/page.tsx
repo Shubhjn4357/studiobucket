@@ -73,7 +73,6 @@ export default function InteractionsPage() {
     }
   }
 
-  const selectedVideo = videos.find(v => v.id === selectedVideoId)
 
   return (
     <div className="space-y-16 pb-24 relative max-w-7xl mx-auto">

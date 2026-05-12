@@ -2,13 +2,11 @@
 
 import { useEffect, useState } from "react"
 import { Icons } from "@/components/ui/icons"
-import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { getPlaylistsAction } from "@/app/dashboard/actions"
 import { motion, AnimatePresence } from "framer-motion"
 import Image from "next/image"
 import { YouTubePlaylist } from "@/types/video"
-import { cn } from "@/lib/utils"
 
 export default function PlaylistsPage() {
   const [playlists, setPlaylists] = useState<YouTubePlaylist[]>([])

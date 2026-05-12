@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react"
 import { Icons } from "@/components/ui/icons"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,7 +15,6 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { getYouTubeVideosAction, deleteYouTubeVideoAction } from "@/app/dashboard/actions"
-import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 import Image from "next/image"
 import { YouTubeSearchResult } from "@/types/video"

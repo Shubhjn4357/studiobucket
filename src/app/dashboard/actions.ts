@@ -6,7 +6,7 @@ import { authOptions } from "@/lib/auth"
 import { revalidatePath } from "next/cache"
 import { pauseQueue, resumeQueue, clearQueue } from "@/lib/queue"
 import { db } from "@/lib/db"
-import { userSettings, channels as channelsTable, videos, videoSchedules } from "@/lib/db/schema"
+import { userSettings, channels as channelsTable, videos } from "@/lib/db/schema"
 import { createYouTubeService } from "@/lib/youtube"
 import { eq } from "drizzle-orm"
 
@@ -177,7 +177,7 @@ export async function triggerTranscriptionAction(videoId: string) {
   }
 }
 
-export async function triggerAutoCutAction(videoId: string) {
+export async function triggerAutoCutAction() {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) throw new Error("Unauthorized")
   

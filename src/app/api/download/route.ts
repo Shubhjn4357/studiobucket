@@ -32,7 +32,6 @@ export async function POST(request: NextRequest) {
         }
 
         const downloadJobId = randomUUID()
-        const now = Math.floor(Date.now() / 1000)
 
         logger.info(
             `Download initiated: ${downloadJobId} for user ${session.user.id}`
@@ -82,7 +81,6 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        const ytDlpPath = "C:\\Users\\shubh\\AppData\\Local\\Python\\pythoncore-3.14-64\\Scripts\\yt-dlp.exe"
         logger.info(`Starting download: ${sourceUrl}`)
 
         // Single video download

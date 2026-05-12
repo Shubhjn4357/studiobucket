@@ -5,14 +5,12 @@ import { usePathname } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { Icons } from "@/components/ui/icons"
-import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { ROUTES } from "@/constants/route.constant"
 
 interface SidebarProps {
   open: boolean
-  onClose: () => void
   isMobile?: boolean
+  onClose?: () => void
   items: readonly {
     title: string
     href: string
@@ -20,19 +18,17 @@ interface SidebarProps {
   }[]
 }
 
-export function Sidebar({ open, onClose, isMobile, items }: SidebarProps) {
+export function Sidebar({ open, isMobile, items }: SidebarProps) {
   const pathname = usePathname()
 
   const sidebarVariants = {
     open: { 
-      x: 0,
-      width: isMobile ? "100%" : 280,
-      transition: { type: "spring" as const, stiffness: 400, damping: 40 }
+      width: isMobile ? "280px" : "260px",
+      transition: { type: "spring", stiffness: 300, damping: 30 } as const
     },
     closed: { 
-      x: isMobile ? -300 : 0,
-      width: isMobile ? 0 : 100,
-      transition: { type: "spring" as const, stiffness: 400, damping: 40 }
+      width: isMobile ? "0px" : "80px",
+      transition: { type: "spring", stiffness: 300, damping: 30 } as const
     }
   }
 
@@ -42,36 +38,49 @@ export function Sidebar({ open, onClose, isMobile, items }: SidebarProps) {
       animate={open ? "open" : "closed"}
       variants={sidebarVariants}
       className={cn(
-        "z-50 flex flex-col backdrop-blur-3xl bg-black/60 border-r border-white/5 h-screen transition-all overflow-hidden shrink-0 shadow-2xl relative",
-        isMobile ? "fixed inset-y-0 left-0 max-w-[320px]" : "relative"
+        "z-50 flex flex-col glass-morphism h-screen transition-all overflow-hidden shrink-0 relative",
+        isMobile ? "fixed inset-y-0 left-0" : "relative border-r"
       )}
     >
       {/* Structural Grid Overlay */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_bottom,#ffffff01_1px,transparent_1px)] bg-[size:100%_40px] pointer-events-none opacity-20" />
+      <div className="absolute inset-0 industrial-grid pointer-events-none opacity-5" />
 
       {/* Header Area */}
-      <div className="flex h-24 items-center px-8 border-b border-white/5 relative z-10">
-         <div className="flex items-center gap-4 group cursor-pointer">
-            <div className="h-10 w-10 rounded-2xl bg-primary flex items-center justify-center shadow-2xl shadow-primary/40 group-hover:scale-105 transition-transform duration-500">
-               <Icons.logo className="h-6 w-6 text-white" />
+      <div className="flex h-16 items-center px-4 border-b border-white/5 relative z-10 shrink-0">
+         <div className="flex items-center gap-3 group cursor-pointer w-full overflow-hidden">
+            <div className="hud-border p-1.5 bg-primary/10 transition-all duration-500 group-hover:bg-primary/20 shrink-0">
+               <Icons.logo className="h-5 w-5 text-primary" />
             </div>
-            {(open || isMobile) && (
-              <motion.div 
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="flex flex-col leading-none"
-              >
-                <span className="text-xl font-black tracking-tighter italic text-white uppercase">StudioBucket</span>
-                <span className="text-[8px] font-bold tracking-[0.4em] uppercase text-primary opacity-60">System_Node_01</span>
-              </motion.div>
-            )}
+            <AnimatePresence mode="wait">
+              {(open || isMobile) && (
+                <motion.div 
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -10 }}
+                  className="flex flex-col leading-none whitespace-nowrap"
+                >
+                  <span className="text-sm font-black tracking-tighter italic text-foreground uppercase">StudioBucket</span>
+                  <span className="text-[7px] font-bold tracking-[0.4em] uppercase text-primary opacity-60">Control_Deck</span>
+                </motion.div>
+              )}
+            </AnimatePresence>
          </div>
       </div>
 
-      <ScrollArea className="flex-1 py-10 px-4 custom-scrollbar relative z-10">
-        <nav className="space-y-4">
-          <div className="px-4 mb-6">
-             <span className="text-[9px] font-black text-white/20 uppercase tracking-[0.4em] italic">Navigation_Matrix</span>
+      <ScrollArea className="flex-1 py-6 px-3 custom-scrollbar relative z-10">
+        <nav className="space-y-1.5">
+          <div className="px-3 mb-4 h-4 flex items-center">
+             <AnimatePresence>
+                {(open || isMobile) && (
+                  <motion.span 
+                    initial={{ opacity: 0 }} 
+                    animate={{ opacity: 0.3 }}
+                    className="text-[8px] font-mono font-black uppercase tracking-[0.3em] italic"
+                  >
+                    System_Matrix
+                  </motion.span>
+                )}
+             </AnimatePresence>
           </div>
           {items.map((item) => {
             const Icon = Icons[item.icon]
@@ -82,23 +91,24 @@ export function Sidebar({ open, onClose, isMobile, items }: SidebarProps) {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex items-center gap-6 rounded-2xl transition-all px-4 py-4 group relative overflow-hidden",
+                  "flex items-center gap-4 rounded-lg transition-all px-3 py-2.5 group relative overflow-hidden",
                   isActive 
-                    ? "bg-white/[0.03] border border-white/5 shadow-xl" 
-                    : "hover:bg-white/[0.02] border border-transparent hover:border-white/5"
+                    ? "bg-primary/10 text-primary shadow-[0_0_20px_rgba(255,0,0,0.05)]" 
+                    : "hover:bg-foreground/5 text-muted-foreground hover:text-foreground"
                 )}
               >
                 {isActive && (
                   <motion.div 
-                    layoutId="active-indicator"
-                    className="absolute left-0 top-1/4 bottom-1/4 w-1 bg-primary rounded-full shadow-[0_0_15px_rgba(var(--primary),0.8)]"
+                    layoutId="sidebar-active"
+                    className="absolute left-0 top-2 bottom-2 w-1 bg-primary rounded-full"
+                    transition={{ type: "spring", stiffness: 300, damping: 30 } as const}
                   />
                 )}
                 
-                <div className="flex h-6 w-6 items-center justify-center shrink-0 relative">
+                <div className="flex h-5 w-5 items-center justify-center shrink-0 relative">
                   <Icon className={cn(
-                    "h-5 w-5 transition-all duration-500", 
-                    isActive ? "text-primary scale-110" : "text-white/40 group-hover:text-white"
+                    "h-4.5 w-4.5 transition-all duration-300", 
+                    isActive ? "text-primary scale-110" : "opacity-40 group-hover:opacity-100"
                   )} />
                 </div>
                 
@@ -109,8 +119,8 @@ export function Sidebar({ open, onClose, isMobile, items }: SidebarProps) {
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: -10 }}
                       className={cn(
-                        "text-[11px] font-black uppercase tracking-[0.2em] italic whitespace-nowrap transition-colors",
-                        isActive ? "text-white" : "text-white/40 group-hover:text-white"
+                        "text-hud whitespace-nowrap transition-colors italic",
+                        isActive ? "text-foreground" : "text-muted-foreground group-hover:text-foreground"
                       )}
                     >
                       {item.title}
@@ -124,21 +134,38 @@ export function Sidebar({ open, onClose, isMobile, items }: SidebarProps) {
       </ScrollArea>
 
       {/* Footer / System Status */}
-      {(open || isMobile) && (
-        <div className="p-8 border-t border-white/5 bg-black/20 relative z-10">
-           <div className="flex items-center justify-between mb-4">
-              <span className="text-[9px] font-black text-white/20 uppercase tracking-widest italic">Core_Stability</span>
-              <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest italic">Nominal</span>
-           </div>
-           <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
-              <motion.div 
-                className="h-full bg-emerald-500"
-                animate={{ width: ["90%", "95%", "92%"] }}
-                transition={{ duration: 5, repeat: Infinity }}
-              />
-           </div>
-        </div>
-      )}
+      <div className="p-4 border-t border-white/5 relative z-10 shrink-0">
+         <AnimatePresence>
+           {(open || isMobile) ? (
+             <motion.div
+               initial={{ opacity: 0, y: 10 }}
+               animate={{ opacity: 1, y: 0 }}
+               exit={{ opacity: 0, y: 10 }}
+               className="space-y-3"
+             >
+                <div className="flex items-center justify-between">
+                   <span className="text-[8px] font-black opacity-30 uppercase tracking-[0.2em] italic">Stability</span>
+                   <div className="flex items-center gap-1.5">
+                      <div className="h-1 w-1 rounded-full bg-primary animate-pulse" />
+                      <span className="text-[8px] font-black text-primary uppercase tracking-[0.2em] italic">Operational</span>
+                   </div>
+                </div>
+                <div className="h-1 w-full bg-foreground/5 rounded-full overflow-hidden">
+                   <motion.div 
+                     className="h-full bg-primary/40"
+                     animate={{ width: ["85%", "92%", "88%"] }}
+                     transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                   />
+                </div>
+             </motion.div>
+           ) : (
+             <div className="flex justify-center">
+                <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+             </div>
+           )}
+         </AnimatePresence>
+      </div>
     </motion.aside>
   )
 }
+

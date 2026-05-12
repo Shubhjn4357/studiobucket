@@ -71,7 +71,6 @@ export async function POST(request: NextRequest) {
         const validated = CreateVideoSchema.parse(body)
 
         const videoId = randomUUID()
-        const now = Math.floor(Date.now() / 1000)
 
         const newVideo = await db.insert(videos).values({
             ...validated,

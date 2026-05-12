@@ -20,27 +20,36 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid metadata" }, { status: 400 })
     }
 
+    logger.info(`Initialising upload for user ${session.user.id}: ${filename} (${formatSize(fileSize)})`)
+
     const videoId = randomUUID()
     const storageKey = `${Date.now()}-${filename}`
     
     // Get Pre-signed URL or direct upload path
+    logger.debug(`Generating presigned URL for ${storageKey}`)
     const { url } = await StorageEngine.getPresignedUrl(storageKey, fileType)
     const storedPath = StorageEngine.getUrl(storageKey)
 
-    // Create initial DB record in 'pending' or 'uploading' state
-    await db.insert(videos).values({
-      id: videoId,
-      userId: session.user.id,
-      title: title || filename,
-      description: description || "",
-      filePath: storedPath,
-      fileSize: fileSize,
-      status: "draft",
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    })
+    // Create initial DB record
+    logger.debug(`Inserting video record ${videoId} into DB`)
+    try {
+      await db.insert(videos).values({
+        id: videoId,
+        userId: session.user.id,
+        title: title || filename,
+        description: description || "",
+        filePath: storedPath,
+        fileSize: fileSize,
+        status: "draft",
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      })
+    } catch (dbError) {
+      logger.error(dbError, `DB insertion failed for video ${videoId}`)
+      throw new Error("Database synchronization failure during protocol initialization")
+    }
 
-    logger.info(`Upload initialized: ${videoId} for user ${session.user.id}. Strategy: ${url.includes('api/upload') ? 'Local' : 'Cloud'}`)
+    logger.info(`Upload initialized: ${videoId}. Strategy: ${url.includes('api/upload') ? 'Local' : 'Cloud'}`)
 
     return NextResponse.json({
       success: true,
@@ -48,8 +57,19 @@ export async function POST(request: NextRequest) {
       uploadUrl: url,
       storedPath
     })
-  } catch (error) {
-    logger.error(error, "Upload Init failure")
-    return NextResponse.json({ error: "Protocol initialization failed" }, { status: 500 })
+  } catch (error: unknown) {
+    const err = error as Error
+    logger.error(err, "Upload Init failure")
+    return NextResponse.json({ 
+      error: err.message || "Protocol initialization failed" 
+    }, { status: 500 })
   }
+}
+
+function formatSize(bytes: number) {
+    if (!bytes) return "0B"
+    const k = 1024
+    const sizes = ["B", "KB", "MB", "GB"]
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + sizes[i]
 }

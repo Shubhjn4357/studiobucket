@@ -54,7 +54,6 @@ export async function POST(request: NextRequest) {
 
     logger.info(`Upload initiated: ${videoId} for user ${session.user.id}. File saved to ${storedPath}`)
 
-    const now = Math.floor(Date.now() / 1000)
     const newVideo = await db
       .insert(videos)
       .values({

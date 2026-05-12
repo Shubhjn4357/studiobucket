@@ -11,3 +11,4 @@
 9. Dont use dummy data ever
 10. Dont use 'any' type use proper types always
 11. Fix All Ts and Lint Errors
+12. For Browser Test Always use chrome mcp tool.

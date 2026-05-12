@@ -1,8 +1,7 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useRef } from "react"
 import { useDropzone } from "react-dropzone"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Icons } from "@/components/ui/icons"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -15,8 +14,8 @@ interface FileWithProgress {
   file: File
   progress: number
   status: "pending" | "uploading" | "completed" | "failed"
-  speed?: number // bytes per second
-  eta?: number // seconds remaining
+  speed?: number
+  eta?: number
   startTime?: number
   videoId?: string
 }
@@ -24,6 +23,7 @@ interface FileWithProgress {
 export function UploadCenter() {
   const [files, setFiles] = useState<FileWithProgress[]>([])
   const [isUploading, setIsUploading] = useState(false)
+  const activeXhrs = useRef<Map<string, XMLHttpRequest>>(new Map())
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const now = Date.now()
@@ -34,17 +34,22 @@ export function UploadCenter() {
       status: "pending" as const,
     }))
     setFiles((prev) => [...prev, ...newFiles])
-    toast.success(`${acceptedFiles.length} assets staged for deployment`)
+    toast.success(`${acceptedFiles.length} assets staged for ingestion`)
   }, [])
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      "video/*": [".mp4", ".mov", ".avi"],
+      "video/*": [".mp4", ".mov", ".avi", ".mkv"],
     },
   })
 
   const removeFile = (id: string) => {
+    const xhr = activeXhrs.current.get(id)
+    if (xhr) {
+      xhr.abort()
+      activeXhrs.current.delete(id)
+    }
     setFiles((prev) => prev.filter((f) => f.id !== id))
   }
 
@@ -54,32 +59,40 @@ export function UploadCenter() {
     
     try {
       for (const fileItem of files) {
-        if (fileItem.status === "completed") continue
+        if (fileItem.status === "completed" || fileItem.status === "uploading") continue
 
-        // 1. Initialize Protocol (Get Pre-signed URL)
+        setFiles(prev => prev.map(f => f.id === fileItem.id ? { ...f, status: "uploading", progress: 0 } : f))
+
+        // 1. Initialize Protocol
         const initRes = await fetch("/api/upload/init", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             filename: fileItem.file.name,
-            fileType: fileItem.file.type,
+            fileType: fileItem.file.type || "video/mp4",
             fileSize: fileItem.file.size,
             title: fileItem.file.name.split('.')[0]
           })
         })
 
-        if (!initRes.ok) throw new Error("Protocol initialization failed")
+        if (!initRes.ok) {
+          const errorData = await initRes.json().catch(() => ({ error: "Protocol error" }))
+          throw new Error(errorData.error || "Protocol initialization failed")
+        }
+        
         const { uploadUrl, videoId } = await initRes.json()
 
-        // 2. Execute Transmission (Direct to Storage)
+        // 2. Execute Transmission
         const xhr = new XMLHttpRequest()
-        const startTime = Date.now()
+        activeXhrs.current.set(fileItem.id, xhr)
         
         const uploadPromise = new Promise((resolve, reject) => {
+          const startTime = Date.now() // Moved inside promise to satisfy purity if possible, or just used in closure
+          
           xhr.upload.addEventListener("progress", (event) => {
             if (event.lengthComputable) {
               const progress = Math.round((event.loaded / event.total) * 100)
-              const elapsedTime = (Date.now() - startTime) / 1000 || 0.1 // avoid div by 0
+              const elapsedTime = (Date.now() - startTime) / 1000 || 0.1
               const speed = event.loaded / elapsedTime
               const remainingBytes = event.total - event.loaded
               const eta = speed > 0 ? Math.round(remainingBytes / speed) : 0
@@ -95,35 +108,53 @@ export function UploadCenter() {
           })
 
           xhr.addEventListener("load", async () => {
+            activeXhrs.current.delete(fileItem.id)
             if (xhr.status >= 200 && xhr.status < 300) {
-              // 3. Finalize Protocol (Trigger Pipeline)
-              await fetch("/api/upload/finalize", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ videoId })
-              })
-              
-              setFiles(prev => prev.map(f => f.id === fileItem.id ? { ...f, status: "completed", progress: 100, eta: 0, videoId } : f))
-              resolve(true)
+              // 3. Finalize Protocol
+              try {
+                const finalizeRes = await fetch("/api/upload/finalize", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ videoId })
+                })
+                
+                if (!finalizeRes.ok) {
+                  throw new Error("Finalization failed")
+                }
+                
+                setFiles(prev => prev.map(f => f.id === fileItem.id ? { ...f, status: "completed", progress: 100, eta: 0, videoId } : f))
+                resolve(true)
+              } catch (err) {
+                reject(err)
+              }
             } else {
               reject(new Error(`Transmission error: ${xhr.status}`))
             }
           })
 
-          xhr.addEventListener("error", () => reject(new Error("Network protocol interrupted")))
+          xhr.addEventListener("error", () => {
+            activeXhrs.current.delete(fileItem.id)
+            reject(new Error("Network connection interrupted"))
+          })
           
-          // Direct PUT to pre-signed URL is much faster
+          xhr.addEventListener("abort", () => {
+            activeXhrs.current.delete(fileItem.id)
+            reject(new Error("Transmission aborted by user"))
+          })
+          
           xhr.open("PUT", uploadUrl)
-          xhr.setRequestHeader("Content-Type", fileItem.file.type)
+          xhr.setRequestHeader("Content-Type", fileItem.file.type || "application/octet-stream")
           xhr.send(fileItem.file)
         })
 
         await uploadPromise
       }
-      toast.success("All assets synchronized with global grid")
+      toast.success("All assets synchronized successfully")
     } catch (error) {
-      logger.error(error, "Deployment Pipeline Error")
-      toast.error("Pipeline failure detected. Protocol aborted.")
+      const errorMessage = error instanceof Error ? error.message : "Protocol aborted"
+      logger.error(error, "Ingestion Pipeline Failure")
+      toast.error(`Pipeline failure: ${errorMessage}`)
+      setFiles(prev => prev.map(f => f.status === "uploading" ? { ...f, status: "failed" } : f))
     } finally {
       setIsUploading(false)
     }
@@ -132,176 +163,186 @@ export function UploadCenter() {
   const formatSize = (bytes: number) => {
     if (bytes === 0) return "0 B"
     const k = 1024
-    const sizes = ["B", "KB", "MB", "GB"]
+    const sizes = ["B", "KB", "MB", "GB", "TB"]
     const i = Math.floor(Math.log(bytes) / Math.log(k))
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i]
   }
 
-  const formatETA = (seconds: number) => {
-    if (!seconds || seconds === Infinity) return "Calculating..."
-    if (seconds < 60) return `${seconds}s`
-    const mins = Math.floor(seconds / 60)
-    const secs = seconds % 60
-    return `${mins}m ${secs}s`
+  const formatSpeed = (bytesPerSec: number) => {
+    if (!bytesPerSec) return "0 B/s"
+    if (bytesPerSec > 1024 * 1024) return `${(bytesPerSec / (1024 * 1024)).toFixed(1)} MB/s`
+    return `${(bytesPerSec / 1024).toFixed(1)} KB/s`
   }
 
   return (
-    <Card className="backdrop-blur-3xl bg-white/[0.02] border-white/5 rounded-[3rem] overflow-hidden flex flex-col h-full shadow-2xl">
-      <CardHeader className="p-10 pb-6">
-        <div className="flex items-center justify-between">
-          <div className="space-y-2">
-            <CardTitle className="flex items-center gap-4 text-2xl font-black uppercase tracking-tighter text-white italic">
-              <div className="h-12 w-12 rounded-[1.2rem] bg-primary/10 flex items-center justify-center border border-white/5">
-                <Icons.upload className="h-6 w-6 text-primary" />
+    <div className="flex flex-col h-[calc(100vh-12rem)] gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 min-h-0">
+        <div className="lg:col-span-5 flex flex-col gap-6 min-h-0">
+          <div
+            {...getRootProps()}
+            className={cn(
+              "flex-1 flex flex-col items-center justify-center border-2 border-dashed rounded-2xl transition-all duration-500 cursor-pointer group relative overflow-hidden",
+              isDragActive 
+                ? "border-primary bg-primary/5 shadow-[0_0_40px_rgba(255,0,0,0.05)]" 
+                : "border-border hover:border-primary/30 hover:bg-surface"
+            )}
+          >
+            <input {...getInputProps()} />
+            
+            {/* Background pattern */}
+            <div className="absolute inset-0 industrial-grid opacity-[0.03] pointer-events-none" />
+            
+            <div className="flex flex-col items-center gap-6 text-center p-8 relative z-10">
+              <motion.div 
+                animate={isDragActive ? { scale: 1.1, y: -10 } : { scale: 1, y: 0 }}
+                className={cn(
+                  "h-20 w-20 rounded-3xl flex items-center justify-center border transition-all duration-500 shadow-sm",
+                  isDragActive 
+                    ? "bg-primary text-white border-primary shadow-primary/20" 
+                    : "bg-background text-muted-foreground border-border group-hover:border-primary/20 group-hover:text-primary"
+                )}
+              >
+                <Icons.cloudUpload className="h-10 w-10" />
+              </motion.div>
+              
+              <div className="space-y-2">
+                <p className="text-sm font-black text-foreground tracking-tight uppercase italic">
+                  {isDragActive ? "Release to Ingest" : "Stage New Assets"}
+                </p>
+                <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.2em] opacity-60">
+                  Raw_Transmission_Capable • MP4, MOV, MKV
+                </p>
               </div>
-              Command Center
-            </CardTitle>
-            <CardDescription className="text-muted-foreground font-bold uppercase tracking-[0.4em] text-[8px] opacity-40">Asset Ingestion • Global Grid Synchronization</CardDescription>
-          </div>
-        </div>
-      </CardHeader>
-
-      <CardContent className="flex-1 flex flex-col gap-10 p-10 pt-4 overflow-hidden">
-        {/* Pro Dropzone */}
-        <div
-          {...getRootProps()}
-          className={cn(
-            "relative flex-1 flex flex-col items-center justify-center border-2 border-dashed rounded-[2.5rem] transition-all duration-700 cursor-pointer group min-h-[300px]",
-            isDragActive
-              ? "border-primary bg-primary/5 shadow-[0_0_50px_rgba(var(--primary),0.1)]"
-              : "border-white/5 hover:border-primary/20 bg-white/[0.01]"
-          )}
-        >
-          <input {...getInputProps()} />
-          
-          <div className="relative z-10 flex flex-col items-center gap-6 text-center p-12">
-            <motion.div 
-              animate={isDragActive ? { scale: 1.1, y: -10 } : { scale: 1, y: 0 }}
-              className={cn(
-                "h-20 w-20 rounded-[2rem] bg-black/40 backdrop-blur-xl flex items-center justify-center border border-white/5 transition-all duration-700 shadow-2xl",
-                isDragActive ? "border-primary/40 text-primary" : "text-muted-foreground group-hover:border-primary/20"
-              )}
-            >
-              <Icons.cloudUpload className="h-10 w-10" />
-            </motion.div>
-            <div>
-              <p className="text-xl font-black text-white uppercase tracking-tighter italic">
-                {isDragActive ? "Initialize Ingestion" : "Stage Assets Here"}
-              </p>
-              <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.2em] mt-3 opacity-60">
-                ProRes • H.265 • 8K Raw Compatible
-              </p>
             </div>
-            <Button variant="outline" className="mt-4 h-12 rounded-2xl border-white/10 bg-white/5 text-[10px] font-black uppercase tracking-widest hover:bg-white/10 px-10 text-white transition-all shadow-xl">
-              Select Transmissions
-            </Button>
           </div>
+
+          <Button 
+            onClick={initializePipeline}
+            disabled={isUploading || files.length === 0 || files.every(f => f.status === "completed")}
+            className="w-full bg-primary hover:bg-primary/90 text-white rounded-xl h-14 font-black uppercase tracking-widest italic text-xs shadow-lg shadow-primary/20 transition-all hover:scale-[1.01] active:scale-[0.99]"
+          >
+            {isUploading ? (
+              <>
+                <Icons.refreshCw className="h-5 w-5 mr-3 animate-spin" />
+                Synchronizing_Protocol...
+              </>
+            ) : (
+              <>
+                <Icons.zap className="h-5 w-5 mr-3 fill-current" />
+                Initialize_Ingestion
+              </>
+            )}
+          </Button>
         </div>
 
-        {/* Upload Staging Area */}
-        {files.length > 0 && (
-          <div className="space-y-6 flex flex-col min-h-0">
-            <div className="flex items-center justify-between px-4">
-              <div className="flex items-center gap-3">
-                <span className="text-[10px] font-black text-white uppercase tracking-[0.3em] italic">Staging Queue</span>
-                <span className="px-2 py-0.5 rounded-full bg-white/5 border border-white/5 text-[8px] font-black text-muted-foreground">{files.length}</span>
-              </div>
+        <div className="lg:col-span-7 flex flex-col glass-morphism rounded-2xl border overflow-hidden min-h-0 shadow-sm">
+          <div className="px-5 py-4 border-b flex items-center justify-between bg-muted/30">
+            <div className="flex items-center gap-3">
+               <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+               <span className="text-[10px] font-black text-foreground tracking-widest uppercase italic">Ingestion_Queue</span>
+            </div>
+            {files.length > 0 && (
               <Button 
                 variant="ghost" 
                 size="sm" 
-                onClick={() => setFiles([])}
-                className="h-8 text-[9px] font-black text-primary uppercase tracking-widest hover:bg-primary/10 rounded-xl"
+                onClick={() => setFiles([])} 
+                disabled={isUploading}
+                className="text-[9px] font-black text-primary uppercase tracking-widest hover:bg-primary/5 rounded-lg h-7"
               >
-                Clear Uplink
+                Purge_Queue
               </Button>
-            </div>
+            )}
+          </div>
 
-            <div className="flex-1 space-y-4 overflow-y-auto custom-scrollbar pr-4 pb-4">
-              <AnimatePresence initial={false}>
-                {files.map((file) => (
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-3">
+            <AnimatePresence initial={false}>
+              {files.length === 0 ? (
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="h-full flex flex-col items-center justify-center opacity-20 py-20"
+                >
+                  <Icons.layers className="h-12 w-12 mb-4" />
+                  <span className="text-[9px] font-black tracking-[0.4em] uppercase">No_Assets_Staged</span>
+                </motion.div>
+              ) : (
+                files.map((file) => (
                   <motion.div
                     key={file.id}
                     layout
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                    className="p-6 rounded-[2rem] bg-white/[0.02] border border-white/5 group hover:border-primary/20 transition-all duration-500 shadow-xl"
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className={cn(
+                      "p-4 rounded-xl border transition-all duration-300 relative overflow-hidden group",
+                      file.status === "uploading" ? "border-primary/30 bg-primary/2" : "border-border bg-background hover:border-primary/20"
+                    )}
                   >
-                    <div className="flex items-center justify-between mb-5">
-                      <div className="flex items-center gap-5 overflow-hidden">
-                        <div className="h-12 w-12 rounded-2xl bg-black/40 border border-white/5 flex items-center justify-center shrink-0 shadow-lg">
-                          <Icons.video className="h-5 w-5 text-primary" />
+                    <div className="flex items-center justify-between relative z-10">
+                      <div className="flex items-center gap-4 overflow-hidden">
+                        <div className={cn(
+                          "h-10 w-10 rounded-lg flex items-center justify-center shrink-0 border transition-colors",
+                          file.status === "uploading" ? "bg-primary/10 border-primary/20 text-primary" : "bg-muted border-border text-muted-foreground"
+                        )}>
+                          {file.status === "completed" ? <Icons.check className="h-5 w-5" /> : <Icons.video className="h-5 w-5" />}
                         </div>
                         <div className="overflow-hidden">
-                          <p className="text-sm font-black text-white truncate uppercase tracking-tighter italic">{file.file.name}</p>
-                          <div className="flex items-center gap-3 mt-1">
-                            <span className="text-[9px] text-muted-foreground font-black uppercase tracking-widest opacity-40">{formatSize(file.file.size)}</span>
-                            <span className="h-1 w-1 rounded-full bg-white/10" />
-                            <span className={cn(
-                              "text-[9px] font-black uppercase tracking-widest",
-                              file.status === "uploading" ? "text-primary animate-pulse" : 
-                              file.status === "completed" ? "text-emerald-500" : 
-                              file.status === "failed" ? "text-red-500" : "text-muted-foreground"
-                            )}>
-                              {file.status}
-                            </span>
+                          <p className="text-[11px] font-black text-foreground truncate uppercase tracking-tight italic">{file.file.name}</p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                             <span className="text-[8px] text-muted-foreground font-bold uppercase">{formatSize(file.file.size)}</span>
+                             <span className="text-[8px] text-muted-foreground opacity-30">•</span>
+                             <span className={cn(
+                               "text-[8px] font-black uppercase tracking-wider",
+                               file.status === "completed" ? "text-success" : 
+                               file.status === "failed" ? "text-error" : 
+                               file.status === "uploading" ? "text-primary animate-pulse" : "text-muted-foreground"
+                             )}>{file.status}</span>
                           </div>
                         </div>
                       </div>
                       
-                      {file.status === "uploading" && (
-                        <div className="flex flex-col items-end mr-6">
-                           <span className="text-[10px] font-black text-white uppercase tracking-tighter italic">ETA: {formatETA(file.eta || 0)}</span>
-                           <span className="text-[8px] font-black text-muted-foreground uppercase tracking-widest opacity-40 mt-1">
-                             {( (file.speed || 0) / (1024 * 1024) ).toFixed(2)} MB/s
-                           </span>
+                      <div className="flex items-center gap-4">
+                        {file.status === "uploading" && (
+                          <div className="text-right hidden sm:block">
+                             <p className="text-[9px] font-black text-primary uppercase">{formatSpeed(file.speed || 0)}</p>
+                             <p className="text-[7px] text-muted-foreground font-bold uppercase opacity-50">ETA: {file.eta || 0}s</p>
+                          </div>
+                        )}
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={() => removeFile(file.id)} 
+                          disabled={file.status === "uploading" && !isUploading}
+                          className="h-8 w-8 rounded-lg hover:bg-error/10 hover:text-error text-muted-foreground transition-all"
+                        >
+                          <Icons.x className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    {file.status === "uploading" && (
+                      <div className="mt-4">
+                        <div className="flex items-center justify-between mb-1.5">
+                           <span className="text-[7px] font-bold text-muted-foreground uppercase tracking-widest">Protocol_Progress</span>
+                           <span className="text-[9px] font-black text-primary italic">{file.progress}%</span>
                         </div>
-                      )}
-
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={() => removeFile(file.id)}
-                        disabled={file.status === "uploading"}
-                        className="h-10 w-10 text-muted-foreground hover:text-red-500 transition-all hover:bg-red-500/10 rounded-xl"
-                      >
-                        <Icons.trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-
-                    <div className="relative pt-2">
-                      <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
-                        <motion.div 
-                          initial={{ width: 0 }}
-                          animate={{ width: `${file.progress}%` }}
-                          className="h-full bg-linear-to-r from-primary to-accent shadow-[0_0_20px_rgba(var(--primary),0.4)]"
-                        />
+                        <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden border border-border/50">
+                          <motion.div 
+                            initial={{ width: 0 }}
+                            animate={{ width: `${file.progress}%` }}
+                            className="h-full bg-primary shadow-[0_0_10px_rgba(255,0,0,0.3)]"
+                          />
+                        </div>
                       </div>
-                      <div className="flex justify-between mt-3 px-1">
-                        <span className="text-[8px] font-black text-muted-foreground/40 uppercase tracking-[0.3em] italic">Bitrate Protocol ACTIVE</span>
-                        <span className="text-[10px] font-black text-white italic">{file.progress}%</span>
-                      </div>
-                    </div>
+                    )}
                   </motion.div>
-                ))}
-              </AnimatePresence>
-            </div>
-            
-            <Button 
-              onClick={initializePipeline}
-              disabled={isUploading || files.length === 0 || files.every(f => f.status === "completed")}
-              className="w-full bg-linear-to-br from-primary to-accent hover:opacity-90 text-white rounded-[1.5rem] h-16 font-black uppercase tracking-[0.2em] shadow-2xl shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98] italic text-[11px]"
-            >
-              {isUploading ? (
-                <Icons.refreshCw className="h-5 w-5 mr-3 animate-spin" />
-              ) : (
-                <Icons.zap className="h-5 w-5 mr-3" />
+                ))
               )}
-              Initialize Deployment Pipeline
-            </Button>
+            </AnimatePresence>
           </div>
-        )}
-      </CardContent>
-    </Card>
+        </div>
+      </div>
+    </div>
   )
 }
+

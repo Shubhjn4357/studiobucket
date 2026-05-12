@@ -25,7 +25,7 @@ export default function BillingDemoPage() {
         toast.error("Operation Aborted")
         router.push("/dashboard/settings?canceled=true")
       }
-    } catch (err) {
+    } catch {
       toast.error("Handshake Failed")
     } finally {
       setIsProcessing(false)

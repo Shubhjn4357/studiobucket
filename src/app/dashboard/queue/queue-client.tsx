@@ -119,7 +119,7 @@ function JobCard({ job }: { job: Job }) {
   )
 }
 
-export function QueueClient({ initialJobs, initialStats }: { 
+export function QueueClient({ initialJobs }: { 
   initialJobs: Job[], 
   initialStats: { active: number, completed: number, failed: number, waiting: number } 
 }) {

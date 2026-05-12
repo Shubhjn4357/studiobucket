@@ -96,7 +96,6 @@ export async function POST(request: NextRequest) {
             )
         }
 
-        const now = Math.floor(Date.now() / 1000)
 
         const newAnalytics = await db
             .insert(analytics)

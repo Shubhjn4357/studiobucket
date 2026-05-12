@@ -4,7 +4,6 @@ import { redirect } from "next/navigation"
 import { VideoService } from "@/lib/services/video-service"
 import { ChannelList } from "./channel-list"
 import { ChannelActions } from "./channel-actions"
-import { motion } from "framer-motion"
 import { Icons } from "@/components/ui/icons"
 
 export default async function ChannelsPage() {

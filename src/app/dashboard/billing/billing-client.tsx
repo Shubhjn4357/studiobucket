@@ -136,7 +136,7 @@ export function BillingClient({ currentPlan }: BillingClientProps) {
             exit={{ opacity: 0, y: -40 }}
             className="grid grid-cols-1 md:grid-cols-3 gap-12 px-4 relative z-10"
           >
-            {plans.map((plan, i) => {
+            {plans.map((plan) => {
               const isActive = currentPlan.toLowerCase() === plan.id.toLowerCase()
               return (
                 <div key={plan.id} className={cn(

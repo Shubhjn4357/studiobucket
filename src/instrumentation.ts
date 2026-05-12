@@ -30,8 +30,10 @@ export async function register() {
       }
     })
 
+    // Initialize Workers (assignments removed to satisfy 'no-unused-vars' as workers register themselves)
+    
     // Upload Worker
-    const uploadWorker = new Worker('upload-queue', async (job) => {
+    new Worker('upload-queue', async (job) => {
       logger.info(`Processing upload job ${job.id}`)
       const { userId, filePath, metadata } = job.data
       
@@ -49,11 +51,10 @@ export async function register() {
     }, { connection })
 
     // Download Worker (HARDENED)
-    const downloadWorker = new Worker('download-queue', async (job) => {
-      const { userId, sourceUrl, sourceType } = job.data
+    new Worker('download-queue', async (job) => {
+      const { userId, sourceUrl } = job.data
       logger.info(`Initiating recovery protocol for ${sourceUrl} (Node: ${job.id})`)
 
-      const downloadId = job.id || Math.random().toString(36).substring(7)
       const downloadDir = path.join(process.cwd(), 'public', 'downloads')
       if (!fs.existsSync(downloadDir)) fs.mkdirSync(downloadDir, { recursive: true })
 
@@ -118,7 +119,7 @@ export async function register() {
     }, { connection })
 
     // Studio Worker (SIMULATED)
-    const studioWorker = new Worker('studio-queue', async (job) => {
+    new Worker('studio-queue', async (job) => {
       const { type, videoId, jobId: dbJobId } = job.data
       logger.info(`Processing studio job: ${type} for ${videoId}`)
 
@@ -138,7 +139,7 @@ export async function register() {
     }, { connection })
 
     // Transcode Worker (SIMULATED)
-    const transcodeWorker = new Worker('transcode-queue', async (job) => {
+    new Worker('transcode-queue', async (job) => {
       const { videoId } = job.data
       logger.info(`Initiating transcoding protocol for ${videoId}`)
       await job.updateProgress(100)
@@ -147,3 +148,4 @@ export async function register() {
     logger.info('StudioBucket Operational Workers Online')
   }
 }
+

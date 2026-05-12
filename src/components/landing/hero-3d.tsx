@@ -1,11 +1,10 @@
 "use client"
 
-import { useRef, useMemo, useState, Suspense } from "react"
+import { useRef, useMemo, Suspense } from "react"
 import { Canvas, useFrame } from "@react-three/fiber"
-import { OrbitControls, PerspectiveCamera, Environment, Float, Center } from "@react-three/drei"
+import { OrbitControls, PerspectiveCamera, Environment, Float } from "@react-three/drei"
 import * as THREE from "three"
 import { Button } from "@/components/ui/button"
-import { Icons } from "@/components/ui/icons"
 import { motion } from "framer-motion"
 import Link from "next/link"
 

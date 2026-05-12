@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import { Icons } from "@/components/ui/icons"
-import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { YouTubeContentClient } from "./youtube-content-client"
 

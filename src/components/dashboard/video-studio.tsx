@@ -12,7 +12,6 @@ import { toast } from "sonner"
 import { Track, Clip, VideoProject } from "@/types/video"
 import { motion, AnimatePresence } from "framer-motion"
 import Hls from "hls.js"
-import { AudioWaveform } from "@/components/studio/audio-waveform"
 import { PropertiesPanel } from "@/components/studio/properties-panel"
 import { Badge } from "@/components/ui/badge"
 
@@ -467,9 +466,9 @@ export function VideoStudio({ videoId, initialData, title = "ALPHA_STRIKE", file
                             <div className="w-72 flex items-center gap-6 px-12 shrink-0 border-r border-white/5 h-full bg-black/40 relative overflow-hidden group/trackhead">
                               <div className="absolute inset-y-0 left-0 w-1.5 bg-primary/20 group-hover/trackhead:bg-primary transition-all" />
                               <div className={cn("h-12 w-12 rounded-[1.4rem] flex items-center justify-center border border-white/5 shadow-2xl relative overflow-hidden", 
-                                track.type === "video" ? "bg-primary/10 text-primary" : "bg-emerald-500/10 text-emerald-500"
+                                track.type === "video" ? "bg-primary/10 text-primary" : "bg-success/10 text-success"
                               )}>
-                                 <div className={cn("absolute inset-0 opacity-10", track.type === "video" ? "bg-primary" : "bg-emerald-500")} />
+                                 <div className={cn("absolute inset-0 opacity-10", track.type === "video" ? "bg-primary" : "bg-success")} />
                                  {track.type === "video" ? <Icons.video className="h-6 w-6 relative z-10" /> : <Icons.music className="h-6 w-6 relative z-10" />}
                               </div>
                               <div className="flex flex-col gap-1 overflow-hidden">
@@ -506,7 +505,7 @@ export function VideoStudio({ videoId, initialData, title = "ALPHA_STRIKE", file
                                        {[1,2,3,2,1,4,3,2,5,3,2,1,2,4,3,2,1,2,4,2,3,1,2].map((h, i) => (
                                          <motion.div 
                                            key={i} 
-                                           className="flex-1 bg-emerald-400/60 rounded-full" 
+                                           className="flex-1 bg-success/60 rounded-full" 
                                            style={{ height: `${h * 8}px` }}
                                            animate={selectedClip?.id === clip.id && isPlaying ? { height: [h*8, h*12, h*6, h*10] } : {}}
                                            transition={{ duration: 0.5, repeat: Infinity, delay: i * 0.05 }}
@@ -572,7 +571,7 @@ export function VideoStudio({ videoId, initialData, title = "ALPHA_STRIKE", file
                              <div className="relative group">
                                 <Input 
                                   value={localTitle} 
-                                  onChange={(e) => setLocalTitle(e.target.value)}
+                                  onChange={(_e) => setLocalTitle(_e.target.value)}
                                   className="bg-black/60 border-white/5 h-20 rounded-[2rem] px-10 text-xl font-black tracking-tight text-white focus:border-primary/40 transition-all uppercase italic shadow-inner" 
                                 />
                                 <div className="absolute right-8 top-1/2 -translate-y-1/2 h-2 w-2 rounded-full bg-primary opacity-0 group-focus-within:opacity-100 transition-opacity" />
@@ -603,7 +602,7 @@ export function VideoStudio({ videoId, initialData, title = "ALPHA_STRIKE", file
                              <div className="relative group">
                                 <textarea 
                                   value={description}
-                                  onChange={(e) => setDescription(e.target.value)}
+                                  onChange={(_e) => setDescription(_e.target.value)}
                                   rows={10}
                                   placeholder="Inject protocol details for global indexing..."
                                   className="w-full bg-black/60 border border-white/5 rounded-[3rem] p-10 text-sm font-bold tracking-wide text-white/60 focus:text-white focus:border-primary/40 transition-all outline-none resize-none custom-scrollbar shadow-inner italic"
@@ -659,7 +658,7 @@ export function VideoStudio({ videoId, initialData, title = "ALPHA_STRIKE", file
                              <div className="relative group">
                                 <Input 
                                   value={tags}
-                                  onChange={(e) => setTags(e.target.value)}
+                                  onChange={(_e) => setTags(_e.target.value)}
                                   placeholder="TAG_01, TAG_02, PROTOCOL_ALPHA..."
                                   className="bg-black/60 border-white/5 h-20 rounded-[2rem] px-10 text-[11px] font-black tracking-[0.3em] text-white focus:border-primary/40 transition-all uppercase italic shadow-inner" 
                                 />
@@ -860,7 +859,7 @@ export function VideoStudio({ videoId, initialData, title = "ALPHA_STRIKE", file
                     <span className="text-[11px] font-black text-primary uppercase tracking-[0.6em] italic block">Sector_Telemetry</span>
                     {[
                       { label: "Asset_Scale", value: telemetry.resolution, icon: Icons.maximize },
-                      { label: "Sync_Node", value: "NOMINAL", icon: Icons.refreshCw, color: "text-emerald-500" },
+                      { label: "Sync_Node", value: "NOMINAL", icon: Icons.refreshCw, color: "text-success" },
                       { label: "Enc_Layer", value: "ALPHA_X", icon: Icons.shieldCheck },
                       { label: "Grid_Sector", value: "STRIKE_04", icon: Icons.target },
                       { label: "Protocol", value: "V4.2_PRO", icon: Icons.cpu },
@@ -893,7 +892,7 @@ export function VideoStudio({ videoId, initialData, title = "ALPHA_STRIKE", file
       {/* Global Mission Control Footer */}
       <div className="fixed bottom-8 left-1/2 -translate-x-1/2 hidden xl:flex items-center gap-12 px-12 py-5 bg-black/80 backdrop-blur-3xl border border-white/10 rounded-full shadow-[0_20px_100px_rgba(0,0,0,0.8)] z-50 group hover:border-primary/40 transition-all duration-700">
          <div className="flex items-center gap-6">
-            <div className="h-3 w-3 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_15px_rgba(16,185,129,0.5)]" />
+            <div className="h-3 w-3 rounded-full bg-success animate-pulse shadow-[0_0_15px_rgba(var(--success),0.5)]" />
             <span className="text-[10px] font-black text-white uppercase tracking-[0.5em] italic">GLOBAL_SYNC: NOMINAL</span>
          </div>
          <div className="h-6 w-px bg-white/10" />
@@ -904,7 +903,7 @@ export function VideoStudio({ videoId, initialData, title = "ALPHA_STRIKE", file
          </div>
          <div className="h-6 w-px bg-white/10" />
          <div className="flex items-center gap-6">
-            <Icons.wifi className="h-4 w-4 text-emerald-500" />
+            <Icons.wifi className="h-4 w-4 text-success" />
             <span className="text-[10px] font-black text-white uppercase tracking-[0.4em] italic">STRIKE_HUB_ACTIVE</span>
          </div>
       </div>

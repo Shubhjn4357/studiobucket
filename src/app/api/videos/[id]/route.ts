@@ -72,7 +72,6 @@ export async function PUT(
 
         const body = await request.json()
         const validated = UpdateVideoSchema.parse(body)
-        const now = Math.floor(Date.now() / 1000)
 
         const updated = await db
             .update(videos)

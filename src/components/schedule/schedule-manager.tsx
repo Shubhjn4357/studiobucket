@@ -35,7 +35,6 @@ export function ScheduleManager({ initialSchedules = [] }: ScheduleManagerProps)
   const [schedules, setSchedules] = useState<ScheduledItem[]>(initialSchedules)
   const [isDeleting, setIsDeleting] = useState<string | null>(null)
 
-  const daysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate()
   const firstDayOfMonth = (year: number, month: number) => new Date(year, month, 1).getDay()
 
   const currentYear = selectedDate.getFullYear()
