@@ -7,12 +7,12 @@ import { Icons } from "@/components/ui/icons"
 import { cn } from "@/lib/utils"
 
 interface PropertiesPanelProps {
-  selectedClip: Clip | null
+  clip: Clip | null
   onUpdate: (updates: Partial<Clip>) => void
 }
 
-export function PropertiesPanel({ selectedClip, onUpdate }: PropertiesPanelProps) {
-  if (!selectedClip) {
+export function PropertiesPanel({ clip, onUpdate }: PropertiesPanelProps) {
+  if (!clip) {
     return (
       <div className="h-full flex flex-col items-center justify-center text-muted-foreground p-8">
         <Icons.info className="h-8 w-8 mb-4 opacity-20" />
@@ -33,10 +33,10 @@ export function PropertiesPanel({ selectedClip, onUpdate }: PropertiesPanelProps
           <div className="space-y-3">
              <div className="flex items-center justify-between">
                 <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Opacity</label>
-                <span className="text-[9px] font-mono text-primary">{Math.round((selectedClip.opacity || 1) * 100)}%</span>
+                <span className="text-[9px] font-mono text-primary">{Math.round((clip.opacity || 1) * 100)}%</span>
              </div>
              <Slider 
-               value={[(selectedClip.opacity || 1) * 100]} 
+               value={[(clip.opacity || 1) * 100]} 
                onValueChange={([v]) => onUpdate({ opacity: v / 100 })} 
                max={100} 
              />
@@ -45,10 +45,10 @@ export function PropertiesPanel({ selectedClip, onUpdate }: PropertiesPanelProps
           <div className="space-y-3">
              <div className="flex items-center justify-between">
                 <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Scale</label>
-                <span className="text-[9px] font-mono text-primary">{Math.round((selectedClip.scale || 1) * 100)}%</span>
+                <span className="text-[9px] font-mono text-primary">{Math.round((clip.scale || 1) * 100)}%</span>
              </div>
              <Slider 
-               value={[(selectedClip.scale || 1) * 100]} 
+               value={[(clip.scale || 1) * 100]} 
                onValueChange={([v]) => onUpdate({ scale: v / 100 })} 
                max={500} 
              />
@@ -57,10 +57,10 @@ export function PropertiesPanel({ selectedClip, onUpdate }: PropertiesPanelProps
           <div className="space-y-3">
              <div className="flex items-center justify-between">
                 <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Rotation</label>
-                <span className="text-[9px] font-mono text-primary">{selectedClip.rotation || 0}°</span>
+                <span className="text-[9px] font-mono text-primary">{clip.rotation || 0}°</span>
              </div>
              <Slider 
-               value={[selectedClip.rotation || 0]} 
+               value={[clip.rotation || 0]} 
                onValueChange={([v]) => onUpdate({ rotation: v })} 
                min={-180}
                max={180} 
@@ -73,10 +73,10 @@ export function PropertiesPanel({ selectedClip, onUpdate }: PropertiesPanelProps
                   <Icons.volume2 className="h-3 w-3" />
                   Audio Volume
                 </label>
-                <span className="text-[9px] font-mono text-emerald-500">{Math.round((selectedClip.volume ?? 1) * 100)}%</span>
+                <span className="text-[9px] font-mono text-emerald-500">{Math.round((clip.volume ?? 1) * 100)}%</span>
              </div>
              <Slider 
-               value={[(selectedClip.volume ?? 1) * 100]} 
+               value={[(clip.volume ?? 1) * 100]} 
                onValueChange={([v]) => onUpdate({ volume: v / 100 })} 
                max={100} 
              />
@@ -99,7 +99,7 @@ export function PropertiesPanel({ selectedClip, onUpdate }: PropertiesPanelProps
                     onClick={() => onUpdate({ transitionIn: t })}
                     className={cn(
                       "h-10 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all italic",
-                      selectedClip.transitionIn === t 
+                      clip.transitionIn === t 
                         ? "bg-accent/10 border-accent/40 text-accent" 
                         : "bg-white/[0.02] border-white/5 text-white/20 hover:bg-white/[0.05]"
                     )}
@@ -118,7 +118,7 @@ export function PropertiesPanel({ selectedClip, onUpdate }: PropertiesPanelProps
                     onClick={() => onUpdate({ transitionOut: t })}
                     className={cn(
                       "h-10 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all italic",
-                      selectedClip.transitionOut === t 
+                      clip.transitionOut === t 
                         ? "bg-accent/10 border-accent/40 text-accent" 
                         : "bg-white/[0.02] border-white/5 text-white/20 hover:bg-white/[0.05]"
                     )}

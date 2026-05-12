@@ -1,8 +1,7 @@
 "use client";
 
-import { IconArrowLeft, IconArrowRight } from "@tabler/icons-react";
+import { IconArrowLeft, IconArrowRight, IconVideo } from "@tabler/icons-react";
 import { motion, AnimatePresence } from "framer-motion";
-import Image from "next/image";
 import { useEffect, useState, useMemo, useCallback } from "react";
 
 type Testimonial = {
@@ -83,14 +82,18 @@ export const AnimatedTestimonials = ({
                   }}
                   className="absolute inset-0 origin-bottom"
                 >
-                  <Image
-                    src={testimonial.src}
-                    alt={testimonial.name}
-                    width={500}
-                    height={500}
-                    draggable={false}
-                    className="h-full w-full rounded-2xl object-cover object-center border border-border shadow-sm"
-                  />
+                  <div className="h-full w-full rounded-2xl bg-secondary/10 border border-border flex flex-col items-center justify-center relative overflow-hidden group/card shadow-sm">
+                    <div className="absolute inset-0 industrial-grid opacity-20" />
+                    <div className="relative z-10 space-y-4 text-center">
+                      <div className="p-3 bg-primary/10 rounded-lg border border-primary/20 inline-block">
+                         <IconVideo className="h-8 w-8 text-primary" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-bold text-primary tracking-widest uppercase">Verified_Operator</p>
+                        <p className="text-[8px] text-muted-foreground font-mono uppercase opacity-50">UID: {testimonial.src}</p>
+                      </div>
+                    </div>
+                  </div>
                 </motion.div>
               ))}
             </AnimatePresence>

@@ -58,10 +58,12 @@ export const StickyScroll = ({
       animate={{
         backgroundColor: backgroundColors[activeCard % backgroundColors.length],
       }}
-      className="relative flex h-[30rem] justify-center space-x-10 overflow-y-auto rounded-xl p-10 glass-morphism transition-colors duration-500"
+      className="relative flex h-[30rem] justify-center space-x-10 overflow-y-auto rounded-md p-10 border border-border bg-surface transition-colors duration-500"
       ref={ref}
     >
-      <div className="relative flex items-start px-4">
+      <div className="absolute inset-0 industrial-grid opacity-5 pointer-events-none" />
+      
+      <div className="relative flex items-start px-4 z-10">
         <div className="max-w-2xl">
           {content.map((item, index) => (
             <div key={item.title + index} className="my-20">
@@ -70,9 +72,9 @@ export const StickyScroll = ({
                   opacity: 0,
                 }}
                 animate={{
-                  opacity: activeCard === index ? 1 : 0.3,
+                  opacity: activeCard === index ? 1 : 0.2,
                 }}
-                className="text-2xl font-black text-foreground italic uppercase tracking-tight"
+                className="text-3xl font-black text-foreground italic uppercase tracking-tighter"
               >
                 {item.title}
               </motion.h2>
@@ -81,9 +83,9 @@ export const StickyScroll = ({
                   opacity: 0,
                 }}
                 animate={{
-                  opacity: activeCard === index ? 1 : 0.3,
+                  opacity: activeCard === index ? 1 : 0.2,
                 }}
-                className="text-base mt-6 max-w-sm text-muted-foreground font-medium"
+                className="text-xs mt-4 max-w-sm text-muted-foreground font-bold uppercase tracking-wide opacity-80"
               >
                 {item.description}
               </motion.p>
@@ -95,10 +97,11 @@ export const StickyScroll = ({
       <div
         style={{ background: backgroundGradient }}
         className={cn(
-          "sticky top-10 hidden h-60 w-80 overflow-hidden rounded-xl bg-background lg:block border border-border shadow-2xl transition-all duration-500",
+          "sticky top-10 hidden h-60 w-80 overflow-hidden rounded-md bg-background lg:block border border-border shadow-sm transition-all duration-500",
           contentClassName,
         )}
       >
+        <div className="absolute inset-0 industrial-grid opacity-10 pointer-events-none" />
         {content[activeCard].content ?? null}
       </div>
     </motion.div>

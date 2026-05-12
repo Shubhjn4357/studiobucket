@@ -1,11 +1,12 @@
-import { db } from "../lib/db"
-import { redis } from "../lib/redis"
-import { execSync } from "child_process"
 import * as dotenv from "dotenv"
-
 dotenv.config()
 
+import { execSync } from "child_process"
+
 async function runDoctor() {
+  const { db } = await import("../lib/db")
+  const { redis } = await import("../lib/redis")
+  
   console.log("🏥 StudioBucket System Doctor\n")
   let healthy = true
 
@@ -64,10 +65,12 @@ async function runDoctor() {
   // 4. Check FFmpeg
   console.log("\n🎬 Checking FFmpeg...")
   try {
-    const ffmpegVersion = execSync("ffmpeg -version").toString().split("\n")[0]
+    const { default: ffmpegStatic } = await import("ffmpeg-static")
+    const ffmpegPath = ffmpegStatic || "ffmpeg"
+    const ffmpegVersion = execSync(`${ffmpegPath} -version`).toString().split("\n")[0]
     console.log(`  ✅ ${ffmpegVersion}`)
-  } catch {
-    console.log("  ❌ FFmpeg not found! Please install ffmpeg.")
+  } catch (error) {
+    console.log("  ❌ FFmpeg not found! (Tried system and static package)")
     healthy = false
   }
 

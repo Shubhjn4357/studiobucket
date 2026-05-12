@@ -41,12 +41,12 @@ export async function POST(request: NextRequest) {
         filePath: storedPath,
         fileSize: fileSize,
         status: "draft",
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
+        // Letting Drizzle handle createdAt/updatedAt defaults for better compatibility
       })
-    } catch (dbError) {
-      logger.error(dbError, `DB insertion failed for video ${videoId}`)
-      throw new Error("Database synchronization failure during protocol initialization")
+    } catch (dbError: unknown) {
+      const message = dbError instanceof Error ? dbError.message : "protocol initialization failed";
+      logger.error(dbError instanceof Error ? dbError : new Error(message), `DB insertion failed for video ${videoId}: ${message}`);
+      throw new Error(`Database synchronization failure: ${message}`);
     }
 
     logger.info(`Upload initialized: ${videoId}. Strategy: ${url.includes('api/upload') ? 'Local' : 'Cloud'}`)
