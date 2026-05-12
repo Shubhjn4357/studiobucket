@@ -7,8 +7,6 @@ import { Icons } from "@/components/ui/icons"
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
-import Image from "next/image"
-
 interface DownloadJob {
   id: string
   url: string

@@ -141,8 +141,10 @@ import {
   Monitor,
   Cast,
   ExternalLink,
+  ShieldAlert,
 } from "lucide-react"
 export const Icons = {
+  shieldAlert:ShieldAlert,
   send:Send,
   inbox:Inbox,
   sliders:Sliders,
