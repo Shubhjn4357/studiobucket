@@ -1,7 +1,7 @@
 import { google } from "googleapis"
 import { db } from "@/lib/db"
 import { users } from "@/lib/db/schema"
-import { eq } from "drizzle-orm"
+import { eq, and } from "drizzle-orm"
 import pino from "pino"
 import fs from "fs"
 
@@ -61,10 +61,10 @@ export class YouTubeService {
     } catch (error: unknown) {
       if (error && typeof error === 'object' && 'code' in error && error.code === 401 && refreshToken) {
         try {
-          const newTokens = await this.refreshTokens(refreshToken)
+          const newTokens = await this.refreshTokens(refreshToken, userId)
           this.oauth2Client.setCredentials({
-            access_token: newTokens.accessToken,
-            refresh_token: newTokens.refreshToken,
+            access_token: newTokens.accessToken || undefined,
+            refresh_token: newTokens.refreshToken || undefined,
           })
 
           const response = await this.youtube.channels.list({
@@ -358,18 +358,47 @@ export class YouTubeService {
     }
   }
 
-  private async refreshTokens(refreshToken: string) {
+  private async refreshTokens(refreshToken: string, userId?: string) {
     try {
       const response = await this.oauth2Client.refreshAccessToken()
       const credentials = response.credentials
-      return {
+      
+      const newTokens = {
         accessToken: credentials.access_token,
         refreshToken: credentials.refresh_token || refreshToken,
         expiresAt: credentials.expiry_date,
       }
+
+      // Persist to DB if userId is provided
+      if (userId && newTokens.accessToken) {
+        const { accounts, channels } = await import("@/lib/db/schema")
+        
+        // Update main account
+        await db.update(accounts)
+          .set({
+            access_token: newTokens.accessToken,
+            refresh_token: newTokens.refreshToken,
+            expires_at: newTokens.expiresAt ? Math.floor(newTokens.expiresAt / 1000) : null,
+          })
+          .where(and(eq(accounts.userId, userId), eq(accounts.provider, "google")))
+
+        // Update all channels linked to this user (they likely share the same account)
+        await db.update(channels)
+          .set({
+            accessToken: newTokens.accessToken,
+            refreshToken: newTokens.refreshToken,
+            expiresAt: newTokens.expiresAt,
+            updatedAt: Date.now()
+          })
+          .where(eq(channels.userId, userId))
+          
+        logger.info(`Tokens refreshed and persisted for user: ${userId}`)
+      }
+
+      return newTokens
     } catch (error) {
-      logger.error(error, "Token refresh failed:")
-      throw new Error("Failed to refresh tokens")
+      logger.error(error, "Token refresh and persistence failed:")
+      throw new Error("Failed to refresh and synchronize tokens")
     }
   }
 

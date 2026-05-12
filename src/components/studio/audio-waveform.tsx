@@ -36,11 +36,14 @@ export function AudioWaveform({ audioUrl, width, height, color = "#10b981" }: Au
   }, [audioUrl, width, height, color])
 
   return (
-    <canvas 
-      ref={canvasRef} 
-      width={width} 
-      height={height} 
-      className="w-full h-full opacity-50"
-    />
+    <div className="relative group overflow-hidden rounded-xl border border-white/5 bg-black/20">
+      <canvas 
+        ref={canvasRef} 
+        width={width} 
+        height={height} 
+        className="w-full h-full opacity-60 group-hover:opacity-100 transition-opacity duration-500"
+      />
+      <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_50%,rgba(0,0,0,0.2)_50%)] bg-[size:100%_4px] pointer-events-none" />
+    </div>
   )
 }

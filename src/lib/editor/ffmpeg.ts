@@ -5,10 +5,12 @@ import * as path from "path"
 import ffmpegStatic from "ffmpeg-static"
 // Resolve static paths safely
 const FFMPEG_PATH = ffmpegStatic || "ffmpeg"
-// Inject into PATH so ezffmpeg and raw spawn can find them
+// In production/win32, ensure the path is absolute and correctly delimited
 if (ffmpegStatic) {
   const ffmpegDir = path.dirname(ffmpegStatic)
-  process.env.PATH = `${ffmpegDir}${path.delimiter}${process.env.PATH}`
+  if (!process.env.PATH?.includes(ffmpegDir)) {
+    process.env.PATH = `${ffmpegDir}${path.delimiter}${process.env.PATH}`
+  }
 }
 
 export interface VideoTransformOptions {

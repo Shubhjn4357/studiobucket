@@ -93,8 +93,11 @@ export interface YouTubePlaylist {
     title: string
     description?: string
     thumbnails?: {
-      high?: { url: string }
       default?: { url: string }
+      medium?: { url: string }
+      high?: { url: string }
+      standard?: { url: string }
+      maxres?: { url: string }
     }
     publishedAt?: string
   }
@@ -125,15 +128,25 @@ export interface YouTubeComment {
 }
 
 export interface YouTubeSearchResult {
-  id?: {
-    videoId?: string
+  kind?: string | null
+  etag?: string | null
+  id: {
+    kind?: string | null
+    videoId?: string | null
+    channelId?: string | null
+    playlistId?: string | null
   }
   snippet?: {
-    title: string
-    description: string
+    title?: string | null
+    description?: string | null
     thumbnails?: {
-      high?: { url: string }
+      default?: { url?: string | null }
+      medium?: { url?: string | null }
+      high?: { url?: string | null }
+      standard?: { url?: string | null }
+      maxres?: { url?: string | null }
     }
-    publishedAt: string
+    publishedAt?: string | null
+    channelTitle?: string | null
   }
 }

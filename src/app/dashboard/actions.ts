@@ -307,6 +307,12 @@ export async function getYouTubeVideosAction() {
   return await ytService.getChannelVideos(settings.selectedChannelId)
 }
 
+export async function getChannelsAction() {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) return []
+  return await videoService.getChannels(session.user.id)
+}
+
 export async function deleteYouTubeVideoAction(videoId: string) {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) throw new Error("Unauthorized")

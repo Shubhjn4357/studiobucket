@@ -12,7 +12,7 @@ export function useSettings() {
     try {
       await switchChannelAction(channelId)
       toast.success("Channel switched successfully")
-    } catch (_err: unknown) {
+    } catch {
       toast.error("Failed to switch channel")
     } finally {
       setIsUpdating(false)

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { Icons } from "@/components/ui/icons"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { getVideosAction, getCommentsAction, postCommentAction } from "@/app/dashboard/actions"
@@ -66,7 +66,6 @@ export default function InteractionsPage() {
       await postCommentAction(selectedVideoId, replyText)
       toast.success("Frequency transmitted successfully")
       setReplyText("")
-      // Reload comments
       const data = await getCommentsAction(selectedVideoId)
       setComments(data as YouTubeComment[])
     } catch {
@@ -74,57 +73,86 @@ export default function InteractionsPage() {
     }
   }
 
+  const selectedVideo = videos.find(v => v.id === selectedVideoId)
+
   return (
-    <div className="space-y-8 pb-12">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="h-12 w-12 rounded-2xl bg-linear-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/20">
-            <Icons.messageSquare className="h-6 w-6 text-white" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-black text-foreground uppercase tracking-tighter leading-none italic">Community Hub</h1>
-            <p className="text-muted-foreground font-bold uppercase tracking-[0.2em] text-[10px] mt-1">Audience Interactions • Engagement Node</p>
+    <div className="space-y-16 pb-24 relative max-w-7xl mx-auto">
+      {/* Structural Ambience Nodes */}
+      <div className="absolute -top-60 -left-60 w-[800px] h-[800px] bg-primary/5 blur-[200px] rounded-full pointer-events-none" />
+      <div className="absolute top-1/2 -right-60 w-[600px] h-[600px] bg-accent/5 blur-[180px] rounded-full pointer-events-none" />
+
+      {/* Industrial Header Console */}
+      <div className="flex flex-col md:flex-row items-center justify-between gap-12 p-16 bg-black/40 backdrop-blur-3xl border border-white/5 rounded-[4rem] shadow-2xl relative overflow-hidden">
+        {/* HUD Scanline FX */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_2px_2px,#ffffff03_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />
+        
+        <div className="flex flex-col md:flex-row items-center gap-12 relative z-10">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.8, rotate: -10 }}
+            animate={{ opacity: 1, scale: 1, rotate: 0 }}
+            className="h-24 w-24 rounded-[2.5rem] bg-primary flex items-center justify-center shadow-2xl shadow-primary/40 relative group"
+          >
+            <div className="absolute inset-0 rounded-[2.5rem] bg-primary blur-2xl opacity-20 group-hover:opacity-40 transition-opacity" />
+            <Icons.messageSquare className="h-12 w-12 text-white relative z-10" />
+          </motion.div>
+          <div className="space-y-3 text-center md:text-left">
+            <div className="flex items-center justify-center md:justify-start gap-4">
+               <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+               <span className="text-[11px] font-black text-primary uppercase tracking-[0.5em] italic">Community_Node_Linked</span>
+            </div>
+            <h1 className="text-5xl md:text-6xl font-black text-white uppercase tracking-tighter italic leading-none">Transmission_Feed</h1>
+            <p className="text-white/20 font-black uppercase tracking-[0.4em] text-[11px] italic">Audience_Interaction_Hub // Community_Sync</p>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 relative z-10 px-4">
         {/* Video Selector Sidebar */}
-        <div className="lg:col-span-4 space-y-4">
-           <div className="flex items-center justify-between px-2">
-              <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest italic">Signal Selection</span>
-              <span className="text-[8px] font-black text-primary uppercase tracking-[0.2em]">{videos.length} Channels</span>
+        <div className="lg:col-span-4 space-y-8">
+           <div className="flex items-center justify-between px-6">
+              <span className="text-[11px] font-black text-white/20 uppercase tracking-[0.4em] italic">Signal_Selection</span>
+              <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em] italic">{videos.length} NODES</span>
            </div>
-           <div className="space-y-2 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+           <div className="space-y-4 max-h-[700px] overflow-y-auto pr-4 custom-scrollbar">
               {isLoading ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="h-16 rounded-xl bg-muted/20 animate-pulse border border-white/5" />
+                Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="h-24 rounded-[2rem] bg-white/[0.02] animate-pulse border border-white/5" />
                 ))
               ) : (
                 videos.map((video) => (
-                  <button
+                  <motion.button
                     key={video.id}
+                    layout
                     onClick={() => setSelectedVideoId(video.id)}
                     className={cn(
-                      "w-full p-4 rounded-xl border-2 transition-all text-left flex items-center gap-3 group",
+                      "w-full p-6 rounded-[2.5rem] border transition-all duration-700 text-left flex items-center gap-6 group relative overflow-hidden shadow-2xl",
                       selectedVideoId === video.id 
-                        ? "border-primary bg-primary/5 shadow-lg shadow-primary/10" 
-                        : "border-border bg-card/50 hover:border-primary/30"
+                        ? "border-primary/40 bg-primary/[0.05] shadow-primary/10" 
+                        : "border-white/5 bg-black/40 hover:border-primary/20"
                     )}
                   >
-                    <div className="h-10 w-10 rounded-lg bg-slate-900 border border-white/5 overflow-hidden shrink-0">
-                       {video.thumbnailPath && <img src={video.thumbnailPath} className="h-full w-full object-cover" />}
+                    <div className="h-16 w-24 rounded-2xl bg-black border border-white/10 overflow-hidden shrink-0 relative z-10">
+                       {video.thumbnailPath ? (
+                         <img src={video.thumbnailPath} className="h-full w-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" />
+                       ) : (
+                         <div className="h-full w-full bg-[radial-gradient(circle_at_center,#ffffff05_1px,transparent_1px)] bg-[size:10px_10px]" />
+                       )}
                     </div>
-                    <div className="min-w-0">
+                    <div className="min-w-0 relative z-10 space-y-2">
                        <p className={cn(
-                         "text-[10px] font-black uppercase tracking-tight truncate",
-                         selectedVideoId === video.id ? "text-primary" : "text-foreground"
+                         "text-sm font-black uppercase tracking-tight truncate italic",
+                         selectedVideoId === video.id ? "text-primary" : "text-white/60 group-hover:text-white"
                        )}>{video.title}</p>
-                       <p className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest mt-0.5">
-                         {video.views?.toLocaleString() || 0} Views
-                       </p>
+                       <div className="flex items-center gap-3">
+                         <span className="text-[9px] font-black text-white/20 uppercase tracking-widest italic leading-none">
+                           {video.views?.toLocaleString() || 0} UNITS
+                         </span>
+                         {selectedVideoId === video.id && (
+                           <div className="h-1 w-1 rounded-full bg-primary animate-pulse" />
+                         )}
+                       </div>
                     </div>
-                  </button>
+                  </motion.button>
                 ))
               )}
            </div>
@@ -132,91 +160,103 @@ export default function InteractionsPage() {
 
         {/* Comment Thread */}
         <div className="lg:col-span-8">
-           <Card className="cyber-card border-border bg-card/50 min-h-[600px] flex flex-col">
-              <CardHeader className="border-b border-white/5 pb-6">
-                 <div className="flex items-center justify-between">
-                    <div>
-                       <CardTitle className="text-xl font-black uppercase italic tracking-tighter text-foreground">Transmission Feed</CardTitle>
-                       <CardDescription className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Monitoring community frequencies in real-time</CardDescription>
-                    </div>
-                    <div className="flex items-center gap-2">
-                       <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                       <span className="text-[9px] font-black uppercase tracking-widest text-emerald-500">Uplink Active</span>
-                    </div>
+           <div className="bg-black/40 backdrop-blur-3xl border border-white/5 rounded-[4rem] min-h-[700px] flex flex-col shadow-2xl relative overflow-hidden">
+              {/* Internal HUD Elements */}
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_2px_2px,#ffffff03_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />
+              
+              <div className="p-12 border-b border-white/5 bg-white/[0.01] flex items-center justify-between relative z-10">
+                 <div>
+                    <h2 className="text-2xl font-black uppercase italic tracking-tighter text-white">Frequency_Feed</h2>
+                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/20 mt-1 italic">Monitoring community sectors in real-time</p>
                  </div>
-              </CardHeader>
-              <CardContent className="flex-1 overflow-y-auto p-0 custom-scrollbar">
-                 <div className="p-6 space-y-6">
-                    {isLoadingComments ? (
-                      <div className="flex flex-col items-center justify-center py-20 opacity-20">
-                         <Icons.refreshCw className="h-10 w-10 animate-spin mb-4" />
-                         <p className="text-[10px] font-black uppercase tracking-widest">Synchronizing Feed...</p>
-                      </div>
-                    ) : comments.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center py-20 opacity-20">
-                         <Icons.messageSquare className="h-12 w-12 mb-4" />
-                         <p className="text-[10px] font-black uppercase tracking-widest">No frequencies detected in this sector.</p>
-                      </div>
-                    ) : (
-                      comments.map((comment, i) => (
-                        <motion.div
-                          key={comment.id}
-                          initial={{ opacity: 0, x: -10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: i * 0.05 }}
-                          className="flex gap-4 p-4 rounded-2xl bg-white/5 border border-white/5 group hover:border-primary/20 transition-all"
-                        >
-                           <div className="h-10 w-10 rounded-full bg-linear-to-br from-slate-800 to-slate-900 border border-white/10 shrink-0 overflow-hidden">
-                              {comment.snippet.topLevelComment.snippet.authorProfileImageUrl && (
-                                <img src={comment.snippet.topLevelComment.snippet.authorProfileImageUrl} className="h-full w-full object-cover" />
-                              )}
-                           </div>
-                           <div className="space-y-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                 <span className="text-[10px] font-black text-foreground uppercase tracking-tight italic">
-                                   {comment.snippet.topLevelComment.snippet.authorDisplayName}
-                                 </span>
-                                 <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest">
-                                   {new Date(comment.snippet.topLevelComment.snippet.publishedAt).toLocaleDateString()}
-                                 </span>
-                              </div>
-                              <p className="text-[11px] text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                                {comment.snippet.topLevelComment.snippet.textOriginal}
-                              </p>
-                              <div className="flex items-center gap-4 pt-2">
-                                 <button className="flex items-center gap-1 text-[9px] font-black text-muted-foreground hover:text-primary transition-colors">
-                                    <Icons.heart className="h-3 w-3" />
-                                    {comment.snippet.topLevelComment.snippet.likeCount || 0}
-                                 </button>
-                                 <button className="text-[9px] font-black text-muted-foreground hover:text-primary transition-colors uppercase tracking-widest">
-                                    Reply
-                                 </button>
-                              </div>
-                           </div>
-                        </motion.div>
-                      ))
-                    )}
+                 <div className="hidden sm:flex items-center gap-4 border-l border-white/5 pl-8">
+                    <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-[9px] font-black uppercase tracking-[0.4em] text-emerald-500 italic">UPLINK_STABLE</span>
                  </div>
-              </CardContent>
-              <div className="p-6 border-t border-white/5 bg-black/20 backdrop-blur-3xl">
-                 <div className="relative">
+              </div>
+
+              <div className="flex-1 overflow-y-auto custom-scrollbar relative z-10">
+                 <div className="p-12 space-y-10">
+                    <AnimatePresence mode="popLayout">
+                      {isLoadingComments ? (
+                        <div className="flex flex-col items-center justify-center py-40 opacity-20">
+                           <Icons.refreshCw className="h-12 w-12 animate-spin mb-6" />
+                           <p className="text-[11px] font-black uppercase tracking-[0.5em] italic">Synchronizing_Frequencies...</p>
+                        </div>
+                      ) : comments.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-40 opacity-20 border border-dashed border-white/5 rounded-[3rem]">
+                           <Icons.messageSquare className="h-16 w-16 mb-6" />
+                           <p className="text-[11px] font-black uppercase tracking-[0.5em] italic text-center px-12">No frequency detected in this sector.<br/>Awaiting community transmission.</p>
+                        </div>
+                      ) : (
+                        comments.map((comment, i) => (
+                          <motion.div
+                            key={comment.id}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: i * 0.05 }}
+                            className="flex gap-8 p-10 rounded-[3rem] bg-white/[0.02] border border-white/5 group hover:border-primary/30 transition-all duration-700 shadow-xl relative overflow-hidden"
+                          >
+                             {/* Individual Comment HUD Scanline */}
+                             <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.02)_50%)] pointer-events-none bg-[size:100%_4px] opacity-10" />
+
+                             <div className="h-14 w-14 rounded-2xl bg-black border border-white/10 shrink-0 overflow-hidden relative z-10 shadow-2xl">
+                                {comment.snippet.topLevelComment.snippet.authorProfileImageUrl && (
+                                  <img src={comment.snippet.topLevelComment.snippet.authorProfileImageUrl} className="h-full w-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+                                )}
+                             </div>
+                             <div className="space-y-4 min-w-0 relative z-10 flex-1">
+                                <div className="flex items-center justify-between">
+                                   <div className="flex items-center gap-4">
+                                      <span className="text-[12px] font-black text-white uppercase tracking-tight italic group-hover:text-primary transition-colors">
+                                        {comment.snippet.topLevelComment.snippet.authorDisplayName}
+                                      </span>
+                                      <span className="text-[9px] font-black text-white/20 uppercase tracking-widest italic">
+                                        {new Date(comment.snippet.topLevelComment.snippet.publishedAt).toLocaleDateString()}
+                                      </span>
+                                   </div>
+                                   <div className="flex items-center gap-4">
+                                      <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20">
+                                         <Icons.heart className="h-3 w-3 text-primary" />
+                                         <span className="text-[10px] font-black text-primary italic leading-none">
+                                            {comment.snippet.topLevelComment.snippet.likeCount || 0}
+                                         </span>
+                                      </div>
+                                   </div>
+                                </div>
+                                <p className="text-[13px] text-white/60 leading-relaxed italic whitespace-pre-wrap font-medium group-hover:text-white/80 transition-colors">
+                                  {comment.snippet.topLevelComment.snippet.textOriginal}
+                                </p>
+                             </div>
+                          </motion.div>
+                        ))
+                      )}
+                    </AnimatePresence>
+                 </div>
+              </div>
+
+              <div className="p-10 border-t border-white/5 bg-black/40 backdrop-blur-3xl relative z-20">
+                 <div className="relative group">
                     <Input 
-                      placeholder="Input frequency to transmit..." 
-                      className="h-14 bg-white/5 border-white/10 rounded-2xl pl-6 pr-32 font-medium focus:ring-primary/20 transition-all"
+                      placeholder="Transmitting frequency response protocol..." 
+                      className="h-20 bg-white/5 border-white/10 rounded-[2rem] pl-10 pr-48 font-black uppercase text-[11px] tracking-[0.2em] italic focus:ring-primary/20 focus:border-primary/40 transition-all duration-500 placeholder:text-white/10"
                       value={replyText}
                       onChange={(e) => setReplyText(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && handlePostComment()}
                     />
-                    <Button 
-                      onClick={handlePostComment}
-                      disabled={!replyText || !selectedVideoId}
-                      className="absolute right-2 top-2 h-10 bg-primary text-white hover:opacity-90 rounded-xl px-6 text-[10px] font-black uppercase tracking-widest"
-                    >
-                       Transmit
-                    </Button>
+                    <div className="absolute right-3 top-3 h-14">
+                      <Button 
+                        onClick={handlePostComment}
+                        disabled={!replyText || !selectedVideoId}
+                        className="h-full bg-primary text-white hover:scale-[1.05] active:scale-[0.95] rounded-[1.5rem] px-10 text-[11px] font-black uppercase tracking-[0.4em] shadow-2xl shadow-primary/30 transition-all italic border border-primary/20"
+                      >
+                         <Icons.send className="h-4 w-4 mr-3" />
+                         Transmit
+                      </Button>
+                    </div>
                  </div>
               </div>
-           </Card>
+           </div>
         </div>
       </div>
     </div>

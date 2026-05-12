@@ -12,7 +12,7 @@ export function usePayments() {
     try {
       const { url } = await createCheckoutSession(priceId as "alpha" | "pro" | "pro-monthly" | "fleet" | "fleet-monthly")
       if (url) window.location.href = url
-    } catch (_err: unknown) {
+    } catch {
       toast.error("Failed to initiate payment")
     } finally {
       setIsLoading(false)
@@ -24,7 +24,7 @@ export function usePayments() {
     try {
       const { url } = await createPortalSession()
       if (url) window.location.href = url
-    } catch (_err: unknown) {
+    } catch {
       toast.error("Failed to open billing portal")
     } finally {
       setIsLoading(false)

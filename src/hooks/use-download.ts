@@ -24,7 +24,7 @@ export function useDownload() {
       toast.info("Download initiated")
       // Simulate progress
       setDownload(prev => ({ ...prev, progress: 100, status: "completed" }))
-    } catch (_err) {
+    } catch {
       setDownload(prev => ({ ...prev, status: "failed" }))
       toast.error("Download failed")
     }

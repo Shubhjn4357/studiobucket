@@ -26,7 +26,7 @@ export function useScheduler() {
       setTasks(prev => [...prev, newTask])
       toast.success("Task scheduled successfully")
       return newTask.id
-    } catch (_err) {
+    } catch {
       toast.error("Failed to schedule task")
     } finally {
       setIsLoading(false)

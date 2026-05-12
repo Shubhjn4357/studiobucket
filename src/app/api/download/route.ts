@@ -45,7 +45,8 @@ export async function POST(request: NextRequest) {
             const execAsync = promisify(exec)
             
             try {
-                const { stdout } = await execAsync(`yt-dlp --flat-playlist --get-id "${sourceUrl}"`)
+                const ytDlpPath = "C:\\Users\\shubh\\AppData\\Local\\Python\\pythoncore-3.14-64\\Scripts\\yt-dlp.exe"
+      const { stdout } = await execAsync(`"${ytDlpPath}" --flat-playlist --get-id "${sourceUrl}"`)
                 const videoIds = stdout.trim().split("\n").filter(id => id.length > 0)
                 
                 const results = []
@@ -80,6 +81,9 @@ export async function POST(request: NextRequest) {
                 return NextResponse.json({ error: "Failed to expand playlist" }, { status: 500 })
             }
         }
+
+        const ytDlpPath = "C:\\Users\\shubh\\AppData\\Local\\Python\\pythoncore-3.14-64\\Scripts\\yt-dlp.exe"
+        logger.info(`Starting download: ${sourceUrl}`)
 
         // Single video download
         const newDownloadJob = await db

@@ -5,9 +5,7 @@ import GoogleProvider from "next-auth/providers/google"
 import { db } from "@/lib/db"
 import { accounts, sessions, users, verificationTokens, channels } from "@/lib/db/schema"
 
-import { SubscriptionService } from "@/lib/services/subscription-service"
 
-const subService = new SubscriptionService()
 
 export const authOptions: NextAuthOptions = {
   adapter: DrizzleAdapter(db, {
@@ -31,7 +29,7 @@ export const authOptions: NextAuthOptions = {
     })
   ],
   callbacks: {
-    async signIn({ account, user }) {
+    async signIn() {
       return true
     },
     session: ({ session, token }) => ({

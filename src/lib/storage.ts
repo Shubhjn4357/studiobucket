@@ -1,4 +1,5 @@
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3"
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 import fs from "fs"
 import path from "path"
 import { logger } from "./logger"
@@ -87,5 +88,21 @@ export class StorageEngine {
       return `${R2_PUBLIC_URL}/${key}`
     }
     return `/uploads/${key}`
+  }
+
+  static async getPresignedUrl(key: string, contentType: string): Promise<{ url: string; fields?: Record<string, string> }> {
+    if (!isCloudEnabled || !s3Client) {
+      // Local fallback doesn't support pre-signed URLs in the same way
+      return { url: `/api/upload/direct?key=${key}&type=${contentType}` }
+    }
+
+    const command = new PutObjectCommand({
+      Bucket: R2_BUCKET,
+      Key: key,
+      ContentType: contentType,
+    })
+
+    const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 })
+    return { url }
   }
 }

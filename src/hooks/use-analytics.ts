@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { getDailyStatsAction } from "@/app/dashboard/actions"
+import { toast } from "sonner"
 
 export interface DailyStat {
   date: string
@@ -19,7 +20,8 @@ export function useAnalytics(days = 7) {
     try {
       const stats = await getDailyStatsAction(days)
       setData(stats as unknown as DailyStat[])
-    } catch (err) {
+    } catch {
+      toast.error("Telemetry failure")
       setError("Failed to load analytics data")
     } finally {
       setIsLoading(false)

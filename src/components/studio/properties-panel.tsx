@@ -4,6 +4,7 @@ import React from "react"
 import { Clip } from "@/types/video"
 import { Slider } from "@/components/ui/slider"
 import { Icons } from "@/components/ui/icons"
+import { cn } from "@/lib/utils"
 
 interface PropertiesPanelProps {
   selectedClip: Clip | null
@@ -83,35 +84,49 @@ export function PropertiesPanel({ selectedClip, onUpdate }: PropertiesPanelProps
         </div>
       </div>
 
-      <div className="space-y-4 pt-8 border-t border-border">
-        <h3 className="text-[10px] font-black uppercase tracking-widest text-accent flex items-center gap-2">
-          <Icons.layers className="h-3 w-3" />
-          Transitions
+      <div className="space-y-6 pt-10 border-t border-white/5">
+        <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-accent flex items-center gap-4 italic">
+          <Icons.layers className="h-4 w-4" />
+          Transition_Protocols
         </h3>
-        <div className="grid grid-cols-2 gap-4">
-           <div className="space-y-2">
-              <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">In</label>
-              <select 
-                value={selectedClip.transitionIn || "none"}
-                onChange={(e) => onUpdate({ transitionIn: e.target.value as "none" | "fade" | "dissolve" })}
-                className="w-full bg-muted border border-border rounded px-2 h-8 text-[9px] font-black uppercase tracking-widest outline-none"
-              >
-                <option value="none">None</option>
-                <option value="fade">Fade</option>
-                <option value="dissolve">Dissolve</option>
-              </select>
+        <div className="grid grid-cols-1 gap-6">
+           <div className="space-y-4">
+              <label className="text-[9px] font-black uppercase tracking-[0.4em] text-white/20 italic ml-2">Uplink_Fade</label>
+              <div className="grid grid-cols-3 gap-2">
+                {(["none", "fade", "dissolve"] as const).map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => onUpdate({ transitionIn: t })}
+                    className={cn(
+                      "h-10 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all italic",
+                      selectedClip.transitionIn === t 
+                        ? "bg-accent/10 border-accent/40 text-accent" 
+                        : "bg-white/[0.02] border-white/5 text-white/20 hover:bg-white/[0.05]"
+                    )}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
            </div>
-           <div className="space-y-2">
-              <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Out</label>
-              <select 
-                value={selectedClip.transitionOut || "none"}
-                onChange={(e) => onUpdate({ transitionOut: e.target.value as "none" | "fade" | "dissolve" })}
-                className="w-full bg-muted border border-border rounded px-2 h-8 text-[9px] font-black uppercase tracking-widest outline-none"
-              >
-                <option value="none">None</option>
-                <option value="fade">Fade</option>
-                <option value="dissolve">Dissolve</option>
-              </select>
+           <div className="space-y-4">
+              <label className="text-[9px] font-black uppercase tracking-[0.4em] text-white/20 italic ml-2">Downlink_Fade</label>
+              <div className="grid grid-cols-3 gap-2">
+                {(["none", "fade", "dissolve"] as const).map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => onUpdate({ transitionOut: t })}
+                    className={cn(
+                      "h-10 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all italic",
+                      selectedClip.transitionOut === t 
+                        ? "bg-accent/10 border-accent/40 text-accent" 
+                        : "bg-white/[0.02] border-white/5 text-white/20 hover:bg-white/[0.05]"
+                    )}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
            </div>
         </div>
       </div>

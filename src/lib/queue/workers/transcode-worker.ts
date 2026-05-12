@@ -37,7 +37,7 @@ export class TranscodeWorker {
       fs.mkdirSync(hlsOutputDir, { recursive: true })
     }
 
-    const masterPlaylistPath = path.join(hlsOutputDir, "master.m3u8")
+
     const ffmpegPath = ffmpegStatic || "ffmpeg"
 
     try {
