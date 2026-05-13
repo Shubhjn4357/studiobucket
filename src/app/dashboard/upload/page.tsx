@@ -13,26 +13,38 @@ export default async function UploadPage() {
   }
 
   return (
-    <PageContainer maxWidth="5xl">
+    <PageContainer maxWidth="6xl">
       <PageHeader 
-        title="Upload Video" 
-        description="Select a video asset to initialize the ingestion pipeline and customize metadata." 
+        title="Upload Media" 
+        description="Add your video assets to the platform and prepare them for your automated workflow." 
         iconName="upload"
       />
       
-      <div className="bg-card border border-border rounded-3xl p-1 shadow-sm overflow-hidden">
+      <div className="bg-card border border-border rounded-[2rem] md:rounded-[2.5rem] p-1 shadow-sm overflow-hidden mt-4 md:mt-8">
         <UploadCenter />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 pt-8 md:pt-12">
         {[
-          { title: "Smart Transcoding", desc: "Automated HLS generation for all resolutions." },
-          { title: "Cloud Backup", desc: "Redundant storage across multiple regions." },
-          { title: "Privacy Controls", desc: "Granular access management for all assets." },
+          { 
+            title: "Optimized Encoding", 
+            desc: "Your videos are prepared in multiple formats for maximum compatibility.",
+            icon: "zap"
+          },
+          { 
+            title: "Cloud Storage", 
+            desc: "Encrypted, high-speed storage for your raw and processed assets.",
+            icon: "cloud"
+          },
+          { 
+            title: "Secure Workflow", 
+            desc: "Granular access controls ensure your content remains private.",
+            icon: "shieldCheck"
+          },
         ].map((item, i) => (
-          <div key={i} className="p-6 rounded-2xl bg-muted/30 border border-border/50">
-            <h3 className="text-xs font-bold uppercase tracking-widest text-foreground mb-2">{item.title}</h3>
-            <p className="text-xs text-muted-foreground leading-relaxed">{item.desc}</p>
+          <div key={i} className="p-6 md:p-8 rounded-[2rem] bg-card border border-border shadow-sm group hover:border-primary/20 transition-all duration-500">
+            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground mb-3 group-hover:text-primary transition-colors">{item.title}</h3>
+            <p className="text-xs md:text-sm text-muted-foreground leading-relaxed font-medium">{item.desc}</p>
           </div>
         ))}
       </div>

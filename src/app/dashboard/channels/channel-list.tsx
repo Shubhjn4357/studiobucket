@@ -15,6 +15,7 @@ import {
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu"
+import { Card, CardContent } from "@/components/ui/card"
 
 interface Channel {
   id: string
@@ -39,9 +40,9 @@ export function ChannelList({ initialChannels }: { initialChannels: Channel[] })
         ...ch,
         isSelected: ch.id === id
       })))
-      toast.success("Operational node switched")
+      toast.success("Active channel switched")
     } catch {
-      toast.error("Handshake synchronization failed")
+      toast.error("Failed to switch channel")
     } finally {
       setIsPending(null)
     }
@@ -51,9 +52,9 @@ export function ChannelList({ initialChannels }: { initialChannels: Channel[] })
     setIsPending(id)
     try {
       await syncChannelAction(id)
-      toast.success("Node telemetry updated")
+      toast.success("Channel data synchronized")
     } catch {
-      toast.error("Telemetry link failed")
+      toast.error("Sync failed")
     } finally {
       setIsPending(null)
     }
@@ -64,28 +65,28 @@ export function ChannelList({ initialChannels }: { initialChannels: Channel[] })
     try {
       await disconnectChannelAction(id)
       setChannels(prev => prev.filter(ch => ch.id !== id))
-      toast.success("Operational link severed")
+      toast.success("Channel disconnected")
     } catch {
-      toast.error("Disconnection sequence failed")
+      toast.error("Disconnection failed")
     } finally {
       setIsPending(null)
     }
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-12 px-4 relative z-10">
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
       <AnimatePresence mode="popLayout">
         {channels.length === 0 ? (
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="col-span-full py-40 text-center bg-black/40 backdrop-blur-3xl border border-dashed border-white/10 rounded-[4rem]"
+            className="col-span-full py-32 text-center bg-card border border-dashed border-border rounded-[2.5rem]"
           >
-            <div className="flex flex-col items-center gap-8">
-              <div className="h-24 w-24 rounded-full bg-white/5 flex items-center justify-center border border-white/5">
-                <Icons.users className="h-10 w-10 text-white/10" />
+            <div className="flex flex-col items-center gap-6">
+              <div className="h-16 w-16 rounded-3xl bg-muted flex items-center justify-center">
+                <Icons.users className="h-8 w-8 text-muted-foreground/30" />
               </div>
-              <p className="text-[11px] font-black uppercase tracking-[0.6em] text-white/20 italic">Zero_Nodes_Synchronized</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground opacity-50">No channels connected yet</p>
             </div>
           </motion.div>
         ) : (
@@ -93,104 +94,98 @@ export function ChannelList({ initialChannels }: { initialChannels: Channel[] })
             <motion.div
               key={channel.id}
               layout
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.05 }}
               exit={{ opacity: 0, scale: 0.95 }}
             >
-              <div className={cn(
-                "bg-black/40 backdrop-blur-3xl border border-white/5 rounded-[4rem] overflow-hidden group transition-all duration-700 shadow-2xl relative flex flex-col h-full",
-                channel.isSelected ? "border-primary/40 bg-primary/[0.02]" : "hover:border-primary/20"
+              <Card className={cn(
+                "bg-card border-border overflow-hidden group hover:border-primary/20 transition-all rounded-[2.5rem] shadow-sm relative h-full flex flex-col",
+                channel.isSelected && "border-primary/40 shadow-lg shadow-primary/5"
               )}>
-                {/* Background Grid Pattern */}
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,#ffffff02_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
-                
-                <div className="p-12 space-y-10 relative z-10 flex-1 flex flex-col justify-between">
-                  <div className="space-y-10">
+                <CardContent className="p-8 flex-1 flex flex-col justify-between">
+                  <div className="space-y-8">
                     <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-6">
-                        <div className="relative group/avatar">
+                      <div className="flex items-center gap-5">
+                        <div className="relative">
                           <Avatar className={cn(
-                            "h-20 w-20 rounded-[1.8rem] border-2 transition-all duration-700",
-                            channel.isSelected ? "border-primary shadow-[0_0_30px_rgba(var(--primary),0.3)]" : "border-white/5 group-hover:border-primary/40"
+                            "h-16 w-16 rounded-2xl border-2 transition-all",
+                            channel.isSelected ? "border-primary shadow-lg shadow-primary/20" : "border-border"
                           )}>
                             <AvatarImage src={channel.thumbnailUrl || ""} className="object-cover" />
-                            <AvatarFallback className="bg-black text-primary font-black text-2xl uppercase italic">
+                            <AvatarFallback className="bg-muted text-muted-foreground font-bold">
                               {(channel.channelName || "U")[0]}
                             </AvatarFallback>
                           </Avatar>
                           {channel.isActive && (
-                            <div className="absolute -bottom-1 -right-1 h-6 w-6 bg-black rounded-xl border border-white/10 flex items-center justify-center shadow-2xl">
-                              <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                            <div className="absolute -bottom-1 -right-1 h-5 w-5 bg-card rounded-full border border-border flex items-center justify-center">
+                              <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
                             </div>
                           )}
                         </div>
-                        <div className="space-y-2">
-                          <h3 className="text-xl font-black text-white uppercase tracking-tighter italic leading-none group-hover:text-primary transition-colors">{channel.channelName || "Node_Unnamed"}</h3>
-                          <div className="flex items-center gap-3">
-                             <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em] italic font-mono">{channel.channelId.slice(0, 12)}...</span>
-                             {channel.isSelected && (
-                               <span className="text-[8px] font-black text-primary uppercase tracking-[0.4em] bg-primary/10 px-3 py-1 rounded-full border border-primary/20 italic">MISSION_ACTIVE</span>
-                             )}
+                        <div className="space-y-1">
+                          <h3 className="text-lg font-bold text-foreground leading-tight group-hover:text-primary transition-colors">{channel.channelName || "Unnamed Channel"}</h3>
+                          <div className="flex items-center gap-2">
+                             <span className="text-[10px] font-bold text-muted-foreground opacity-60 font-mono tracking-tighter">{channel.channelId.slice(0, 16)}...</span>
                           </div>
                         </div>
                       </div>
                       
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-12 w-12 rounded-2xl hover:bg-white/10 text-white/20 hover:text-white transition-all border border-transparent hover:border-white/10">
-                            <Icons.moreHorizontal className="h-6 w-6" />
+                          <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl hover:bg-muted transition-all">
+                            <Icons.moreHorizontal className="h-5 w-5" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-56 backdrop-blur-3xl bg-black/90 border-white/10 rounded-[2rem] p-3 shadow-2xl">
+                        <DropdownMenuContent align="end" className="w-56 rounded-2xl p-2 shadow-xl border-border">
                           <DropdownMenuItem 
                             onClick={() => handleSync(channel.id)}
                             disabled={isPending === channel.id}
-                            className="flex items-center gap-3 px-5 py-4 rounded-xl text-[10px] font-black uppercase tracking-[0.3em] cursor-pointer hover:bg-primary/10 hover:text-primary transition-all italic"
+                            className="flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold cursor-pointer transition-all"
                           >
                             <Icons.refreshCw className={cn("h-4 w-4", isPending === channel.id && "animate-spin")} />
-                            Sync_Node_Telemetry
+                            Sync Data
                           </DropdownMenuItem>
                           <DropdownMenuItem 
-                            className="flex items-center gap-3 px-5 py-4 rounded-xl text-[10px] font-black uppercase tracking-[0.3em] cursor-pointer hover:bg-white/10 hover:text-white transition-all italic"
+                            className="flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold cursor-pointer transition-all"
                           >
                             <Icons.externalLink className="h-4 w-4" />
-                            Global_View
+                            Open on YouTube
                           </DropdownMenuItem>
-                          <DropdownMenuSeparator className="bg-white/5 my-2" />
+                          <DropdownMenuSeparator className="my-2" />
                           <DropdownMenuItem 
                             onClick={() => handleDisconnect(channel.id)}
                             disabled={isPending === channel.id}
-                            className="flex items-center gap-3 px-5 py-4 rounded-xl text-[10px] font-black uppercase tracking-[0.3em] cursor-pointer hover:bg-red-500/10 text-red-500 transition-all italic"
+                            className="flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold cursor-pointer hover:bg-destructive/10 text-destructive transition-all"
                           >
                             <Icons.zapOff className="h-4 w-4" />
-                            Sever_Operational_Link
+                            Disconnect
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-8 py-10 border-y border-white/5">
-                      <div className="space-y-2">
-                        <p className="text-[9px] font-black text-white/20 uppercase tracking-[0.4em] italic">Sub_Count</p>
-                        <p className="text-2xl font-black text-white italic tracking-tighter">{(channel.subscriberCount || 0).toLocaleString()}</p>
+                    <div className="grid grid-cols-2 gap-4 py-6 border-y border-border/50">
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Subscribers</p>
+                        <p className="text-xl font-black text-foreground italic tracking-tighter">{(channel.subscriberCount || 0).toLocaleString()}</p>
                       </div>
-                      <div className="space-y-2">
-                        <p className="text-[9px] font-black text-white/20 uppercase tracking-[0.4em] italic">Asset_Count</p>
-                        <p className="text-2xl font-black text-white italic tracking-tighter">{(channel.videoCount || 0).toLocaleString()}</p>
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Total Videos</p>
+                        <p className="text-xl font-black text-foreground italic tracking-tighter">{(channel.videoCount || 0).toLocaleString()}</p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="pt-10">
+                  <div className="pt-8">
                     <Button 
                       disabled={channel.isSelected || isPending === channel.id}
                       onClick={() => handleSwitch(channel.id)}
                       className={cn(
-                        "w-full h-16 rounded-[1.8rem] text-[10px] font-black uppercase tracking-[0.4em] transition-all italic border",
+                        "w-full h-12 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all italic shadow-md",
                         channel.isSelected 
-                          ? "bg-primary/10 text-primary border-primary/20 cursor-default" 
-                          : "bg-white/5 text-white/60 hover:bg-white/10 border-white/10"
+                          ? "bg-primary/10 text-primary hover:bg-primary/20 shadow-none border border-primary/20" 
+                          : "bg-primary text-white hover:scale-[1.02]"
                       )}
                     >
                       {isPending === channel.id ? (
@@ -200,11 +195,11 @@ export function ChannelList({ initialChannels }: { initialChannels: Channel[] })
                       ) : (
                         <Icons.zap className="h-4 w-4 mr-3" />
                       )}
-                      {channel.isSelected ? "Active_Node_Linked" : "Initialize_Handshake"}
+                      {channel.isSelected ? "Active Session" : "Switch To Channel"}
                     </Button>
                   </div>
-                </div>
-              </div>
+                </CardContent>
+              </Card>
             </motion.div>
           ))
         )}

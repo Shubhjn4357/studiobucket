@@ -23,12 +23,12 @@ export function Sidebar({ open, isMobile, items }: SidebarProps) {
 
   const sidebarVariants = {
     open: { 
-      width: isMobile ? "240px" : "200px",
-      transition: { type: "spring", stiffness: 400, damping: 40 } as const
+      width: isMobile ? "260px" : "260px",
+      transition: { type: "spring", stiffness: 300, damping: 30 } as const
     },
     closed: { 
-      width: isMobile ? "0px" : "60px",
-      transition: { type: "spring", stiffness: 400, damping: 40 } as const
+      width: isMobile ? "0px" : "90px",
+      transition: { type: "spring", stiffness: 300, damping: 30 } as const
     }
   }
 
@@ -38,45 +38,45 @@ export function Sidebar({ open, isMobile, items }: SidebarProps) {
       animate={open ? "open" : "closed"}
       variants={sidebarVariants}
       className={cn(
-        "z-50 flex flex-col bg-background h-screen transition-all overflow-hidden shrink-0 relative",
+        "z-50 flex flex-col bg-card h-screen transition-all overflow-hidden shrink-0 relative shadow-[0_0_50px_rgba(0,0,0,0.02)]",
         isMobile ? "fixed inset-y-0 left-0" : "relative border-r border-border"
       )}
     >
-      <div className="absolute inset-0 tactical-grid pointer-events-none opacity-5" />
-
-      {/* Header Area */}
-      <div className="flex h-10 items-center px-3 border-b border-border relative z-10 shrink-0">
-         <div className="flex items-center gap-2 group cursor-pointer w-full overflow-hidden">
-            <div className="p-1 bg-primary/10 rounded-sm shrink-0">
-               <Icons.logo className="h-4 w-4 text-primary" />
+      {/* Brand Header */}
+      <div className="flex h-16 md:h-20 items-center px-6 relative z-10 shrink-0 border-b border-border/50 bg-background/50 backdrop-blur-sm">
+         <div className="flex items-center gap-4 group cursor-pointer w-full overflow-hidden">
+            <div className="h-10 w-10 bg-primary rounded-[1.25rem] shrink-0 shadow-lg shadow-primary/20 transition-transform group-hover:rotate-6">
+               <div className="h-full w-full flex items-center justify-center text-white">
+                  <Icons.logo className="h-5 w-5" />
+               </div>
             </div>
             <AnimatePresence mode="wait">
               {(open || isMobile) && (
                 <motion.div 
-                  initial={{ opacity: 0, x: -5 }}
+                  initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -5 }}
+                  exit={{ opacity: 0, x: -10 }}
                   className="flex flex-col leading-none whitespace-nowrap"
                 >
-                  <span className="text-xs font-bold text-foreground">StudioBucket</span>
-                  <span className="text-[10px] font-medium text-primary/70">Creator Studio</span>
+                  <span className="text-base font-black text-foreground tracking-tight uppercase italic">Studio</span>
+                  <span className="text-[10px] font-black text-primary uppercase tracking-widest mt-0.5">Bucket</span>
                 </motion.div>
               )}
             </AnimatePresence>
          </div>
       </div>
 
-      <ScrollArea className="flex-1 py-4 px-2 custom-scrollbar relative z-10">
-        <nav className="space-y-1">
-          <div className="px-2 mb-2 h-3 flex items-center">
+      <ScrollArea className="flex-1 py-8 px-4 custom-scrollbar relative z-10">
+        <nav className="space-y-2">
+          <div className="px-3 mb-6 h-4 flex items-center">
              <AnimatePresence>
                 {(open || isMobile) && (
                   <motion.span 
                     initial={{ opacity: 0 }} 
-                    animate={{ opacity: 0.3 }}
-                    className="text-[7px] font-black uppercase tracking-[0.3em] italic"
+                    animate={{ opacity: 1 }}
+                    className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/30"
                   >
-                    Menu
+                    Control Panel
                   </motion.span>
                 )}
              </AnimatePresence>
@@ -90,73 +90,79 @@ export function Sidebar({ open, isMobile, items }: SidebarProps) {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex items-center gap-3 rounded-sm transition-all px-2 py-1.5 group relative overflow-hidden",
+                  "flex items-center gap-4 rounded-2xl transition-all px-4 py-3 group relative overflow-hidden",
                   isActive 
-                    ? "bg-primary/5 text-primary" 
-                    : "hover:bg-muted/30 text-muted-foreground hover:text-foreground"
+                    ? "bg-primary text-white shadow-xl shadow-primary/10" 
+                    : "hover:bg-muted text-muted-foreground hover:text-foreground"
                 )}
               >
-                <div className="flex h-4 w-4 items-center justify-center shrink-0 relative">
+                <div className="flex h-5 w-5 items-center justify-center shrink-0 relative">
                   <Icon className={cn(
-                    "h-3 w-3 transition-all duration-300", 
-                    isActive ? "text-primary" : "opacity-40 group-hover:opacity-100"
+                    "h-4.5 w-4.5 transition-all duration-300", 
+                    isActive ? "text-white" : "opacity-40 group-hover:opacity-100 group-hover:text-primary"
                   )} />
                 </div>
                 
                 <AnimatePresence mode="wait">
                   {(open || isMobile) && (
                     <motion.span
-                      initial={{ opacity: 0, x: -5 }}
+                      initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -5 }}
+                      exit={{ opacity: 0, x: -10 }}
                       className={cn(
-                        "text-[9px] font-black whitespace-nowrap transition-colors italic uppercase",
-                        isActive ? "text-foreground" : "text-muted-foreground group-hover:text-foreground"
+                        "text-xs font-bold whitespace-nowrap transition-colors",
+                        isActive ? "text-white" : "text-muted-foreground group-hover:text-foreground"
                       )}
                     >
                       {item.title}
                     </motion.span>
                   )}
                 </AnimatePresence>
+
+                {isActive && (
+                  <motion.div 
+                    layoutId="active-indicator"
+                    className="absolute right-0 top-3 bottom-3 w-1 bg-white rounded-l-full"
+                  />
+                )}
               </Link>
             )
           })}
         </nav>
       </ScrollArea>
 
-      {/* Footer / System Status */}
-      <div className="p-3 border-t border-border relative z-10 shrink-0 bg-muted/10">
+      {/* Footer Status */}
+      <div className="p-6 border-t border-border relative z-10 shrink-0 bg-muted/5">
          <AnimatePresence>
-           {(open || isMobile) ? (
-             <motion.div
-               initial={{ opacity: 0 }}
-               animate={{ opacity: 1 }}
-               exit={{ opacity: 0 }}
-               className="space-y-2"
-             >
-                <div className="flex items-center justify-between">
-                   <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">Status</span>
-                   <div className="flex items-center gap-1">
-                     <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
-                     <span className="text-[10px] font-bold text-green-500 uppercase tracking-tight">Online</span>
-                   </div>
-                </div>
-                <div className="h-0.5 w-full bg-muted rounded-full overflow-hidden">
-                   <motion.div 
-                     className="h-full bg-primary/40"
-                     animate={{ width: ["85%", "92%", "88%"] }}
-                     transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                   />
-                </div>
-             </motion.div>
-           ) : (
-             <div className="flex justify-center">
-                <div className="h-1 w-1 rounded-full bg-primary animate-pulse" />
-             </div>
-           )}
+            {(open || isMobile) ? (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 10 }}
+                className="p-5 rounded-3xl bg-card border border-border/50 space-y-4 shadow-sm"
+              >
+                 <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest opacity-60">Status</span>
+                    <div className="flex items-center gap-2">
+                       <div className="h-2 w-2 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.3)]" />
+                       <span className="text-[9px] font-black text-green-500 uppercase">Online</span>
+                    </div>
+                 </div>
+                 <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                    <motion.div 
+                      className="h-full bg-primary/30"
+                      animate={{ width: ["60%", "90%", "75%"] }}
+                      transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+                    />
+                 </div>
+              </motion.div>
+            ) : (
+              <div className="flex justify-center">
+                 <div className="h-2.5 w-2.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_12px_rgba(34,197,94,0.6)]" />
+              </div>
+            )}
          </AnimatePresence>
       </div>
     </motion.aside>
   )
 }
-

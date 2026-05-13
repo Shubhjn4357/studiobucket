@@ -58,8 +58,8 @@
   --secondary: hsl(0, 0%, 92%);
   --secondary-foreground: hsl(0, 0%, 10%);
   
-  --muted: hsl(0, 0%, 94%);
-  --muted-foreground: hsl(0, 0%, 45%);
+  --muted: hsl(0, 0%, 97%); /* Lighter, cleaner gray */
+  --muted-foreground: hsl(0, 0%, 40%);
   
   --accent: hsl(0, 100%, 50%);
   --accent-foreground: hsl(0, 0%, 100%);

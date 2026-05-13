@@ -4,6 +4,8 @@ import { redirect } from "next/navigation"
 import { VideoService } from "@/lib/services/video-service"
 import { AnalyticsClient } from "./analytics-client"
 import { VideoWithStats } from "@/types/video"
+import { PageHeader } from "@/components/dashboard/page-header"
+import { PageContainer } from "@/components/layout/page-container"
 
 export default async function AnalyticsPage() {
   const session = await getServerSession(authOptions)
@@ -15,7 +17,6 @@ export default async function AnalyticsPage() {
   const dailyStats = await videoService.getDailyStats(session.user.id, 7)
   const trends = await videoService.getGlobalTrends(session.user.id)
 
-  // Map real data to client components
   const metrics = [
     { 
       label: "Total Views", 
@@ -24,19 +25,19 @@ export default async function AnalyticsPage() {
       trending: (trends.viewsChange >= 0 ? "up" : "down") as "up" | "down" 
     },
     { 
-      label: "Videos", 
+      label: "Uploaded Videos", 
       value: stats.totalVideos.toLocaleString(), 
       change: "+0.0%", 
       trending: "up" as const 
     },
     { 
-      label: "Likes", 
+      label: "Total Likes", 
       value: stats.totalLikes.toLocaleString(), 
       change: `${trends.likesChange >= 0 ? '+' : ''}${trends.likesChange}%`, 
       trending: (trends.likesChange >= 0 ? "up" : "down") as "up" | "down" 
     },
     { 
-      label: "Engagement", 
+      label: "Avg. Engagement", 
       value: stats.totalViews > 0 ? `${((stats.totalLikes / stats.totalViews) * 100).toFixed(1)}%` : "0%", 
       change: "+0.0%", 
       trending: "up" as const 
@@ -44,20 +45,28 @@ export default async function AnalyticsPage() {
   ]
 
   return (
-    <AnalyticsClient 
-      metrics={metrics}
-      dailyStats={dailyStats.map(s => ({ 
-        date: s.date, 
-        views: s.views ? Number(s.views) : 0, 
-        likes: s.likes ? Number(s.likes) : 0 
-      }))}
-      recentVideos={(recentVideos as unknown as VideoWithStats[]).map(v => ({
-        id: v.id,
-        title: v.title,
-        views: v.views?.toLocaleString() || "0",
-        reach: v.duration ? `${Math.min(99, Math.round((v.views / 100) * 10))}%` : "0%",
-        retention: v.duration ? `${Math.min(99, 60 + Math.round(v.likes / (v.views || 1) * 20))}%` : "0%"
-      }))}
-    />
+    <PageContainer>
+      <PageHeader 
+        title="Channel Analytics" 
+        description="Track your performance across all connected channels and optimize your strategy." 
+        iconName="barChart"
+      />
+
+      <AnalyticsClient 
+        metrics={metrics}
+        dailyStats={dailyStats.map(s => ({ 
+          date: s.date, 
+          views: s.views ? Number(s.views) : 0, 
+          likes: s.likes ? Number(s.likes) : 0 
+        }))}
+        recentVideos={(recentVideos as unknown as VideoWithStats[]).map(v => ({
+          id: v.id,
+          title: v.title,
+          views: v.views?.toLocaleString() || "0",
+          reach: v.duration ? `${Math.min(99, Math.round((v.views / 100) * 10))}%` : "0%",
+          retention: v.duration ? `${Math.min(99, 60 + Math.round(v.likes / (v.views || 1) * 20))}%` : "0%"
+        }))}
+      />
+    </PageContainer>
   )
 }

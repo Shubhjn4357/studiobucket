@@ -37,24 +37,24 @@ export function Header({ onMenuClick }: HeaderProps) {
 
   const navLinks = [
     { title: "Channels", href: "/dashboard/channels", icon: Icons.users },
-    { title: "Queues", href: "/dashboard/queues", icon: Icons.refreshCw },
-    { title: "Playlists", href: "/dashboard/playlists", icon: Icons.list },
-    { title: "Community", href: "/dashboard/community", icon: Icons.users },
+    { title: "Queue", href: "/dashboard/queue", icon: Icons.refreshCw },
+    { title: "Library", href: "/dashboard/content", icon: Icons.list },
+    { title: "Calendar", href: "/dashboard/schedule", icon: Icons.calendar },
   ]
 
   return (
-    <header className="sticky top-0 z-40 flex h-16 w-full items-center justify-between px-6 bg-background/80 backdrop-blur-md border-b border-border transition-all">
-      <div className="flex items-center gap-4">
+    <header className="sticky top-0 z-40 flex h-16 md:h-20 w-full items-center justify-between px-4 md:px-10 bg-background/60 backdrop-blur-xl border-b border-border/50 transition-all">
+      <div className="flex items-center gap-2 md:gap-4">
         <Button
           variant="ghost"
           size="icon"
           onClick={onMenuClick}
-          className="h-9 w-9 md:hidden"
+          className="h-10 w-10 lg:hidden rounded-xl hover:bg-primary/5 transition-all"
         >
-          <Icons.menu className="h-5 w-5" />
+          <Icons.menu className="h-6 w-6" />
         </Button>
         
-        <div className="hidden md:flex items-center gap-1">
+        <div className="hidden lg:flex items-center gap-1.5">
           {navLinks.map((link) => {
             const isActive = pathname === link.href
             return (
@@ -63,8 +63,8 @@ export function Header({ onMenuClick }: HeaderProps) {
                   variant="ghost" 
                   size="sm" 
                   className={cn(
-                    "font-bold text-[11px] uppercase tracking-wider rounded-lg h-9 px-4 transition-all",
-                    isActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                    "font-black text-[10px] uppercase tracking-widest rounded-xl h-10 px-4 transition-all",
+                    isActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-primary/[0.03] hover:text-primary"
                   )}
                 >
                   {link.title}
@@ -75,62 +75,63 @@ export function Header({ onMenuClick }: HeaderProps) {
         </div>
       </div>
 
-      <div className="flex-1 max-w-md px-6 hidden lg:flex">
-        <form onSubmit={handleSearch} className="w-full relative">
-          <Icons.search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+      <div className="flex-1 max-w-lg px-6 hidden md:flex">
+        <form onSubmit={handleSearch} className="w-full relative group">
+          <Icons.search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/40 group-focus-within:text-primary transition-colors" />
           <Input
             type="text"
-            placeholder="Search assets and metadata..."
+            placeholder="Search assets, metadata, or jobs..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-muted/40 border-border rounded-xl pl-10 pr-4 h-10 text-xs font-medium focus-visible:ring-1 focus-visible:ring-primary/20"
+            className="w-full bg-muted/20 border-border rounded-xl md:rounded-2xl pl-11 pr-4 h-10 md:h-12 text-xs font-medium focus-visible:ring-primary/20 transition-all placeholder:text-muted-foreground/30"
           />
         </form>
       </div>
 
-      <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2 pr-4 border-r border-border mr-1">
+      <div className="flex items-center gap-2 md:gap-4">
+        <div className="flex items-center gap-1.5 pr-2 md:pr-4 border-r border-border/50">
           <ThemeToggle />
-          <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg hover:bg-primary/10 text-muted-foreground hover:text-primary transition-all">
+          <Button variant="ghost" size="icon" className="h-9 w-9 md:h-11 md:w-11 rounded-xl hover:bg-primary/5 text-muted-foreground hover:text-primary transition-all">
             <Icons.bell className="h-5 w-5" />
           </Button>
         </div>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-10 pl-1 pr-3 rounded-xl hover:bg-muted/50 transition-all border border-transparent hover:border-border">
-              <Avatar className="h-8 w-8 rounded-lg border border-border">
+            <Button variant="ghost" className="h-10 md:h-12 pl-1 pr-1 md:pr-4 rounded-[1rem] md:rounded-[1.25rem] hover:bg-primary/[0.03] transition-all border border-transparent hover:border-border/50 gap-3">
+              <Avatar className="h-8 w-8 md:h-9 md:w-9 rounded-lg md:rounded-xl border border-border shadow-sm">
                 <AvatarImage src={session?.user?.image || ""} />
                 <AvatarFallback className="bg-primary/10 text-primary text-xs font-black">
                   {session?.user?.name?.[0] || "U"}
                 </AvatarFallback>
               </Avatar>
-              <div className="flex flex-col items-start ml-3 text-left leading-none hidden sm:flex">
-                <span className="text-xs font-bold text-foreground truncate max-w-[100px]">{session?.user?.name?.split(' ')[0]}</span>
-                <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest mt-0.5">Admin</span>
+              <div className="flex flex-col items-start text-left leading-none hidden lg:flex">
+                <span className="text-xs font-black text-foreground uppercase tracking-tight truncate max-w-[120px]">{session?.user?.name?.split(' ')[0]}</span>
+                <span className="text-[9px] font-black text-primary/60 uppercase tracking-[0.2em] mt-1">Creator</span>
               </div>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-64 p-2 mt-2">
-            <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg mb-2">
-              <Avatar className="h-10 w-10 rounded-lg border border-border">
+          <DropdownMenuContent align="end" className="w-64 p-3 mt-3 rounded-[1.5rem] border-border shadow-2xl">
+            <div className="flex items-center gap-4 p-3 bg-primary/[0.03] rounded-2xl mb-2 border border-primary/5">
+              <Avatar className="h-10 w-10 rounded-xl border border-border">
+                <AvatarImage src={session?.user?.image || ""} />
                 <AvatarFallback className="bg-primary/10 text-primary font-black">
                   {session?.user?.name?.[0] || "U"}
                 </AvatarFallback>
               </Avatar>
               <div className="flex flex-col overflow-hidden leading-tight">
-                <span className="font-bold text-sm text-foreground truncate">{session?.user?.name}</span>
-                <span className="text-xs text-muted-foreground truncate">{session?.user?.email}</span>
+                <span className="font-black text-xs uppercase tracking-tight text-foreground truncate">{session?.user?.name}</span>
+                <span className="text-[10px] font-medium text-muted-foreground truncate">{session?.user?.email}</span>
               </div>
             </div>
-            <DropdownMenuItem onClick={() => router.push("/dashboard/settings")} className="gap-3 p-2 rounded-md cursor-pointer">
+            <DropdownMenuItem onClick={() => router.push("/dashboard/settings")} className="gap-3 p-3 rounded-xl cursor-pointer focus:bg-primary/5 focus:text-primary transition-all">
               <Icons.settings className="h-4 w-4" />
-              <span className="text-sm font-medium">Settings</span>
+              <span className="text-xs font-black uppercase tracking-widest">Settings</span>
             </DropdownMenuItem>
-            <DropdownMenuSeparator className="my-1" />
-            <DropdownMenuItem onClick={() => signOut()} className="gap-3 p-2 rounded-md cursor-pointer text-red-500 focus:bg-red-500/10 focus:text-red-500">
+            <DropdownMenuSeparator className="my-2 bg-border/50" />
+            <DropdownMenuItem onClick={() => signOut()} className="gap-3 p-3 rounded-xl cursor-pointer text-red-500 focus:bg-red-500/10 focus:text-red-500 transition-all">
               <Icons.logOut className="h-4 w-4" />
-              <span className="text-sm font-medium">Sign Out</span>
+              <span className="text-xs font-black uppercase tracking-widest">Sign Out</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

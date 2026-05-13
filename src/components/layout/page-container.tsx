@@ -20,7 +20,7 @@ export function PageContainer({
 
   return (
     <div className={cn(
-      "p-6 mx-auto space-y-8 pb-24",
+      "p-4 md:p-8 mx-auto space-y-6 md:space-y-8 pb-24",
       maxWidthClass,
       className
     )}>
