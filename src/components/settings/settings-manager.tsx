@@ -12,7 +12,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { createCheckoutSession, createPortalSession } from "@/app/dashboard/settings/billing-actions"
 import { inviteTeamMember, getTeamMembers } from "@/app/dashboard/settings/actions"
 import { updateUserSettingsAction } from "@/app/dashboard/actions"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
@@ -205,9 +205,10 @@ export function SettingsManager({ initialUser, initialChannels = [] }: SettingsM
                   toast.success("Request transmitted")
                   setInviteEmail("")
                   const updatedTeam = await getTeamMembers()
-                  setTeam(updatedTeam as any)
-                } catch (err: any) {
-                  toast.error(err.message || "Transmission failed")
+                  setTeam(updatedTeam as Array<{ id: string; role: string; member: { name: string | null; email: string | null } }>)
+                } catch (err: unknown) {
+                  const message = err instanceof Error ? err.message : "Transmission failed"
+                  toast.error(message)
                 } finally {
                   setIsSaving(false)
                 }
@@ -289,9 +290,9 @@ export function SettingsManager({ initialUser, initialChannels = [] }: SettingsM
                  onClick={async () => {
                     setIsSaving(true)
                     try {
-                      const { url } = await createCheckoutSession(plan.id as any)
+                      const { url } = await createCheckoutSession(plan.id as "alpha" | "pro" | "fleet")
                       if (url) window.location.href = url
-                    } catch (err: any) {
+                    } catch {
                       toast.error("Process aborted")
                     } finally {
                       setIsSaving(false)
@@ -326,7 +327,7 @@ export function SettingsManager({ initialUser, initialChannels = [] }: SettingsM
               try {
                 const { url } = await createPortalSession()
                 if (url) window.location.href = url
-              } catch (err: any) {
+              } catch {
                 toast.error("Portal access denied")
               } finally {
                 setIsSaving(false)
@@ -361,7 +362,7 @@ export function SettingsManager({ initialUser, initialChannels = [] }: SettingsM
                   </div>
                   <Switch 
                     checked={prefs[pref.id as keyof typeof prefs]}
-                    onCheckedChange={(val) => setPrefs(prev => ({ ...prev, [pref.id]: val }))}
+                    onCheckedChange={(val: boolean) => setPrefs(prev => ({ ...prev, [pref.id]: val }))}
                     className="data-[state=checked]:bg-primary"
                   />
                </CardContent>

@@ -169,7 +169,7 @@ export function VideoStudio({ initialData, title = "Untitled Project", filePath,
                 <Sheet>
                    <SheetTrigger asChild>
                       <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl lg:hidden">
-                         <Icons.settings2 className="h-4 w-4" />
+                         <Icons.settings className="h-4 w-4" />
                       </Button>
                    </SheetTrigger>
                    <SheetContent side="right" className="w-[300px] p-0 border-l border-border bg-card">
@@ -241,7 +241,7 @@ export function VideoStudio({ initialData, title = "Untitled Project", filePath,
         {/* Right Sidebar - Properties (Hidden on Mobile, replaced by Sheet) */}
         <div className="hidden lg:flex w-80 border-l border-border bg-card flex-col shrink-0">
           <div className="p-4 border-b border-border flex items-center gap-3">
-            <Icons.settings2 className="h-4 w-4 text-muted-foreground" />
+            <Icons.settings className="h-4 w-4 text-muted-foreground" />
             <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Properties</span>
           </div>
           <ScrollArea className="flex-1 p-8">

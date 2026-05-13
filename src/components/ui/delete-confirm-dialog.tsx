@@ -55,7 +55,7 @@ export function DeleteConfirmDialog({
         {requireWordConfirm && (
           <div className="py-6 space-y-3">
              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-               Type <span className="text-foreground select-none">"{requireWordConfirm}"</span> to confirm
+               Type <span className="text-foreground select-none">&quot;{requireWordConfirm}&quot;</span> to confirm
              </p>
              <Input 
                value={inputValue}

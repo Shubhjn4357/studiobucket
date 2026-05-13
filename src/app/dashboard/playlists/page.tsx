@@ -10,6 +10,7 @@ import { YouTubePlaylist } from "@/types/video"
 import { PageHeader } from "@/components/dashboard/page-header"
 import { PageContainer } from "@/components/layout/page-container"
 import { Card, CardContent } from "@/components/ui/card"
+import { cn } from "@/lib/utils"
 
 export default function PlaylistsPage() {
   const [playlists, setPlaylists] = useState<YouTubePlaylist[]>([])
