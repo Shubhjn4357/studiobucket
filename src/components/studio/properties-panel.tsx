@@ -4,7 +4,7 @@ import React from "react"
 import { Clip } from "@/types/video"
 import { Slider } from "@/components/ui/slider"
 import { Icons } from "@/components/ui/icons"
-import { cn } from "@/lib/utils"
+import { Input } from "@/components/ui/input"
 
 interface PropertiesPanelProps {
   clip: Clip | null
@@ -16,119 +16,109 @@ export function PropertiesPanel({ clip, onUpdate }: PropertiesPanelProps) {
     return (
       <div className="h-full flex flex-col items-center justify-center text-muted-foreground p-8">
         <Icons.info className="h-8 w-8 mb-4 opacity-20" />
-        <p className="text-[10px] font-black uppercase tracking-widest italic">Select a clip to view properties</p>
+        <p className="text-[10px] font-black uppercase tracking-widest italic text-center">Node_Selection_Required</p>
       </div>
     )
   }
 
   return (
-    <div className="space-y-8 p-6 overflow-y-auto h-full">
-      <div className="space-y-4">
-        <h3 className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
-          <Icons.sliders className="h-3 w-3" />
-          Transform
-        </h3>
-        
-        <div className="space-y-6">
-          <div className="space-y-3">
-             <div className="flex items-center justify-between">
-                <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Opacity</label>
-                <span className="text-[9px] font-mono text-primary">{Math.round((clip.opacity || 1) * 100)}%</span>
-             </div>
-             <Slider 
-               value={[(clip.opacity || 1) * 100]} 
-               onValueChange={([v]) => onUpdate({ opacity: v / 100 })} 
-               max={100} 
-             />
-          </div>
-
-          <div className="space-y-3">
-             <div className="flex items-center justify-between">
-                <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Scale</label>
-                <span className="text-[9px] font-mono text-primary">{Math.round((clip.scale || 1) * 100)}%</span>
-             </div>
-             <Slider 
-               value={[(clip.scale || 1) * 100]} 
-               onValueChange={([v]) => onUpdate({ scale: v / 100 })} 
-               max={500} 
-             />
-          </div>
-
-          <div className="space-y-3">
-             <div className="flex items-center justify-between">
-                <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Rotation</label>
-                <span className="text-[9px] font-mono text-primary">{clip.rotation || 0}°</span>
-             </div>
-             <Slider 
-               value={[clip.rotation || 0]} 
-               onValueChange={([v]) => onUpdate({ rotation: v })} 
-               min={-180}
-               max={180} 
-             />
-          </div>
-
-          <div className="space-y-3 pt-4 border-t border-white/5">
-             <div className="flex items-center justify-between">
-                <label className="text-[9px] font-black uppercase tracking-widest text-emerald-500 flex items-center gap-2">
-                  <Icons.volume2 className="h-3 w-3" />
-                  Audio Volume
-                </label>
-                <span className="text-[9px] font-mono text-emerald-500">{Math.round((clip.volume ?? 1) * 100)}%</span>
-             </div>
-             <Slider 
-               value={[(clip.volume ?? 1) * 100]} 
-               onValueChange={([v]) => onUpdate({ volume: v / 100 })} 
-               max={100} 
-             />
-          </div>
-        </div>
+    <div className="space-y-4">
+      {/* Node Identity Section */}
+      <div className="space-y-3">
+         <div className="flex items-center justify-between">
+            <span className="text-[7px] font-black text-muted-foreground uppercase tracking-widest">Active_Node</span>
+            <span className="text-[7px] font-mono text-primary/60">NODE_{clip.id.slice(0, 8).toUpperCase()}</span>
+         </div>
+         <div className="space-y-1.5">
+            <label className="text-[8px] font-black uppercase text-muted-foreground tracking-widest italic ml-1">Asset_Label</label>
+            <Input 
+              value={clip.name} 
+              onChange={(e) => onUpdate({ name: e.target.value })}
+              className="h-7 bg-background border-border rounded-sm text-[9px] font-bold uppercase tracking-tight focus-visible:ring-primary/20"
+            />
+         </div>
       </div>
 
-      <div className="space-y-6 pt-10 border-t border-white/5">
-        <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-accent flex items-center gap-4 italic">
-          <Icons.layers className="h-4 w-4" />
-          Transition_Protocols
-        </h3>
-        <div className="grid grid-cols-1 gap-6">
-           <div className="space-y-4">
-              <label className="text-[9px] font-black uppercase tracking-[0.4em] text-white/20 italic ml-2">Uplink_Fade</label>
-              <div className="grid grid-cols-3 gap-2">
-                {(["none", "fade", "dissolve"] as const).map((t) => (
-                  <button
-                    key={t}
-                    onClick={() => onUpdate({ transitionIn: t })}
-                    className={cn(
-                      "h-10 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all italic",
-                      clip.transitionIn === t 
-                        ? "bg-accent/10 border-accent/40 text-accent" 
-                        : "bg-white/[0.02] border-white/5 text-white/20 hover:bg-white/[0.05]"
-                    )}
-                  >
-                    {t}
-                  </button>
-                ))}
-              </div>
-           </div>
-           <div className="space-y-4">
-              <label className="text-[9px] font-black uppercase tracking-[0.4em] text-white/20 italic ml-2">Downlink_Fade</label>
-              <div className="grid grid-cols-3 gap-2">
-                {(["none", "fade", "dissolve"] as const).map((t) => (
-                  <button
-                    key={t}
-                    onClick={() => onUpdate({ transitionOut: t })}
-                    className={cn(
-                      "h-10 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all italic",
-                      clip.transitionOut === t 
-                        ? "bg-accent/10 border-accent/40 text-accent" 
-                        : "bg-white/[0.02] border-white/5 text-white/20 hover:bg-white/[0.05]"
-                    )}
-                  >
-                    {t}
-                  </button>
-                ))}
-              </div>
-           </div>
-        </div>
+      <div className="h-px bg-border/50" />
+
+      {/* Temporal Parameters */}
+      <div className="space-y-3">
+         <div className="flex items-center gap-2">
+            <Icons.clock className="h-3 w-3 text-primary/40" />
+            <span className="text-[8px] font-black text-foreground uppercase tracking-widest italic">Temporal_Logic</span>
+         </div>
+         
+         <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+               <label className="text-[7px] font-black uppercase text-muted-foreground tracking-widest italic">In_Point</label>
+               <div className="h-7 px-2 bg-background border border-border rounded-sm flex items-center">
+                  <span className="text-[9px] font-mono font-bold text-foreground">{clip.start.toFixed(2)}s</span>
+               </div>
+            </div>
+            <div className="space-y-1">
+               <label className="text-[7px] font-black uppercase text-muted-foreground tracking-widest italic">Out_Point</label>
+               <div className="h-7 px-2 bg-background border border-border rounded-sm flex items-center">
+                  <span className="text-[9px] font-mono font-bold text-foreground">{clip.end.toFixed(2)}s</span>
+               </div>
+            </div>
+         </div>
+      </div>
+
+      <div className="h-px bg-border/50" />
+
+      {/* Visual Controls */}
+      <div className="space-y-4">
+         <div className="flex items-center gap-2">
+            <Icons.layers className="h-3 w-3 text-primary/40" />
+            <span className="text-[8px] font-black text-foreground uppercase tracking-widest italic">Visual_Matrix</span>
+         </div>
+
+         <div className="space-y-3">
+            <div className="space-y-1.5">
+               <div className="flex justify-between items-center px-1">
+                  <label className="text-[7px] font-black uppercase text-muted-foreground tracking-widest italic">Opacity_Layer</label>
+                  <span className="text-[8px] font-mono font-black text-primary italic">{Math.round((clip.opacity || 1) * 100)}%</span>
+               </div>
+               <Slider 
+                 value={[(clip.opacity || 1) * 100]} 
+                 onValueChange={(v) => onUpdate({ opacity: v[0] / 100 })}
+                 max={100} 
+                 step={1}
+                 className="py-1"
+               />
+            </div>
+
+            <div className="space-y-1.5">
+               <div className="flex justify-between items-center px-1">
+                  <label className="text-[7px] font-black uppercase text-muted-foreground tracking-widest italic">Signal_Gain</label>
+                  <span className="text-[8px] font-mono font-black text-primary italic">{Math.round((clip.volume || 1) * 100)}%</span>
+               </div>
+               <Slider 
+                 value={[(clip.volume || 1) * 100]} 
+                 onValueChange={(v) => onUpdate({ volume: v[0] / 100 })}
+                 max={100} 
+                 step={1}
+                 className="py-1"
+               />
+            </div>
+         </div>
+      </div>
+
+      <div className="h-px bg-border/50" />
+
+      {/* Sector Meta */}
+      <div className="p-3 bg-muted/20 border border-border rounded-sm space-y-2 relative overflow-hidden">
+         <div className="absolute inset-0 tactical-grid opacity-5" />
+         <div className="relative z-10 space-y-1.5">
+            <div className="flex justify-between items-center">
+               <span className="text-[7px] font-black text-muted-foreground uppercase">Sync_Protocol</span>
+               <span className="text-[7px] font-black text-success uppercase">Active</span>
+            </div>
+            <div className="flex justify-between items-center">
+               <span className="text-[7px] font-black text-muted-foreground uppercase">Cache_Node</span>
+               <span className="text-[7px] font-black text-foreground uppercase">Edge_Alpha</span>
+            </div>
+         </div>
       </div>
     </div>
   )

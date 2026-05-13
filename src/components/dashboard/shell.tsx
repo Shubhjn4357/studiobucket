@@ -66,7 +66,7 @@ export function DashboardShell({ children, navigationItems }: DashboardShellProp
              {/* Dynamic background element for premium feel */}
              <div className="absolute inset-0 bg-fluid-gradient pointer-events-none" />
              
-             <div className="relative z-10 p-4 md:p-6 lg:p-8">
+             <div className="relative z-10 p-3 md:p-4">
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={pathname}
@@ -77,7 +77,7 @@ export function DashboardShell({ children, navigationItems }: DashboardShellProp
                       duration: 0.3, 
                       ease: [0.22, 1, 0.36, 1] // Custom quintic ease-out
                     }}
-                    className="mx-auto max-w-7xl"
+                    className="mx-auto max-w-full"
                   >
                     {children}
                   </motion.div>

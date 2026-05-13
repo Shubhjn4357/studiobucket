@@ -69,7 +69,7 @@ async function runDoctor() {
     const ffmpegPath = ffmpegStatic || "ffmpeg"
     const ffmpegVersion = execSync(`${ffmpegPath} -version`).toString().split("\n")[0]
     console.log(`  ✅ ${ffmpegVersion}`)
-  } catch (error) {
+  } catch {
     console.log("  ❌ FFmpeg not found! (Tried system and static package)")
     healthy = false
   }

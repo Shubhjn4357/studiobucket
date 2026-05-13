@@ -21,144 +21,144 @@
   --color-success: var(--success);
   --color-error: var(--error);
 
-  /* Compact Design Radii */
-  --radius-xl: 0.75rem;   /* 12px */
-  --radius-lg: 0.5rem;    /* 8px */
-  --radius-md: 0.375rem;  /* 6px - Signature Radius */
-  --radius-sm: 0.25rem;   /* 4px */
+  /* Tactical HUD Radii */
+  --radius-xl: 0.5rem;    /* 8px */
+  --radius-lg: 0.375rem;  /* 6px */
+  --radius-md: 0.25rem;   /* 4px */
+  --radius-sm: 0.125rem;  /* 2px */
 
-  --animate-gradient-flow: gradient-flow 8s ease infinite;
-  --animate-shimmer: shimmer 2s infinite linear;
-  --animate-pulse-slow: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  --animate-float: float 6s ease-in-out infinite;
+  --animate-glitch: glitch 0.3s ease-in-out infinite;
+  --animate-scanline: scanline 8s linear infinite;
   
-  @keyframes gradient-flow {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
+  @keyframes scanline {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(100%); }
   }
 
-  @keyframes shimmer {
-    0% { background-position: -200% 0; }
-    100% { background-position: 200% 0; }
-  }
-
-  @keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-5px); }
+  @keyframes glitch {
+    0% { transform: translate(0); }
+    20% { transform: translate(-1px, 1px); }
+    40% { transform: translate(-1px, -1px); }
+    60% { transform: translate(1px, 1px); }
+    80% { transform: translate(1px, -1px); }
+    100% { transform: translate(0); }
   }
 }
 
 :root {
-  /* Design.md - White Canvas Marketing Track */
-  --background: hsl(48, 60%, 98%); /* Creamy White */
-  --foreground: hsl(0, 0%, 9%);   /* Near Black #171717 */
+  /* Tactical Light - Engineering Console */
+  --background: hsl(0, 0%, 98%); /* Creamy White */
+  --foreground: hsl(0, 0%, 5%);   /* Near Black */
   
-  --primary: hsl(0, 100%, 50%);    /* YouTube Red #FF0000 */
-  --primary-foreground: hsl(48, 60%, 98%);
+  --primary: hsl(0, 100%, 50%);    /* YouTube Red */
+  --primary-foreground: hsl(0, 0%, 100%);
   
-  --secondary: hsl(0, 0%, 93%);   /* Hairline Cool #ededed */
-  --secondary-foreground: hsl(0, 0%, 9%);
+  --secondary: hsl(0, 0%, 92%);
+  --secondary-foreground: hsl(0, 0%, 10%);
   
-  --muted: hsl(0, 0%, 96%);       /* Canvas Soft #fafafa */
-  --muted-foreground: hsl(0, 0%, 44%); /* Ink Mute #707070 */
+  --muted: hsl(0, 0%, 94%);
+  --muted-foreground: hsl(0, 0%, 45%);
   
   --accent: hsl(0, 100%, 50%);
-  --accent-foreground: hsl(48, 60%, 98%);
+  --accent-foreground: hsl(0, 0%, 100%);
   
-  --surface: hsl(0, 0%, 98%);
-  --surface-hover: hsl(0, 0%, 96%);
+  --surface: hsl(0, 0%, 96%);
+  --surface-hover: hsl(0, 0%, 94%);
   
   --card: hsl(0, 0%, 100%);
-  --card-foreground: hsl(0, 0%, 9%);
+  --card-foreground: hsl(0, 0%, 5%);
   
-  --border: hsla(0, 0%, 0%, 0.1);
-  --input: hsla(0, 0%, 0%, 0.05);
-  --ring: hsla(0, 100%, 50%, 0.5);
+  --border: hsla(0, 0%, 0%, 0.08);
+  --input: hsla(0, 0%, 0%, 0.04);
+  --ring: hsla(0, 100%, 50%, 0.4);
   
-  --success: hsl(142, 76%, 36%);
+  --success: hsl(142, 80%, 30%);
   --error: hsl(0, 100%, 50%);
 }
 
 .dark {
-  /* Design.md - Canvas Night Product Track */
-  --background: hsl(0, 0%, 7%);    /* #121212 - Soft Black */
-  --foreground: hsl(0, 0%, 93%);   /* #ededed - Hairline Cool */
+  /* Tactical Dark - Command Deck */
+  --background: hsl(0, 0%, 5%);    /* Soft Black */
+  --foreground: hsl(0, 0%, 95%);   /* Creamy White */
   
   --primary: hsl(0, 100%, 50%);    /* YouTube Red */
-  --primary-foreground: hsl(48, 60%, 98%);
+  --primary-foreground: hsl(0, 0%, 100%);
   
-  --secondary: hsl(0, 0%, 11%);    /* #1c1c1c - Canvas Night */
-  --secondary-foreground: hsl(0, 0%, 93%);
+  --secondary: hsl(0, 0%, 10%);
+  --secondary-foreground: hsl(0, 0%, 90%);
   
-  --muted: hsl(0, 0%, 13%);        /* #202020 */
+  --muted: hsl(0, 0%, 12%);
   --muted-foreground: hsl(0, 0%, 60%);
   
   --accent: hsl(0, 100%, 50%);
-  --accent-foreground: hsl(48, 60%, 98%);
+  --accent-foreground: hsl(0, 0%, 100%);
   
-  --surface: hsl(0, 0%, 9%);
-  --surface-hover: hsl(0, 0%, 11%);
+  --surface: hsl(0, 0%, 8%);
+  --surface-hover: hsl(0, 0%, 10%);
   
-  --card: hsl(0, 0%, 8%);
-  --card-foreground: hsl(0, 0%, 93%);
+  --card: hsl(0, 0%, 7%);
+  --card-foreground: hsl(0, 0%, 95%);
   
-  --border: hsla(0, 0%, 100%, 0.1);
-  --input: hsla(0, 0%, 100%, 0.05);
+  --border: hsla(0, 0%, 100%, 0.06);
+  --input: hsla(0, 0%, 100%, 0.04);
   --ring: hsla(0, 100%, 50%, 0.5);
   
-  --success: hsl(142, 70%, 50%);
+  --success: hsl(142, 70%, 45%);
   --error: hsl(0, 100%, 50%);
 }
 
 @layer base {
   body {
-    @apply bg-background text-foreground font-sans antialiased selection:bg-primary/20;
+    @apply bg-background text-foreground font-sans antialiased selection:bg-primary/30;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 }
 
 @layer utilities {
-  .glass-morphism {
-    @apply bg-white/60 backdrop-blur-xl border border-white/20 shadow-sm dark:bg-black/40 dark:backdrop-blur-2xl dark:border-white/10 dark:shadow-lg;
+  .tactical-grid {
+    background-size: 15px 15px;
+    background-image: radial-gradient(circle, var(--border) 1px, transparent 1px);
   }
 
-  .industrial-grid {
-    background-size: 20px 20px;
-    background-image: linear-gradient(to right, var(--border) 1px, transparent 1px),
-      linear-gradient(to bottom, var(--border) 1px, transparent 1px);
+  .micro-border {
+    @apply border border-border/40;
   }
 
-  .hud-border {
-    @apply border border-primary/40 relative rounded-sm overflow-hidden;
+  .hud-corner {
+    @apply relative overflow-hidden;
   }
 
-  .hud-border::before {
+  .hud-corner::before {
     content: "";
-    @apply absolute top-0 left-0 w-2 h-2 border-t border-l border-primary transition-all duration-300;
+    @apply absolute top-0 left-0 w-1.5 h-1.5 border-t border-l border-primary/60;
   }
 
-  .hud-border::after {
+  .hud-corner::after {
     content: "";
-    @apply absolute bottom-0 right-0 w-2 h-2 border-b border-r border-primary transition-all duration-300;
+    @apply absolute bottom-0 right-0 w-1.5 h-1.5 border-b border-r border-primary/60;
   }
 
-  .text-hud {
-    @apply font-mono tracking-tighter uppercase text-[8px] font-bold;
+  .text-tactical {
+    @apply font-mono tracking-wider uppercase text-[9px] font-bold italic;
   }
 
-  .bg-fluid-gradient {
-    background: radial-gradient(circle at top left, var(--primary), transparent 80%),
-                radial-gradient(circle at bottom right, var(--secondary), transparent 80%);
-    @apply opacity-[0.03];
+  .bg-command-gradient {
+    background: linear-gradient(135deg, hsla(0, 100%, 50%, 0.05), transparent 40%);
   }
 
   .custom-scrollbar::-webkit-scrollbar {
-    width: 3px;
+    width: 2px;
+    height: 2px;
   }
   .custom-scrollbar::-webkit-scrollbar-track {
     @apply bg-transparent;
   }
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    @apply bg-primary/30 rounded-full hover:bg-primary/50;
+    @apply bg-primary/20 hover:bg-primary/40 transition-colors;
+  }
+
+  .no-drag {
+    -webkit-user-drag: none;
+    user-select: none;
   }
 }

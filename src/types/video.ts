@@ -20,6 +20,7 @@ export interface Mask {
 
 export interface Clip {
   id: string
+  name: string
   assetId?: string // Link to the raw asset
   start: number // Time in project
   end: number // Time in project
