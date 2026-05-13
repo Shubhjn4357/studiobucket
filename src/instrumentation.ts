@@ -55,7 +55,7 @@ export async function register() {
       const { userId, sourceUrl } = job.data
       logger.info(`Starting download for ${sourceUrl}`)
 
-      const downloadDir = path.join(process.cwd(), 'public', 'downloads')
+      const downloadDir = path.join(/*turbopackIgnore: true*/ process.cwd(), 'public', 'downloads')
       if (!fs.existsSync(downloadDir)) fs.mkdirSync(downloadDir, { recursive: true })
 
       const outputFileName = `download_${Date.now()}.mp4`

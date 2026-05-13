@@ -236,7 +236,7 @@ export function UploadCenter() {
                     
                     {file.status === "completed" && (
                       <div className="flex items-center gap-2 text-green-500">
-                        <Icons.checkCircle2 className="h-4 w-4" />
+                        <Icons.checkCircle className="h-4 w-4" />
                         <span className="text-xs font-bold uppercase">Upload Complete</span>
                       </div>
                     )}

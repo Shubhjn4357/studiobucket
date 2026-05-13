@@ -82,7 +82,7 @@ function JobCard({ job }: { job: Job }) {
               </p>
             </div>
 
-            <div className="w-full lg:w-96 space-y-4 bg-black/20 p-6 rounded-[2rem] border border-white/5">
+            <div className="w-full lg:w-96 space-y-4 bg-black/20 p-6 rounded-4xl border border-white/5">
               <div className="flex justify-between items-end">
                 <div className="space-y-1">
                    <p className="text-[9px] font-black text-white/20 uppercase tracking-[0.4em] italic leading-none">Transmission_Sync</p>
@@ -107,7 +107,7 @@ function JobCard({ job }: { job: Job }) {
               </div>
             </div>
 
-            <div className="flex items-center gap-4 border-l border-white/5 pl-8 hidden lg:flex">
+            <div className="items-center gap-4 border-l border-white/5 pl-8 hidden lg:flex">
               <Button variant="ghost" size="icon" className="h-14 w-14 rounded-2xl hover:bg-red-500/10 text-white/10 hover:text-red-500 transition-all border border-transparent hover:border-red-500/20">
                 <Icons.trash2 className="h-6 w-6" />
               </Button>
@@ -146,7 +146,7 @@ export function QueueClient({ initialJobs }: {
       await purgeQueueAction()
       toast.success("Operational archives purged")
     } catch {
-      toast.error("Purge synchronization failed")
+      toast.error("Remove synchronization failed")
     }
   }
 
@@ -155,7 +155,7 @@ export function QueueClient({ initialJobs }: {
       {/* Industrial Header Console */}
       <div className="flex flex-col md:flex-row items-center justify-between gap-12 p-16 bg-black/40 backdrop-blur-3xl border border-white/5 rounded-[4rem] shadow-2xl relative overflow-hidden">
         {/* HUD Scanline FX */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_2px_2px,#ffffff03_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_2px_2px,#ffffff03_1px,transparent_1px)] bg-size-[40px_40px] pointer-events-none" />
         
         <div className="flex flex-col md:flex-row items-center gap-12 relative z-10">
           <div className="h-24 w-24 rounded-[2.5rem] bg-primary flex items-center justify-center shadow-2xl shadow-primary/40 relative group">

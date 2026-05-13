@@ -26,7 +26,7 @@ export function VideoActions({ videoId }: { videoId: string }) {
       await deleteVideoAction(videoId)
       toast.success("Asset successfully decommissioned")
     } catch {
-      toast.error("Protocol failure: Unable to purge asset")
+      toast.error("Protocol failure: Unable to Remove asset")
     } finally {
       setIsDeleting(false)
     }
@@ -39,7 +39,7 @@ export function VideoActions({ videoId }: { videoId: string }) {
           size="icon" 
           variant="ghost" 
           disabled={isDeleting}
-          className="h-8 w-8 rounded-none bg-white/[0.02] border border-white/5 hover:bg-red-500/10 hover:border-red-500/20 text-white/20 hover:text-red-500 transition-all group"
+          className="h-8 w-8 rounded-none bg-white/2 border border-white/5 hover:bg-red-500/10 hover:border-red-500/20 text-white/20 hover:text-red-500 transition-all group"
         >
           {isDeleting ? <Icons.refreshCw className="h-4 w-4 animate-spin" /> : <Icons.trash2 className="h-4 w-4 group-hover:scale-110 transition-transform" />}
         </Button>
