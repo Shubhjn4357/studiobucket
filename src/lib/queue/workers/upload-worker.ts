@@ -145,13 +145,15 @@ export class UploadWorker {
 
       // Post-processing: Generate thumbnail
       try {
-        const thumbnailDir = path.join(/*turbopackIgnore: true*/ process.cwd(), "public", "thumbnails")
+        const { getStoragePath } = await import("@/lib/storage-utils")
+        const thumbnailDir = getStoragePath("thumbnails")
         if (!fs.existsSync(thumbnailDir)) {
           fs.mkdirSync(thumbnailDir, { recursive: true })
         }
         const thumbName = `${data.videoId}.jpg`
         const thumbnailPath = path.join(thumbnailDir, thumbName)
-        const publicThumbnailPath = `/thumbnails/${thumbName}`
+        const isProd = process.env.NODE_ENV === "production"
+        const publicThumbnailPath = isProd ? `/storage/thumbnails/${thumbName}` : `/thumbnails/${thumbName}`
         
         await videoProcessor.generateThumbnail(data.filePath, thumbnailPath)
         await db.update(videos)

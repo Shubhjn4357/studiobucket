@@ -3,6 +3,7 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 import fs from "fs"
 import path from "path"
 import { logger } from "./logger"
+import { getStoragePath } from "./storage-utils"
 
 const R2_ACCESS_KEY = process.env.R2_ACCESS_KEY
 const R2_SECRET_KEY = process.env.R2_SECRET_KEY
@@ -46,7 +47,7 @@ export class StorageEngine {
         return `${R2_PUBLIC_URL}/${key}`
       } else {
         logger.info(`Local Storage Protocol: Fallback enabled for ${key}`)
-        const localDest = path.join(/*turbopackIgnore: true*/ process.cwd(), "public", "uploads", key)
+        const localDest = getStoragePath("uploads", key)
         const destDir = path.dirname(localDest)
         
         if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true })
@@ -56,7 +57,7 @@ export class StorageEngine {
            fs.copyFileSync(filePath, localDest)
         }
         
-        return `/uploads/${key}`
+        return `/storage/uploads/${key}`
       }
     } catch (error) {
       logger.error(error, `Storage Engine Failure during upload of ${key}`)
@@ -72,7 +73,7 @@ export class StorageEngine {
           Key: key,
         }))
       } else {
-        const localPath = path.join(/*turbopackIgnore: true*/ process.cwd(), "public", "uploads", key)
+        const localPath = getStoragePath("uploads", key)
         if (fs.existsSync(localPath)) fs.unlinkSync(localPath)
       }
     } catch (error) {
@@ -87,7 +88,8 @@ export class StorageEngine {
     if (isCloudEnabled) {
       return `${R2_PUBLIC_URL}/${key}`
     }
-    return `/uploads/${key}`
+    const isProd = process.env.NODE_ENV === 'production'
+    return isProd ? `/storage/uploads/${key}` : `/uploads/${key}`
   }
 
   static async getPresignedUrl(key: string, contentType: string): Promise<{ url: string; fields?: Record<string, string> }> {

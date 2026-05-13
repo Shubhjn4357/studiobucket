@@ -9,6 +9,7 @@ export async function registerNode() {
   const { spawn } = await import('child_process')
   const path = await import('path')
   const fs = await import('fs')
+  const { getStoragePath } = await import('./storage-utils')
 
   const connection = new IORedis(process.env.REDIS_URL || "redis://localhost:6379", {
     maxRetriesPerRequest: null,
@@ -49,7 +50,7 @@ export async function registerNode() {
     const { userId, sourceUrl } = job.data
     logger.info(`Starting download for ${sourceUrl}`)
 
-    const downloadDir = path.join(/*turbopackIgnore: true*/ process.cwd(), 'public', 'downloads')
+    const downloadDir = getStoragePath('downloads')
     if (!fs.existsSync(downloadDir)) fs.mkdirSync(downloadDir, { recursive: true })
 
     const outputFileName = `download_${Date.now()}.mp4`

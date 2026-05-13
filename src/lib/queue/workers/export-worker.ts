@@ -31,7 +31,8 @@ export class ExportWorker {
 
   private async processExport(job: Job) {
     const { videoId, project }: { videoId: string, project: VideoProject } = job.data
-    const exportDir = path.join(/*turbopackIgnore: true*/ process.cwd(), "public", "exports")
+    const { getStoragePath } = await import("@/lib/storage-utils")
+    const exportDir = getStoragePath("exports")
     if (!fs.existsSync(exportDir)) fs.mkdirSync(exportDir, { recursive: true })
 
     const outputPath = path.join(exportDir, `${videoId}-final.mp4`)
@@ -47,7 +48,7 @@ export class ExportWorker {
       // PRE-PROCESS CLIPS & TRANSITIONS
       project.tracks.forEach(track => {
         track.clips.forEach(clip => {
-          const inputPath = path.join(/*turbopackIgnore: true*/ process.cwd(), "public", "uploads", clip.assetId || "")
+          const inputPath = getStoragePath("uploads", clip.assetId || "")
           if (fs.existsSync(inputPath)) {
              inputs.push("-ss", clip.offset.toString(), "-t", clip.duration.toString(), "-i", inputPath)
              
@@ -112,9 +113,10 @@ export class ExportWorker {
 
         renderProcess.on("close", async (code) => {
           if (code === 0) {
+            const isProd = process.env.NODE_ENV === "production"
             await db.update(videos).set({ 
               status: "published", 
-              filePath: `/exports/${videoId}-final.mp4`,
+              filePath: isProd ? `/storage/exports/${videoId}-final.mp4` : `/exports/${videoId}-final.mp4`,
               updatedAt: Date.now() 
             }).where(eq(videos.id, videoId))
             resolve(true)

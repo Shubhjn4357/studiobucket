@@ -30,8 +30,9 @@ export class TranscodeWorker {
 
   private async processTranscode(job: Job) {
     const { videoId, filePath } = job.data
-    const absoluteInputPath = path.join(/*turbopackIgnore: true*/ process.cwd(), "public", filePath)
-    const hlsOutputDir = path.join(/*turbopackIgnore: true*/ process.cwd(), "public", "hls", videoId)
+    const { getStoragePath } = await import("@/lib/storage-utils")
+    const absoluteInputPath = getStoragePath("uploads", filePath)
+    const hlsOutputDir = getStoragePath("hls", videoId)
 
     if (!fs.existsSync(hlsOutputDir)) {
       fs.mkdirSync(hlsOutputDir, { recursive: true })
@@ -91,7 +92,7 @@ export class TranscodeWorker {
             
             await db.update(videos)
               .set({ 
-                hlsPath: `/hls/${videoId}/master.m3u8`,
+                hlsPath: process.env.NODE_ENV === "production" ? `/storage/hls/${videoId}/master.m3u8` : `/hls/${videoId}/master.m3u8`,
                 status: "uploaded",
                 updatedAt: Date.now() 
               })
