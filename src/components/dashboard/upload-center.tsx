@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 import { logger } from "@/lib/logger"
+import { Progress } from "@/components/ui/progress"
+import { ScrollArea } from "@/components/ui/scroll-area"
 
 interface FileWithProgress {
   id: string
@@ -33,7 +35,7 @@ export function UploadCenter() {
       status: "pending" as const,
     }))
     setFiles((prev) => [...prev, ...newFiles])
-    toast.success(`Registered ${acceptedFiles.length} new tactical assets`)
+    toast.success(`Added ${acceptedFiles.length} files to queue`)
   }, [])
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -52,7 +54,7 @@ export function UploadCenter() {
     setFiles((prev) => prev.filter((f) => f.id !== id))
   }
 
-  const initializePipeline = async () => {
+  const startUpload = async () => {
     if (files.length === 0) return
     setIsUploading(true)
     
@@ -73,7 +75,7 @@ export function UploadCenter() {
           })
         })
 
-        if (!initRes.ok) throw new Error("Protocol initialization failed")
+        if (!initRes.ok) throw new Error("Failed to initialize upload")
         
         const { uploadUrl, videoId } = await initRes.json()
 
@@ -95,8 +97,8 @@ export function UploadCenter() {
                 ...f, 
                 progress, 
                 status: "uploading",
-                speed: speed,
-                eta: eta
+                speed,
+                eta
               } : f))
             }
           })
@@ -114,12 +116,12 @@ export function UploadCenter() {
                 setFiles(prev => prev.map(f => f.id === fileItem.id ? { ...f, status: "completed", progress: 100, eta: 0, videoId } : f))
                 resolve(true)
               } catch (err) { reject(err) }
-            } else reject(new Error(`Transmission error: ${xhr.status}`))
+            } else reject(new Error(`Upload error: ${xhr.status}`))
           })
 
           xhr.addEventListener("error", () => {
             activeXhrs.current.delete(fileItem.id)
-            reject(new Error("Uplink failed"))
+            reject(new Error("Network error during upload"))
           })
           
           xhr.open("PUT", uploadUrl)
@@ -129,11 +131,11 @@ export function UploadCenter() {
 
         await uploadPromise
       }
-      toast.success("Tactical synchronization complete")
+      toast.success("All uploads completed successfully")
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Protocol aborted"
-      logger.error(error, "Ingestion Pipeline Failure")
-      toast.error(`Pipeline failure: ${errorMessage}`)
+      const errorMessage = error instanceof Error ? error.message : "Upload failed"
+      logger.error(error, "Upload Pipeline Failure")
+      toast.error(`Upload error: ${errorMessage}`)
       setFiles(prev => prev.map(f => f.status === "uploading" ? { ...f, status: "failed" } : f))
     } finally {
       setIsUploading(false)
@@ -141,123 +143,117 @@ export function UploadCenter() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-10rem)] gap-3">
-      <div className="grid grid-cols-12 gap-3 flex-1 min-h-0">
-        {/* Drop Zone - High Density */}
-        <div className="col-span-3 flex flex-col gap-3">
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Drop Zone */}
+        <div className="md:col-span-1 space-y-4">
           <div
             {...getRootProps()}
             className={cn(
-              "flex-1 flex flex-col items-center justify-center border border-dashed transition-all duration-200 cursor-pointer group relative overflow-hidden hud-corner",
-              isDragActive ? "bg-primary/5 border-primary" : "bg-surface border-border hover:border-primary/40"
+              "aspect-square flex flex-col items-center justify-center border-2 border-dashed rounded-2xl transition-all cursor-pointer group relative overflow-hidden",
+              isDragActive ? "bg-primary/5 border-primary" : "bg-card border-border hover:border-primary/40"
             )}
           >
             <input {...getInputProps()} />
-            <div className="absolute inset-0 tactical-grid opacity-10 pointer-events-none" />
-            <div className="flex flex-col items-center gap-2 text-center p-4 relative z-10">
-              <Icons.cloudUpload className={cn("h-6 w-6 transition-colors", isDragActive ? "text-primary" : "text-muted-foreground group-hover:text-primary")} />
-              <div className="space-y-0.5">
-                <p className="text-[9px] font-black uppercase tracking-widest text-foreground">Inject_New_Asset</p>
-                <p className="text-[7px] font-bold uppercase tracking-widest text-muted-foreground opacity-60 italic">Local Assets_Only</p>
+            <div className="flex flex-col items-center gap-4 text-center p-6 relative z-10">
+              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                <Icons.cloudUpload className="h-6 w-6" />
               </div>
+              <div className="space-y-1">
+                <p className="font-bold text-foreground">Drag & Drop Videos</p>
+                <p className="text-xs text-muted-foreground">MP4, MOV, AVI up to 2GB</p>
+              </div>
+              <Button variant="outline" size="sm" className="font-bold rounded-lg mt-2">
+                Browse Files
+              </Button>
             </div>
           </div>
 
           <Button 
-            onClick={initializePipeline}
+            onClick={startUpload}
             disabled={isUploading || files.length === 0 || files.every(f => f.status === "completed")}
-            className="w-full bg-primary hover:bg-primary/90 text-white h-8 text-[9px] font-black uppercase tracking-[0.3em] italic shadow-sm rounded-sm"
+            className="w-full h-12 font-bold rounded-xl shadow-lg transition-all"
           >
-            {isUploading ? "Sync_Active..." : "Initialize_Ingestion"}
+            {isUploading ? (
+              <><Icons.refreshCw className="animate-spin h-4 w-4 mr-2" /> Uploading...</>
+            ) : (
+              <><Icons.zap className="h-4 w-4 mr-2" /> Start Upload</>
+            )}
           </Button>
         </div>
 
-        {/* Tactical Registry */}
-        <div className="col-span-9 flex flex-col bg-surface border border-border overflow-hidden min-h-0 shadow-sm relative hud-corner">
-          <div className="absolute inset-0 tactical-grid opacity-10 pointer-events-none" />
-          
-          <div className="px-4 h-8 border-b border-border flex items-center justify-between bg-muted/20 relative z-10">
-            <div className="flex items-center gap-2">
-               <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-               <span className="text-[9px] font-black text-foreground tracking-[0.3em] uppercase italic">Telemetry_Stream_Live</span>
-            </div>
-            <span className="text-[8px] font-black text-muted-foreground uppercase tracking-widest italic opacity-50">Content_Inventory_Node</span>
+        {/* Upload List */}
+        <div className="md:col-span-2 bg-card border border-border rounded-2xl overflow-hidden shadow-sm flex flex-col min-h-[400px]">
+          <div className="px-6 py-4 border-b border-border bg-muted/30 flex items-center justify-between">
+            <h3 className="font-bold text-sm">Upload Queue</h3>
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+              {files.length} {files.length === 1 ? 'File' : 'Files'}
+            </span>
           </div>
 
-          <div className="flex-1 overflow-y-auto custom-scrollbar p-0 relative z-10">
+          <ScrollArea className="flex-1">
             {files.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center py-10 opacity-20">
-                <Icons.layers className="h-8 w-8 mb-2" />
-                <span className="text-[8px] font-black uppercase tracking-[0.4em]">Registry_Empty</span>
+              <div className="flex flex-col items-center justify-center py-20 opacity-30">
+                <Icons.layers className="h-12 w-12 mb-4" />
+                <p className="font-bold text-sm uppercase tracking-widest">Queue is empty</p>
               </div>
             ) : (
-              <table className="w-full text-left border-collapse">
-                <thead className="sticky top-0 bg-surface border-b border-border z-20">
-                  <tr className="bg-muted/10">
-                    <th className="px-4 py-2 text-[7px] font-black uppercase tracking-widest text-muted-foreground">Asset_ID</th>
-                    <th className="px-4 py-2 text-[7px] font-black uppercase tracking-widest text-muted-foreground">Protocol_Status</th>
-                    <th className="px-4 py-2 text-[7px] font-black uppercase tracking-widest text-muted-foreground">Payload_Size</th>
-                    <th className="px-4 py-2 text-[7px] font-black uppercase tracking-widest text-muted-foreground">Transmission_Metrics</th>
-                    <th className="px-4 py-2 text-[7px] font-black uppercase tracking-widest text-muted-foreground text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/30">
-                  {files.map((file) => (
-                    <tr key={file.id} className="group hover:bg-primary/5 transition-colors">
-                      <td className="px-4 py-2">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[7px] font-black text-primary/40 uppercase tracking-tighter">NODE_{file.id.split('-').pop()?.toUpperCase()}</span>
-                          <span className="text-[9px] font-black text-foreground uppercase truncate italic max-w-[120px]">{file.file.name}</span>
+              <div className="divide-y divide-border">
+                {files.map((file) => (
+                  <div key={file.id} className="p-6 group hover:bg-muted/30 transition-colors">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex items-center gap-4">
+                        <div className="h-10 w-10 rounded-lg bg-primary/5 flex items-center justify-center text-primary">
+                          <Icons.video className="h-5 w-5" />
                         </div>
-                      </td>
-                      <td className="px-4 py-2">
-                        <div className="flex items-center gap-3">
-                          <span className={cn(
-                            "text-[8px] font-black uppercase tracking-wider",
-                            file.status === "completed" ? "text-success" : 
-                            file.status === "failed" ? "text-error" : 
-                            file.status === "uploading" ? "text-primary animate-pulse" : "text-muted-foreground"
-                          )}>{file.status}</span>
-                          {file.status === "uploading" && (
-                            <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden max-w-[60px] border border-border/30">
-                              <div className="h-full bg-primary" style={{ width: `${file.progress}%` }} />
-                            </div>
-                          )}
+                        <div className="space-y-1">
+                          <p className="text-sm font-bold truncate max-w-[300px]">{file.file.name}</p>
+                          <p className="text-[10px] text-muted-foreground font-bold uppercase">
+                            {(file.file.size / (1024 * 1024)).toFixed(2)} MB • {file.status}
+                          </p>
                         </div>
-                      </td>
-                      <td className="px-4 py-2 text-[8px] text-muted-foreground font-mono uppercase">
-                        {(file.file.size / (1024 * 1024)).toFixed(2)} MB
-                      </td>
-                      <td className="px-4 py-2">
-                        {file.status === "uploading" ? (
-                          <div className="flex gap-3 items-center">
-                            <span className="text-[7px] font-black text-primary uppercase">{(file.speed! / (1024 * 1024)).toFixed(1)} MB/s</span>
-                            <span className="text-[7px] text-muted-foreground uppercase opacity-40">ETA: {file.eta}s</span>
-                          </div>
-                        ) : (
-                          <span className="text-[7px] text-muted-foreground uppercase italic opacity-20">Idle</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-2 text-right">
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          onClick={() => removeFile(file.id)} 
-                          disabled={file.status === "uploading" && !isUploading}
-                          className="h-5 w-5 rounded-sm hover:bg-error/10 hover:text-error text-muted-foreground opacity-0 group-hover:opacity-100 transition-all"
-                        >
-                          <Icons.x className="h-3 w-3" />
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      </div>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => removeFile(file.id)} 
+                        disabled={file.status === "uploading" && isUploading}
+                        className="h-8 w-8 rounded-lg hover:bg-red-500/10 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+                      >
+                        <Icons.x className="h-4 w-4" />
+                      </Button>
+                    </div>
+
+                    {file.status === "uploading" && (
+                      <div className="space-y-3">
+                        <Progress value={file.progress} className="h-1.5" />
+                        <div className="flex justify-between items-center text-[10px] font-bold text-muted-foreground uppercase">
+                          <span>{(file.speed! / (1024 * 1024)).toFixed(1)} MB/s</span>
+                          <span>ETA: {file.eta}s • {file.progress}%</span>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {file.status === "completed" && (
+                      <div className="flex items-center gap-2 text-green-500">
+                        <Icons.checkCircle2 className="h-4 w-4" />
+                        <span className="text-xs font-bold uppercase">Upload Complete</span>
+                      </div>
+                    )}
+                    
+                    {file.status === "failed" && (
+                      <div className="flex items-center gap-2 text-red-500">
+                        <Icons.alertCircle className="h-4 w-4" />
+                        <span className="text-xs font-bold uppercase">Upload Failed</span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
             )}
-          </div>
+          </ScrollArea>
         </div>
       </div>
     </div>
   )
 }
-

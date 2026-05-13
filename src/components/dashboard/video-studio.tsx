@@ -9,6 +9,9 @@ import { Track, Clip, VideoProject } from "@/types/video"
 import Hls from "hls.js"
 import { PropertiesPanel } from "@/components/studio/properties-panel"
 import { Badge } from "@/components/ui/badge"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Slider } from "@/components/ui/slider"
+import { PageHeader } from "@/components/dashboard/page-header"
 
 interface VideoStudioProps {
   videoId: string
@@ -18,8 +21,7 @@ interface VideoStudioProps {
   hlsPath?: string
 }
 
-export function VideoStudio({ initialData, title = "ALPHA_STRIKE", filePath, hlsPath }: Omit<VideoStudioProps, "videoId">) {
-  const [activeTab, setActiveTab] = useState<"timeline" | "manifest" | "logic">("timeline")
+export function VideoStudio({ initialData, title = "Untitled Project", filePath, hlsPath }: Omit<VideoStudioProps, "videoId">) {
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -28,19 +30,9 @@ export function VideoStudio({ initialData, title = "ALPHA_STRIKE", filePath, hls
   const videoRef = useRef<HTMLVideoElement>(null)
 
   const [tracks, setTracks] = useState<Track[]>(initialData?.tracks || [
-    { id: "v1", name: "ALPHA_VISUAL_CORE", type: "video", clips: [] },
-    { id: "v2", name: "HUD_OVERLAY_LOGIC", type: "video", clips: [] },
-    { id: "a1", name: "ACOUSTIC_SPECTRUM", type: "audio", clips: [] }
+    { id: "v1", name: "Video Layer 1", type: "video", clips: [] },
+    { id: "a1", name: "Audio Layer 1", type: "audio", clips: [] }
   ])
-
-  const telemetry = {
-    fps: 30,
-    resolution: "4K_ULTRA_HDR",
-    bitrate: "45.8_MBPS",
-    latency: "0.024ms",
-    nodes: "NODE_SIGMA_01",
-    sector: "STRIKE_04"
-  }
 
   useEffect(() => {
     if (hlsPath && videoRef.current) {
@@ -75,247 +67,184 @@ export function VideoStudio({ initialData, title = "ALPHA_STRIKE", filePath, hls
     }
   }
 
+  const handleSeek = (time: number) => {
+    if (videoRef.current) {
+      videoRef.current.currentTime = time
+      setCurrentTime(time)
+    }
+  }
+
   const formatTime = (time: number) => {
     const mins = Math.floor(time / 60)
     const secs = Math.floor(time % 60)
-    const ms = Math.floor((time % 1) * 1000)
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${ms.toString().padStart(3, '0')}`
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
   }
 
   return (
-    <div className="h-[calc(100vh-8rem)] flex flex-col gap-2 p-2 bg-background relative overflow-hidden">
-      <div className="absolute inset-0 tactical-grid opacity-5 pointer-events-none" />
-      
-      {/* Tactical Header */}
-      <div className="h-10 micro-border bg-surface flex items-center justify-between px-3 relative z-10 hud-corner">
-         <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-               <div className="h-6 w-6 bg-primary flex items-center justify-center rounded-sm shadow-sm">
-                  <Icons.cpu className="h-3.5 w-3.5 text-white" />
-               </div>
-               <div className="flex flex-col">
-                  <div className="flex items-center gap-1.5 leading-none">
-                     <span className="h-1 w-1 rounded-full bg-primary animate-pulse" />
-                     <span className="text-[7px] font-black text-primary uppercase tracking-widest italic">Command_Studio_Online</span>
-                  </div>
-                  <span className="text-[11px] font-black text-foreground uppercase tracking-tight italic">{title}</span>
-               </div>
-            </div>
-            <div className="h-5 w-px bg-border mx-1" />
-            <nav className="flex items-center gap-0.5">
-               {["Timeline", "Manifest", "Logic"].map(tab => (
-                 <Button 
-                   key={tab} 
-                   variant="ghost" 
-                   onClick={() => setActiveTab(tab.toLowerCase() as "timeline" | "manifest" | "logic")}
-                   className={cn(
-                     "h-6 px-3 text-[8px] font-black uppercase tracking-widest italic rounded-sm transition-all",
-                     activeTab === tab.toLowerCase() ? "bg-primary text-white" : "text-muted-foreground hover:bg-primary/5 hover:text-primary"
-                   )}
-                 >
-                   {tab}
-                 </Button>
-               ))}
-            </nav>
-         </div>
-
-         <div className="flex items-center gap-2">
-            <Button variant="outline" className="h-6 px-3 text-[8px] font-black uppercase tracking-widest italic border-border hover:bg-primary/5 hover:text-primary rounded-sm">
-               Sync_Nodes
-            </Button>
-            <Button className="h-6 px-4 bg-primary text-white text-[8px] font-black uppercase tracking-widest italic hover:bg-primary/90 rounded-sm">
-               Deploy_Strike
-            </Button>
-         </div>
+    <div className="flex flex-col h-[calc(100vh-6rem)] bg-background overflow-hidden">
+      {/* Top Header */}
+      <div className="p-4 border-b border-border bg-card flex items-center justify-between shadow-sm shrink-0">
+        <div className="flex items-center gap-4">
+          <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+            <Icons.scissors className="h-5 w-5" />
+          </div>
+          <div>
+            <h1 className="text-lg font-bold leading-none">{title}</h1>
+            <p className="text-xs text-muted-foreground mt-1">Editing Mode</p>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-3">
+          <Button variant="outline" size="sm" className="font-bold">
+            <Icons.save className="h-4 w-4 mr-2" />
+            Save Draft
+          </Button>
+          <Button size="sm" className="font-bold px-6">
+            <Icons.zap className="h-4 w-4 mr-2" />
+            Export Video
+          </Button>
+        </div>
       </div>
 
-      {/* Main Grid Workspace */}
-      <div className="flex-1 grid grid-cols-12 gap-2 min-h-0 relative z-10">
-         {/* Sector_A: Visual Feed */}
-         <div className="col-span-12 lg:col-span-9 flex flex-col gap-2 min-h-0">
-            <div className="flex-1 bg-black micro-border relative overflow-hidden group rounded-sm shadow-inner">
-               <div className="absolute inset-0 tactical-grid opacity-10 pointer-events-none" />
-               
-               {/* HUD Overlays */}
-               <div className="absolute inset-0 z-20 pointer-events-none p-3 flex flex-col justify-between">
-                  <div className="flex justify-between items-start">
-                     <div className="space-y-1.5">
-                        <div className="flex items-center gap-2">
-                           <div className="h-1 w-1 rounded-full bg-primary animate-pulse" />
-                           <span className="text-[8px] font-black text-white uppercase tracking-widest italic">{telemetry.nodes}</span>
-                           <Badge variant="outline" className="h-3 px-1 border-success/30 bg-success/5 text-success text-[5px] font-black uppercase tracking-widest">UPLINK_STABLE</Badge>
-                        </div>
-                        <div className="grid grid-cols-3 gap-x-3 gap-y-0.5">
-                           {[{k:"FPS",v:telemetry.fps},{k:"BIT",v:telemetry.bitrate},{k:"RES",v:telemetry.resolution.split('_')[0]}].map(s => (
-                             <div key={s.k} className="flex items-center gap-1">
-                                <span className="text-[6px] text-white/30 font-black uppercase">{s.k}:</span>
-                                <span className="text-[7px] text-white/70 font-black">{s.v}</span>
-                             </div>
-                           ))}
-                        </div>
-                     </div>
-                     <div className="bg-black/60 border border-white/5 p-1 rounded-sm text-right">
-                        <span className="text-[6px] text-white/30 font-black block uppercase leading-none mb-0.5">Latency</span>
-                        <span className="text-[10px] text-white font-black block italic leading-none">{telemetry.latency}</span>
-                     </div>
-                  </div>
+      <div className="flex-1 flex overflow-hidden">
+        {/* Left Sidebar - Assets */}
+        <div className="w-64 border-r border-border bg-card flex flex-col shrink-0">
+          <div className="p-4 border-b border-border flex items-center justify-between">
+            <span className="text-xs font-bold uppercase text-muted-foreground tracking-wider">Your Assets</span>
+            <Button variant="ghost" size="icon" className="h-6 w-6"><Icons.plus className="h-4 w-4" /></Button>
+          </div>
+          <ScrollArea className="flex-1">
+            <div className="p-2 space-y-2">
+              <div className="p-3 rounded-xl bg-muted/50 border border-border group cursor-move">
+                <div className="aspect-video bg-black rounded-lg mb-2 overflow-hidden relative">
+                   <div className="absolute inset-0 flex items-center justify-center">
+                     <Icons.video className="h-6 w-6 text-white/20" />
+                   </div>
+                </div>
+                <p className="text-xs font-bold truncate">Main Clip.mp4</p>
+              </div>
+            </div>
+          </ScrollArea>
+        </div>
 
-                  <div className="flex justify-between items-end">
-                     <div className="space-y-1">
-                        <div className="flex items-baseline gap-1 leading-none">
-                           <span className="text-2xl font-black italic text-white tracking-tighter">{formatTime(currentTime).split('.')[0]}</span>
-                           <span className="text-[10px] font-black text-primary italic opacity-70">.{formatTime(currentTime).split('.')[1]}</span>
-                        </div>
-                     </div>
-                     <div className="flex gap-1">
-                        {[Icons.maximize, Icons.monitor].map((Icon, i) => (
-                          <div key={i} className="h-5 w-5 bg-black/40 border border-white/5 rounded-sm flex items-center justify-center cursor-pointer hover:bg-white/10 transition-colors pointer-events-auto">
-                             <Icon className="h-2.5 w-2.5 text-white/30" />
-                          </div>
-                        ))}
-                     </div>
-                  </div>
-               </div>
-
+        {/* Main Work Area */}
+        <div className="flex-1 flex flex-col overflow-hidden bg-muted/20">
+          {/* Video Preview */}
+          <div className="flex-1 flex items-center justify-center p-8 min-h-0">
+            <div className="relative aspect-video w-full max-w-4xl bg-black rounded-2xl shadow-2xl border border-border overflow-hidden">
                <video 
                  ref={videoRef}
                  onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
                  onDurationChange={(e) => setDuration(e.currentTarget.duration)}
+                 onEnded={() => setIsPlaying(false)}
                  className="w-full h-full object-contain"
                />
                
-               <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white/10 z-30">
-                  <div className="h-full bg-primary" style={{ width: `${(currentTime / duration) * 100}%` }} />
-               </div>
+               {/* Video Overlay Controls */}
+               {!isPlaying && (
+                 <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-[1px]">
+                   <Button size="icon" variant="secondary" className="h-16 w-16 rounded-full shadow-2xl" onClick={togglePlayback}>
+                     <Icons.play className="h-8 w-8 fill-current" />
+                   </Button>
+                 </div>
+               )}
+            </div>
+          </div>
+
+          {/* Timeline Section */}
+          <div className="h-72 bg-card border-t border-border flex flex-col shrink-0">
+            {/* Timeline Controls */}
+            <div className="h-12 border-b border-border flex items-center justify-between px-6 bg-muted/5">
+              <div className="flex items-center gap-6">
+                <div className="flex items-center gap-2">
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleSeek(Math.max(0, currentTime - 5))}>
+                    <Icons.skipBack className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-10 w-10" onClick={togglePlayback}>
+                    {isPlaying ? <Icons.pause className="h-6 w-6" /> : <Icons.play className="h-6 w-6" />}
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleSeek(Math.min(duration, currentTime + 5))}>
+                    <Icons.skipForward className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="text-sm font-mono font-bold">
+                  {formatTime(currentTime)} <span className="text-muted-foreground">/ {formatTime(duration)}</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <Icons.zoomOut className="h-4 w-4 text-muted-foreground" />
+                  <Slider 
+                    value={[zoom]} 
+                    onValueChange={(v) => setZoom(v[0])}
+                    min={10} 
+                    max={200} 
+                    className="w-32"
+                  />
+                  <Icons.zoomIn className="h-4 w-4 text-muted-foreground" />
+                </div>
+                <Button variant="outline" size="sm" className="font-bold">Split Clip</Button>
+              </div>
             </div>
 
-            {/* Sector_B: Temporal Grid (Timeline) */}
-            <div className="h-40 micro-border bg-surface flex flex-col overflow-hidden rounded-sm shadow-sm relative">
-               <div className="absolute inset-0 tactical-grid opacity-5 pointer-events-none" />
-               
-               <div className="h-6 border-b border-border bg-muted/20 flex items-center justify-between px-3 relative z-20">
-                  <div className="flex items-center gap-3">
-                     <span className="text-[8px] font-black text-foreground uppercase tracking-[0.2em] italic">Temporal_Grid</span>
-                     <Badge className="h-3 px-1.5 bg-primary/10 border-primary/20 text-primary text-[5px] font-black uppercase">LOCKED_STABLE</Badge>
+            {/* Tracks Area */}
+            <ScrollArea className="flex-1">
+              <div className="p-4 space-y-2 min-w-full" style={{ width: `${zoom}%` }}>
+                {tracks.map(track => (
+                  <div key={track.id} className="h-12 flex items-center relative group">
+                    <div className="w-40 shrink-0 flex items-center px-4 sticky left-0 z-10 bg-card border-r border-border h-full">
+                       <span className="text-[10px] font-bold uppercase text-muted-foreground">{track.name}</span>
+                    </div>
+                    <div className="flex-1 h-10 mx-4 bg-muted/30 rounded-lg relative overflow-hidden border border-border/50">
+                       {/* Playhead position indicator */}
+                       <div 
+                         className="absolute top-0 bottom-0 w-px bg-primary z-20 pointer-events-none"
+                         style={{ left: `${(currentTime / duration) * 100}%` }}
+                       />
+                       
+                       {track.clips.map(clip => (
+                         <div 
+                           key={clip.id}
+                           onClick={() => setSelectedClip(clip)}
+                           className={cn(
+                             "absolute top-1 bottom-1 rounded-md border flex items-center px-3 cursor-pointer transition-all shadow-sm",
+                             selectedClip?.id === clip.id ? "bg-primary text-white border-primary" : "bg-card border-border hover:border-primary/40"
+                           )}
+                           style={{
+                             left: `${(clip.start / duration) * 100}%`,
+                             width: `${((clip.end - clip.start) / duration) * 100}%`
+                           }}
+                         >
+                            <Icons.video className="h-3 w-3 mr-2 shrink-0" />
+                            <span className="text-[10px] font-bold truncate">{clip.name}</span>
+                         </div>
+                       ))}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                     <span className="text-[8px] font-mono text-muted-foreground">{formatTime(currentTime)} / {formatTime(duration)}</span>
-                     <div className="flex items-center gap-1 border-l border-border pl-3">
-                        <Button size="icon" variant="ghost" className="h-4 w-4" onClick={() => setZoom(Math.max(10, zoom-10))}><Icons.zoomOut className="h-2.5 w-2.5" /></Button>
-                        <span className="text-[7px] font-black text-muted-foreground w-6 text-center">{zoom}%</span>
-                        <Button size="icon" variant="ghost" className="h-4 w-4" onClick={() => setZoom(Math.min(200, zoom+10))}><Icons.zoomIn className="h-2.5 w-2.5" /></Button>
-                     </div>
-                  </div>
-               </div>
+                ))}
 
-               <div className="flex-1 overflow-x-auto custom-scrollbar relative z-10 no-drag">
-                  <div className="min-w-full flex flex-col" style={{ width: `${zoom}%` }}>
-                     {tracks.map(track => (
-                       <div key={track.id} className="h-8 border-b border-border/40 flex group/track relative">
-                          <div className="w-32 bg-muted/30 border-r border-border shrink-0 flex items-center px-2 sticky left-0 z-30">
-                             <span className="text-[7px] font-black text-muted-foreground uppercase tracking-tighter truncate group-hover/track:text-primary transition-colors">{track.name}</span>
-                          </div>
-                          <div className="flex-1 relative bg-background/20 overflow-hidden">
-                             {/* Grid Lines */}
-                             <div className="absolute inset-0 flex justify-between pointer-events-none opacity-20">
-                                {Array.from({length: 10}).map((_, i) => <div key={i} className="w-px h-full bg-border" />)}
-                             </div>
-                             {track.clips.map(clip => (
-                               <div 
-                                 key={clip.id}
-                                 onClick={() => setSelectedClip(clip)}
-                                 className={cn(
-                                   "absolute top-1 bottom-1 rounded-sm border flex flex-col justify-center px-1.5 cursor-pointer transition-all shadow-sm",
-                                   selectedClip?.id === clip.id ? "bg-primary border-primary" : "bg-surface border-border hover:border-primary/40"
-                                 )}
-                                 style={{
-                                   left: `${(clip.start / duration) * 100}%`,
-                                   width: `${((clip.end - clip.start) / duration) * 100}%`
-                                 }}
-                               >
-                                  <div className="flex items-center gap-1 overflow-hidden">
-                                     <Icons.video className={cn("h-2 w-2 shrink-0", selectedClip?.id === clip.id ? "text-white" : "text-primary")} />
-                                     <span className={cn("text-[6px] font-black uppercase italic truncate", selectedClip?.id === clip.id ? "text-white" : "text-foreground")}>{clip.name}</span>
-                                  </div>
-                               </div>
-                             ))}
-                          </div>
-                       </div>
-                     ))}
-                  </div>
-                  {/* Playhead */}
-                  <div 
-                    className="absolute top-0 bottom-0 w-px bg-primary z-40 pointer-events-none"
-                    style={{ left: `${(currentTime / duration) * 100}%` }}
-                  >
-                     <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-primary rounded-full shadow-[0_0_8px_rgba(255,0,0,0.5)]" />
-                  </div>
-               </div>
+                {/* Shared Timeline Playhead Line */}
+                <div 
+                  className="absolute top-0 bottom-0 w-[2px] bg-primary z-30 pointer-events-none flex flex-col items-center"
+                  style={{ left: `calc(${(currentTime / duration) * 100}% + 160px)` }}
+                >
+                   <div className="w-3 h-3 bg-primary rotate-45 -mt-1.5 shadow-lg" />
+                </div>
+              </div>
+            </ScrollArea>
+          </div>
+        </div>
 
-               {/* Transport Bar */}
-               <div className="h-6 border-t border-border flex items-center justify-center gap-4 bg-muted/10 relative z-20">
-                  {[Icons.skipBack, isPlaying ? Icons.pause : Icons.play, Icons.skipForward].map((Icon, i) => (
-                    <Button 
-                      key={i} 
-                      size="icon" 
-                      variant="ghost" 
-                      onClick={i === 1 ? togglePlayback : undefined}
-                      className="h-5 w-5 hover:text-primary transition-colors"
-                    >
-                       <Icon className={i === 1 ? "h-3 w-3" : "h-2 w-2"} />
-                    </Button>
-                  ))}
-               </div>
-            </div>
-         </div>
-
-         {/* Sector_C: Tactical Inspector */}
-         <div className="col-span-12 lg:col-span-3 flex flex-col gap-2 min-h-0">
-            <div className="flex-1 micro-border bg-surface flex flex-col overflow-hidden rounded-sm shadow-sm hud-corner">
-               <div className="absolute inset-0 tactical-grid opacity-5 pointer-events-none" />
-               <div className="h-7 border-b border-border bg-muted/20 flex items-center justify-between px-3 relative z-10">
-                  <div className="flex items-center gap-2">
-                     <Icons.search className="h-3 w-3 text-primary" />
-                     <span className="text-[8px] font-black text-foreground uppercase tracking-widest italic">Inspector_Alpha</span>
-                  </div>
-                  <Badge variant="secondary" className="h-3 px-1 text-[5px] font-black uppercase">SECTOR_04</Badge>
-               </div>
-               <div className="flex-1 overflow-y-auto custom-scrollbar p-3 relative z-10">
-                  <PropertiesPanel clip={selectedClip} onUpdate={handleUpdateClip} />
-               </div>
-            </div>
-
-            {/* Telemetry Block */}
-            <div className="h-32 micro-border bg-surface p-3 relative overflow-hidden rounded-sm shadow-sm">
-               <div className="absolute inset-0 tactical-grid opacity-5 pointer-events-none" />
-               <div className="relative z-10 space-y-2">
-                  <h3 className="text-[8px] font-black text-primary uppercase tracking-[0.2em] italic">Sector_Telemetry</h3>
-                  <div className="grid grid-cols-2 gap-2">
-                     {[
-                       {l:"Grid_Node",v:telemetry.nodes},
-                       {l:"Sector",v:telemetry.sector},
-                       {l:"Protocol",v:"ALPHA_X"},
-                       {l:"Status",v:"NOMINAL"}
-                     ].map(t => (
-                       <div key={t.l} className="space-y-0.5">
-                          <p className="text-[6px] text-muted-foreground font-black uppercase">{t.l}</p>
-                          <p className="text-[8px] text-foreground font-black italic">{t.v}</p>
-                       </div>
-                     ))}
-                  </div>
-                  <div className="h-px bg-border/50" />
-                  <div className="space-y-1">
-                     <div className="flex justify-between items-center text-[6px] font-black text-primary/40 uppercase">
-                        <span>Sync_Protocol</span>
-                        <span>Locked</span>
-                     </div>
-                     <div className="h-1 w-full bg-muted rounded-full overflow-hidden">
-                        <div className="h-full bg-primary/40 w-full" />
-                     </div>
-                  </div>
-               </div>
-            </div>
-         </div>
+        {/* Right Sidebar - Properties */}
+        <div className="w-80 border-l border-border bg-card flex flex-col shrink-0">
+          <div className="p-4 border-b border-border">
+            <span className="text-xs font-bold uppercase text-muted-foreground tracking-wider">Clip Settings</span>
+          </div>
+          <ScrollArea className="flex-1 p-6">
+            <PropertiesPanel clip={selectedClip} onUpdate={handleUpdateClip} />
+          </ScrollArea>
+        </div>
       </div>
     </div>
   )

@@ -44,26 +44,20 @@ export default async function AnalyticsPage() {
   ]
 
   return (
-    <div className="space-y-16 pb-24 relative max-w-7xl mx-auto">
-      {/* Structural Ambience Nodes */}
-      <div className="absolute -top-60 -left-60 w-[800px] h-[800px] bg-primary/5 blur-[200px] rounded-full pointer-events-none" />
-      <div className="absolute top-1/2 -right-60 w-[600px] h-[600px] bg-accent/5 blur-[180px] rounded-full pointer-events-none" />
-      
-      <AnalyticsClient 
-        metrics={metrics}
-        dailyStats={dailyStats.map(s => ({ 
-          date: s.date, 
-          views: s.views ? Number(s.views) : 0, 
-          likes: s.likes ? Number(s.likes) : 0 
-        }))}
-        recentVideos={(recentVideos as unknown as VideoWithStats[]).map(v => ({
-          id: v.id,
-          title: v.title,
-          views: v.views?.toLocaleString() || "0",
-          reach: v.duration ? `${Math.min(99, Math.round((v.views / 100) * 10))}%` : "0%",
-          retention: v.duration ? `${Math.min(99, 60 + Math.round(v.likes / (v.views || 1) * 20))}%` : "0%"
-        }))}
-      />
-    </div>
+    <AnalyticsClient 
+      metrics={metrics}
+      dailyStats={dailyStats.map(s => ({ 
+        date: s.date, 
+        views: s.views ? Number(s.views) : 0, 
+        likes: s.likes ? Number(s.likes) : 0 
+      }))}
+      recentVideos={(recentVideos as unknown as VideoWithStats[]).map(v => ({
+        id: v.id,
+        title: v.title,
+        views: v.views?.toLocaleString() || "0",
+        reach: v.duration ? `${Math.min(99, Math.round((v.views / 100) * 10))}%` : "0%",
+        retention: v.duration ? `${Math.min(99, 60 + Math.round(v.likes / (v.views || 1) * 20))}%` : "0%"
+      }))}
+    />
   )
 }

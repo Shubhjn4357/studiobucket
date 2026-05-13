@@ -69,7 +69,7 @@ export class DownloadWorker {
 
       logger.info(`Starting download: ${data.sourceUrl}`)
 
-      const ytDlpPath = "C:\\Users\\shubh\\AppData\\Local\\Python\\pythoncore-3.14-64\\Scripts\\yt-dlp.exe"
+      const ytDlpPath = process.env.YT_DLP_PATH || "yt-dlp"
       const downloadProcess = spawn(ytDlpPath, args)
 
       downloadProcess.stdout.on("data", async (dataBuffer) => {

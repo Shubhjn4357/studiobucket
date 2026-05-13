@@ -144,7 +144,10 @@ import {
   ExternalLink,
   ShieldAlert,
 } from "lucide-react"
+import { IconBrandGithubFilled, IconBrandTwitterFilled } from "@tabler/icons-react"
 export const Icons = {
+  twitter:IconBrandTwitterFilled,
+  github:IconBrandGithubFilled,
   shieldAlert:ShieldAlert,
   send:Send,
   inbox:Inbox,

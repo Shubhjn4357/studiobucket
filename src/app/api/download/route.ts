@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
             const execAsync = promisify(exec)
             
             try {
-                const ytDlpPath = "C:\\Users\\shubh\\AppData\\Local\\Python\\pythoncore-3.14-64\\Scripts\\yt-dlp.exe"
+                const ytDlpPath = process.env.YT_DLP_PATH || "yt-dlp"
       const { stdout } = await execAsync(`"${ytDlpPath}" --flat-playlist --get-id "${sourceUrl}"`)
                 const videoIds = stdout.trim().split("\n").filter(id => id.length > 0)
                 

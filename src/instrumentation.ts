@@ -53,14 +53,14 @@ export async function register() {
     // Download Worker (HARDENED)
     new Worker('download-queue', async (job) => {
       const { userId, sourceUrl } = job.data
-      logger.info(`Initiating recovery protocol for ${sourceUrl} (Node: ${job.id})`)
+      logger.info(`Starting download for ${sourceUrl}`)
 
       const downloadDir = path.join(process.cwd(), 'public', 'downloads')
       if (!fs.existsSync(downloadDir)) fs.mkdirSync(downloadDir, { recursive: true })
 
       const outputFileName = `download_${Date.now()}.mp4`
       const outputPath = path.join(downloadDir, outputFileName)
-      const ytDlpPath = "C:\\Users\\shubh\\AppData\\Local\\Python\\pythoncore-3.14-64\\Scripts\\yt-dlp.exe"
+      const ytDlpPath = process.env.YT_DLP_PATH || "yt-dlp"
 
       return new Promise((resolve, reject) => {
         const args = [
@@ -89,7 +89,7 @@ export async function register() {
 
         child.on('close', async (code) => {
           if (code === 0) {
-            logger.info(`Recovery sequence complete: ${outputFileName}`)
+            logger.info(`Download complete: ${outputFileName}`)
             
             // Final DB Update
             await db.update(downloadJobs)
@@ -108,7 +108,7 @@ export async function register() {
 
             resolve(true)
           } else {
-            logger.error(`Recovery sequence failed with code ${code}`)
+            logger.error(`Download failed with code ${code}`)
             await db.update(downloadJobs)
               .set({ status: 'failed', updatedAt: Date.now() })
               .where(eq(downloadJobs.sourceUrl, sourceUrl))

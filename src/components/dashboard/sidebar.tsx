@@ -59,7 +59,7 @@ export function Sidebar({ open, isMobile, items }: SidebarProps) {
                   className="flex flex-col leading-none whitespace-nowrap"
                 >
                   <span className="text-[10px] font-black italic text-foreground uppercase tracking-tight">StudioBucket</span>
-                  <span className="text-[6px] font-black uppercase text-primary opacity-60">Control_Deck_v5</span>
+                  <span className="text-[6px] font-black uppercase text-primary opacity-60">Creative_Suite</span>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -76,7 +76,7 @@ export function Sidebar({ open, isMobile, items }: SidebarProps) {
                     animate={{ opacity: 0.3 }}
                     className="text-[7px] font-black uppercase tracking-[0.3em] italic"
                   >
-                    Registry_Nodes
+                    Menu
                   </motion.span>
                 )}
              </AnimatePresence>
@@ -135,10 +135,10 @@ export function Sidebar({ open, isMobile, items }: SidebarProps) {
                className="space-y-2"
              >
                 <div className="flex items-center justify-between">
-                   <span className="text-[7px] font-black opacity-30 uppercase tracking-widest italic">Stability</span>
+                   <span className="text-[7px] font-black opacity-30 uppercase tracking-widest italic">System</span>
                    <div className="flex items-center gap-1">
                       <div className="h-1 w-1 rounded-full bg-primary animate-pulse" />
-                      <span className="text-[7px] font-black text-primary uppercase tracking-tight italic">Nominal</span>
+                      <span className="text-[7px] font-black text-primary uppercase tracking-tight italic">Active</span>
                    </div>
                 </div>
                 <div className="h-0.5 w-full bg-muted rounded-full overflow-hidden">
