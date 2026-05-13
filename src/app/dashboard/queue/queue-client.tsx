@@ -6,7 +6,7 @@ import { Icons } from "@/components/ui/icons"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
-import { pauseQueueAction, resumeQueueAction, purgeQueueAction } from "@/app/dashboard/actions"
+import { pauseQueueAction, resumeQueueAction, removeQueueAction } from "@/app/dashboard/actions"
 import { useTelemetry } from "@/hooks/use-telemetry"
 import { UploadJob } from "@/schemas"
 
@@ -141,10 +141,10 @@ export function QueueClient({ initialJobs }: {
     }
   }
 
-  const handlePurge = async () => {
+  const handleRemove = async () => {
     try {
-      await purgeQueueAction()
-      toast.success("Operational archives purged")
+      await removeQueueAction()
+      toast.success("Operational archives removed")
     } catch {
       toast.error("Remove synchronization failed")
     }
@@ -182,7 +182,7 @@ export function QueueClient({ initialJobs }: {
             {isPaused ? "RESUME_FLEET" : "PAUSE_FLEET"}
           </Button>
           <Button 
-            onClick={handlePurge}
+            onClick={handleRemove}
             className="h-16 bg-primary text-white hover:scale-[1.05] active:scale-[0.95] rounded-[1.8rem] px-12 text-[11px] font-black uppercase tracking-[0.4em] shadow-2xl shadow-primary/30 transition-all italic border border-primary/20"
           >
             <Icons.trash2 className="h-5 w-5 mr-3" />

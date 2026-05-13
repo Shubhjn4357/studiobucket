@@ -66,7 +66,7 @@ export async function resumeQueueAction() {
   return { success: true }
 }
 
-export async function purgeQueueAction() {
+export async function removeQueueAction() {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) throw new Error("Unauthorized")
   

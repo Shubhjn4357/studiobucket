@@ -64,7 +64,7 @@ export function VideoActions({ videoId }: { videoId: string }) {
           
           <AlertDialogDescription className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] leading-relaxed text-center italic">
             Permanent decommissioning of asset <span className="text-red-500/60">NODE_{videoId.slice(0, 8).toUpperCase()}</span>. 
-            All binaries will be irreversibly purged.
+            All binaries will be irreversibly removed.
           </AlertDialogDescription>
         </AlertDialogHeader>
 

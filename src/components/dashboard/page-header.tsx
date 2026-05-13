@@ -1,7 +1,7 @@
 "use client"
 
 import { Icons } from "@/components/ui/icons"
-import { motion } from "framer-motion"
+
 
 interface PageHeaderProps {
   title: string

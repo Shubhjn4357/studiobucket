@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Icons } from "@/components/ui/icons"
 import { Input } from "@/components/ui/input"
@@ -141,7 +142,7 @@ export default function DownloaderPage() {
     }, 2000)
   }
 
-  const purgeJob = async (id: string) => {
+  const removeJob = async (id: string) => {
     setJobs(prev => prev.filter(j => j.id !== id))
     toast.success("Download removed from list")
   }
@@ -222,9 +223,9 @@ export default function DownloaderPage() {
                     variant="outline" 
                     size="sm" 
                     className="flex-1 rounded-xl h-10 text-[10px] font-black uppercase tracking-widest border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20 transition-all"
-                    onClick={() => purgeJob(job.id)}
+                    onClick={() => removeJob(job.id)}
                   >
-                    Purge
+                    Remove
                   </Button>
                   <Link href={`/dashboard/studio?id=${job.id}`} className="flex-1">
                     <Button 
