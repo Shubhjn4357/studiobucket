@@ -46,7 +46,7 @@ export class StorageEngine {
         return `${R2_PUBLIC_URL}/${key}`
       } else {
         logger.info(`Local Storage Protocol: Fallback enabled for ${key}`)
-        const localDest = path.join(process.cwd(), "public", "uploads", key)
+        const localDest = path.join(/*turbopackIgnore: true*/ process.cwd(), "public", "uploads", key)
         const destDir = path.dirname(localDest)
         
         if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true })
@@ -72,7 +72,7 @@ export class StorageEngine {
           Key: key,
         }))
       } else {
-        const localPath = path.join(process.cwd(), "public", "uploads", key)
+        const localPath = path.join(/*turbopackIgnore: true*/ process.cwd(), "public", "uploads", key)
         if (fs.existsSync(localPath)) fs.unlinkSync(localPath)
       }
     } catch (error) {

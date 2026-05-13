@@ -30,8 +30,8 @@ export class TranscodeWorker {
 
   private async processTranscode(job: Job) {
     const { videoId, filePath } = job.data
-    const absoluteInputPath = path.join(process.cwd(), "public", filePath)
-    const hlsOutputDir = path.join(process.cwd(), "public", "hls", videoId)
+    const absoluteInputPath = path.join(/*turbopackIgnore: true*/ process.cwd(), "public", filePath)
+    const hlsOutputDir = path.join(/*turbopackIgnore: true*/ process.cwd(), "public", "hls", videoId)
 
     if (!fs.existsSync(hlsOutputDir)) {
       fs.mkdirSync(hlsOutputDir, { recursive: true })

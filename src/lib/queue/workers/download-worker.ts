@@ -45,7 +45,7 @@ export class DownloadWorker {
 
   private async processDownload(job: Job) {
     const data = DownloadJobSchema.parse(job.data)
-    const outputDir = path.join(process.cwd(), "public", "uploads")
+    const outputDir = path.join(/*turbopackIgnore: true*/ process.cwd(), "public", "uploads")
     
     if (!fs.existsSync(outputDir)) {
       fs.mkdirSync(outputDir, { recursive: true })

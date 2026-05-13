@@ -31,7 +31,7 @@ export class ExportWorker {
 
   private async processExport(job: Job) {
     const { videoId, project }: { videoId: string, project: VideoProject } = job.data
-    const exportDir = path.join(process.cwd(), "public", "exports")
+    const exportDir = path.join(/*turbopackIgnore: true*/ process.cwd(), "public", "exports")
     if (!fs.existsSync(exportDir)) fs.mkdirSync(exportDir, { recursive: true })
 
     const outputPath = path.join(exportDir, `${videoId}-final.mp4`)
@@ -47,7 +47,7 @@ export class ExportWorker {
       // PRE-PROCESS CLIPS & TRANSITIONS
       project.tracks.forEach(track => {
         track.clips.forEach(clip => {
-          const inputPath = path.join(process.cwd(), "public", "uploads", clip.assetId || "")
+          const inputPath = path.join(/*turbopackIgnore: true*/ process.cwd(), "public", "uploads", clip.assetId || "")
           if (fs.existsSync(inputPath)) {
              inputs.push("-ss", clip.offset.toString(), "-t", clip.duration.toString(), "-i", inputPath)
              

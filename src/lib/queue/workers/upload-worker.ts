@@ -145,7 +145,7 @@ export class UploadWorker {
 
       // Post-processing: Generate thumbnail
       try {
-        const thumbnailDir = path.join(process.cwd(), "public", "thumbnails")
+        const thumbnailDir = path.join(/*turbopackIgnore: true*/ process.cwd(), "public", "thumbnails")
         if (!fs.existsSync(thumbnailDir)) {
           fs.mkdirSync(thumbnailDir, { recursive: true })
         }

@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
     const fileName = `${Date.now()}-${file.name}`
     
     // Write the file to a temp location first
-    const tempPath = path.join(process.cwd(), "public", "uploads", `temp-${fileName}`)
+    const tempPath = path.join(/*turbopackIgnore: true*/ process.cwd(), "public", "uploads", `temp-${fileName}`)
     const buffer = Buffer.from(await file.arrayBuffer())
     fs.writeFileSync(tempPath, buffer)
 
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     const storedPath = await StorageEngine.uploadFile(tempPath, fileName, file.type)
     
     // Cleanup temp file if it's different from the stored path
-    if (tempPath !== path.join(process.cwd(), "public", storedPath)) {
+    if (tempPath !== path.join(/*turbopackIgnore: true*/ process.cwd(), "public", storedPath)) {
         fs.unlinkSync(tempPath)
     }
 

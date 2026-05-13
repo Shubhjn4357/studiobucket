@@ -20,7 +20,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Missing key" }, { status: 400 })
     }
 
-    const localDest = path.join(process.cwd(), "public", "uploads", key)
+    const localDest = path.join(/*turbopackIgnore: true*/ process.cwd(), "public", "uploads", key)
     const destDir = path.dirname(localDest)
     
     if (!fs.existsSync(destDir)) {

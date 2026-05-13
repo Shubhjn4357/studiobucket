@@ -74,11 +74,11 @@ export class VideoService {
 
     // Physically remove files if they exist
     if (video.filePath) {
-      const fullPath = path.join(process.cwd(), "public", video.filePath)
+      const fullPath = path.join(/*turbopackIgnore: true*/ process.cwd(), "public", video.filePath)
       if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath)
     }
     if (video.thumbnailPath) {
-      const fullPath = path.join(process.cwd(), "public", video.thumbnailPath)
+      const fullPath = path.join(/*turbopackIgnore: true*/ process.cwd(), "public", video.thumbnailPath)
       if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath)
     }
 
