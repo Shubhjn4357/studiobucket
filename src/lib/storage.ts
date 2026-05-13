@@ -44,7 +44,7 @@ export class StorageEngine {
           ContentType: contentType,
         }))
         
-        return `${R2_PUBLIC_URL}/${key}`
+        return key
       } else {
         logger.info(`Local Storage Protocol: Fallback enabled for ${key}`)
         const localDest = getStoragePath("uploads", key)
@@ -57,7 +57,7 @@ export class StorageEngine {
            fs.copyFileSync(filePath, localDest)
         }
         
-        return `/storage/uploads/${key}`
+        return key
       }
     } catch (error) {
       logger.error(error, `Storage Engine Failure during upload of ${key}`)

@@ -51,7 +51,8 @@ export async function POST(request: NextRequest) {
                 const results = []
                 for (const id of videoIds) {
                     const videoUrl = `https://www.youtube.com/watch?v=${id}`
-                    const newJob = await db.insert(downloadJobs).values({
+                    const [newJob] = await db.insert(downloadJobs).values({
+                        id: crypto.randomUUID(),
                         userId: session.user.id,
                         sourceUrl: videoUrl,
                         sourceType: "video",
@@ -60,11 +61,12 @@ export async function POST(request: NextRequest) {
                     }).returning()
                     
                     await addDownloadJob({
+                        downloadJobId: newJob.id,
                         userId: session.user.id,
                         sourceUrl: videoUrl,
                         sourceType: "video",
                     })
-                    results.push(newJob[0])
+                    results.push(newJob)
                 }
 
                 return NextResponse.json({
@@ -84,9 +86,10 @@ export async function POST(request: NextRequest) {
         logger.info(`Starting download: ${sourceUrl}`)
 
         // Single video download
-        const newDownloadJob = await db
+        const [newDownloadJob] = await db
             .insert(downloadJobs)
             .values({
+                id: downloadJobId,
                 userId: session.user.id,
                 sourceUrl: sourceUrl,
                 sourceType: sourceType,
@@ -97,6 +100,7 @@ export async function POST(request: NextRequest) {
             .returning()
 
         const queueJob = await addDownloadJob({
+            downloadJobId: newDownloadJob.id,
             userId: session.user.id,
             sourceUrl: sourceUrl,
             sourceType: sourceType as "video" | "playlist" | "channel",
@@ -113,7 +117,7 @@ export async function POST(request: NextRequest) {
             {
                 success: true,
                 data: {
-                    downloadJob: newDownloadJob[0],
+                    downloadJob: newDownloadJob,
                     queueJobId: queueJob?.id || null,
                 },
             },
@@ -167,6 +171,50 @@ export async function GET(request: NextRequest) {
         logger.error(error, "Get download jobs error:")
         return NextResponse.json(
             { error: "Failed to fetch download jobs" },
+            { status: 500 }
+        )
+    }
+}
+export async function DELETE(request: NextRequest) {
+    try {
+        const session = await getServerSession(authOptions)
+
+        if (!session?.user?.id) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+        }
+
+        const searchParams = request.nextUrl.searchParams
+        const id = searchParams.get("id")
+
+        if (!id) {
+            return NextResponse.json({ error: "ID is required" }, { status: 400 })
+        }
+
+        // 1. Get job from DB to check ownership
+        const job = await db.query.downloadJobs.findFirst({
+            where: and(
+                eq(downloadJobs.id, id),
+                eq(downloadJobs.userId, session.user.id)
+            )
+        })
+
+        if (!job) {
+            return NextResponse.json({ error: "Job not found" }, { status: 404 })
+        }
+
+        // 2. Remove from database
+        await db.delete(downloadJobs).where(eq(downloadJobs.id, id))
+
+        logger.info(`Download job deleted: ${id} by user ${session.user.id}`)
+
+        return NextResponse.json({
+            success: true,
+            message: "Job removed successfully"
+        })
+    } catch (error) {
+        logger.error(error, "Delete download job error:")
+        return NextResponse.json(
+            { error: "Failed to delete download job" },
             { status: 500 }
         )
     }

@@ -2,8 +2,8 @@ import { db } from "@/lib/db"
 import { videos, videoSchedules, uploadJobs, analytics, channels, notifications, userSettings } from "@/lib/db/schema"
 import { eq, and, desc, asc, count, sum, like, sql } from "drizzle-orm"
 import { redis } from "../redis"
-import path from "path"
 import fs from "fs"
+import { getStoragePath } from "../storage-utils"
 
 export class VideoService {
   async getUserVideos(userId: string, status?: string, query?: string, limitValue = 50) {
@@ -74,11 +74,11 @@ export class VideoService {
 
     // Physically remove files if they exist
     if (video.filePath) {
-      const fullPath = path.join(/*turbopackIgnore: true*/ process.cwd(), "public", video.filePath)
+      const fullPath = getStoragePath("uploads", video.filePath)
       if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath)
     }
     if (video.thumbnailPath) {
-      const fullPath = path.join(/*turbopackIgnore: true*/ process.cwd(), "public", video.thumbnailPath)
+      const fullPath = getStoragePath("thumbnails", video.thumbnailPath)
       if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath)
     }
 

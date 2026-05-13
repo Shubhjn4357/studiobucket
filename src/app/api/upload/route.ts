@@ -9,6 +9,8 @@ import { logger } from "@/lib/logger"
 import { randomUUID } from "crypto"
 import fs from "fs"
 import path from "path"
+import { pipeline } from "stream/promises"
+import { getStoragePath } from "@/lib/storage-utils"
 import { StorageEngine } from "@/lib/storage"
 
 export const dynamic = "force-dynamic"
@@ -40,9 +42,12 @@ export async function POST(request: NextRequest) {
     const fileName = `${Date.now()}-${file.name}`
     
     // Write the file to a temp location first
-    const tempPath = path.join(/*turbopackIgnore: true*/ process.cwd(), "public", "uploads", `temp-${fileName}`)
-    const buffer = Buffer.from(await file.arrayBuffer())
-    fs.writeFileSync(tempPath, buffer)
+    const tempPath = getStoragePath("uploads", `temp-${fileName}`)
+    const destDir = path.dirname(tempPath)
+    if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true })
+
+    const writeStream = fs.createWriteStream(tempPath)
+    await pipeline(file.stream() as any, writeStream)
 
     // Upload to Storage Engine (R2 or Local Fallback)
     const storedPath = await StorageEngine.uploadFile(tempPath, fileName, file.type)

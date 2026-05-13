@@ -9,6 +9,7 @@ import pino from "pino"
 import { spawn } from "child_process"
 import path from "path"
 import fs from "fs"
+import { getStoragePath } from "@/lib/storage-utils"
 
 const logger = pino({ level: "info" })
 const connection = new Redis(process.env.REDIS_URL || "redis://localhost:6379")
@@ -45,7 +46,7 @@ export class DownloadWorker {
 
   private async processDownload(job: Job) {
     const data = DownloadJobSchema.parse(job.data)
-    const outputDir = path.join(/*turbopackIgnore: true*/ process.cwd(), "public", "uploads")
+    const outputDir = getStoragePath("uploads")
     
     if (!fs.existsSync(outputDir)) {
       fs.mkdirSync(outputDir, { recursive: true })
@@ -57,7 +58,7 @@ export class DownloadWorker {
     try {
       await db.update(downloadJobs)
         .set({ status: "downloading", updatedAt: Date.now() })
-        .where(eq(downloadJobs.id, job.id as string))
+        .where(eq(downloadJobs.id, data.downloadJobId))
 
       const args = [
         "-f", "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best",
@@ -79,7 +80,7 @@ export class DownloadWorker {
           const progress = Math.round(parseFloat(progressMatch[1]))
           await db.update(downloadJobs)
             .set({ progress, updatedAt: Date.now() })
-            .where(eq(downloadJobs.id, job.id as string))
+            .where(eq(downloadJobs.id, data.downloadJobId))
         }
       })
 
@@ -95,18 +96,18 @@ export class DownloadWorker {
         .set({ 
           status: "completed", 
           progress: 100,
-          outputPath: `/uploads/${outputFileName}`,
+          outputPath: outputFileName,
           updatedAt: Date.now() 
         })
-        .where(eq(downloadJobs.id, job.id as string))
+        .where(eq(downloadJobs.id, data.downloadJobId))
 
       // Create a video record for the library
       const videoId = randomUUID()
       await db.insert(videos).values({
         id: videoId,
         userId: data.userId,
-        title: `Downloaded Asset ${job.id}`,
-        filePath: `uploads/${outputFileName}`,
+        title: `Downloaded Asset ${data.downloadJobId.slice(0, 8)}`,
+        filePath: outputFileName,
         status: "processing",
         createdAt: Date.now(),
         updatedAt: Date.now(),
@@ -115,7 +116,7 @@ export class DownloadWorker {
       // Enqueue HLS Transcoding
       await addTranscodeJob({
         videoId: videoId,
-        filePath: `uploads/${outputFileName}`
+        filePath: outputFileName
       })
 
       logger.info(`Download completed: ${outputPath}. Transcode job queued.`)
@@ -130,7 +131,7 @@ export class DownloadWorker {
           errorMessage,
           updatedAt: Date.now() 
         })
-        .where(eq(downloadJobs.id, job.id as string))
+        .where(eq(downloadJobs.id, data.downloadJobId))
       throw error
     }
   }

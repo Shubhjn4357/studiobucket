@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { Icons } from "@/components/ui/icons"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { useUpload } from "@/providers/upload-provider"
 
 interface SidebarProps {
   open: boolean
@@ -20,6 +21,12 @@ interface SidebarProps {
 
 export function Sidebar({ open, isMobile, items }: SidebarProps) {
   const pathname = usePathname()
+  const { files, isUploading } = useUpload()
+
+  const activeFiles = files.filter(f => f.status === "uploading" || f.status === "pending")
+  const totalProgress = activeFiles.length > 0 
+    ? activeFiles.reduce((acc, f) => acc + (f.progress || 0), 0) / activeFiles.length 
+    : 0
 
   const sidebarVariants = {
     open: { 
@@ -131,34 +138,67 @@ export function Sidebar({ open, isMobile, items }: SidebarProps) {
         </nav>
       </ScrollArea>
 
-      {/* Footer Status */}
-      <div className="p-6 border-t border-border relative z-10 shrink-0 bg-muted/5">
+      {/* Global Upload Progress Monitor */}
+      <div className="p-4 border-t border-border/50 relative z-10 shrink-0 bg-muted/5">
          <AnimatePresence>
             {(open || isMobile) ? (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 10 }}
-                className="p-5 rounded-3xl bg-card border border-border/50 space-y-4 shadow-sm"
+                className="p-4 rounded-[1.5rem] bg-card border border-border/50 space-y-3 shadow-sm group"
               >
-                 <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest opacity-60">Status</span>
-                    <div className="flex items-center gap-2">
-                       <div className="h-2 w-2 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.3)]" />
-                       <span className="text-[9px] font-black text-green-500 uppercase">Online</span>
+                 {isUploading || activeFiles.length > 0 ? (
+                    <Link href="/dashboard/upload" className="space-y-3 block hover:opacity-80 transition-opacity">
+                      <div className="flex items-center justify-between">
+                         <div className="flex items-center gap-2">
+                            <Icons.cloudUpload className={cn("h-3.5 w-3.5 text-primary", isUploading && "animate-pulse")} />
+                            <span className="text-[10px] font-black text-foreground uppercase tracking-widest">
+                               {activeFiles.length} Uploading
+                            </span>
+                         </div>
+                         <span className="text-[9px] font-black text-primary">{Math.round(totalProgress)}%</span>
+                      </div>
+                      <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden border border-border/20">
+                         <motion.div 
+                           className="h-full bg-primary shadow-[0_0_10px_rgba(var(--primary-rgb),0.3)]"
+                           initial={{ width: 0 }}
+                           animate={{ width: `${totalProgress}%` }}
+                           transition={{ duration: 0.5 }}
+                         />
+                      </div>
+                    </Link>
+                 ) : (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                         <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest opacity-60">System Status</span>
+                         <div className="flex items-center gap-2">
+                            <div className="h-2 w-2 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.3)]" />
+                            <span className="text-[9px] font-black text-green-500 uppercase">Live</span>
+                         </div>
+                      </div>
+                      <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden opacity-30">
+                         <motion.div 
+                           className="h-full bg-primary/30"
+                           animate={{ width: ["60%", "90%", "75%"] }}
+                           transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+                         />
+                      </div>
                     </div>
-                 </div>
-                 <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
-                    <motion.div 
-                      className="h-full bg-primary/30"
-                      animate={{ width: ["60%", "90%", "75%"] }}
-                      transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-                    />
-                 </div>
+                 )}
               </motion.div>
             ) : (
-              <div className="flex justify-center">
-                 <div className="h-2.5 w-2.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_12px_rgba(34,197,94,0.6)]" />
+              <div className="flex flex-col items-center gap-4">
+                 {isUploading ? (
+                    <Link href="/dashboard/upload" className="relative h-10 w-10 flex items-center justify-center rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all shadow-lg shadow-primary/10 group">
+                       <Icons.cloudUpload className="h-5 w-5 animate-pulse" />
+                       <div className="absolute -top-1 -right-1 h-4 w-4 bg-primary text-white text-[8px] font-black flex items-center justify-center rounded-full border-2 border-card">
+                          {activeFiles.length}
+                       </div>
+                    </Link>
+                 ) : (
+                    <div className="h-2.5 w-2.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_12px_rgba(34,197,94,0.6)]" />
+                 )}
               </div>
             )}
          </AnimatePresence>

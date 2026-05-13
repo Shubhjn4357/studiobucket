@@ -4,6 +4,8 @@ import { authOptions } from "@/lib/auth"
 import { logger } from "@/lib/logger"
 import fs from "fs"
 import path from "path"
+import { pipeline } from "stream/promises"
+import { getStoragePath } from "@/lib/storage-utils"
 
 
 export async function PUT(request: NextRequest) {
@@ -20,28 +22,24 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Missing key" }, { status: 400 })
     }
 
-    const localDest = path.join(/*turbopackIgnore: true*/ process.cwd(), "public", "uploads", key)
+    const localDest = getStoragePath("uploads", key)
     const destDir = path.dirname(localDest)
     
     if (!fs.existsSync(destDir)) {
       fs.mkdirSync(destDir, { recursive: true })
     }
 
-    // Direct stream from request to file
-    const reader = request.body?.getReader()
-    if (!reader) {
+    // Use pipeline for efficient streaming and backpressure handling
+    const writeStream = fs.createWriteStream(localDest)
+    
+    if (!request.body) {
       throw new Error("No request body")
     }
 
-    const writeStream = fs.createWriteStream(localDest)
-
-    while (true) {
-      const { done, value } = await reader.read()
-      if (done) break
-      writeStream.write(value)
-    }
-
-    writeStream.end()
+    // Readable.fromWeb(request.body) is needed if request.body is a web stream
+    // In Next.js App Router, request.body is already a ReadableStream (web stream)
+    // We can pipe it directly in modern Node environments or use Readable.fromWeb
+    await pipeline(request.body as any, writeStream)
 
     logger.info(`Direct upload complete: ${key}`)
 

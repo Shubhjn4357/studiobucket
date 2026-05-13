@@ -143,10 +143,11 @@ import {
   Cast,
   ExternalLink,
   ShieldAlert,
+  Trash,
 } from "lucide-react"
 import { IconBrandGithubFilled, IconBrandTwitterFilled } from "@tabler/icons-react"
 export const Icons = {
-  
+  trash:Trash,
   twitter:IconBrandTwitterFilled,
   github:IconBrandGithubFilled,
   shieldAlert:ShieldAlert,

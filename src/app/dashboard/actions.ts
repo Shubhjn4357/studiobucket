@@ -277,20 +277,34 @@ export async function getPlaylistsAction() {
   return await ytService.getPlaylists()
 }
 
-export async function getCommentsAction(videoId: string) {
+export async function getCommentsAction(id: string) {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) throw new Error("Unauthorized")
   
+  // Resolve DB ID to YouTube ID
+  const video = await db.query.videos.findFirst({
+    where: eq(videos.id, id)
+  })
+
+  const youtubeVideoId = video?.youtubeVideoId || id
+
   const ytService = await createYouTubeService(session.user.id)
-  return await ytService.listComments(videoId)
+  return await ytService.listComments(youtubeVideoId)
 }
 
-export async function postCommentAction(videoId: string, text: string) {
+export async function postCommentAction(id: string, text: string) {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) throw new Error("Unauthorized")
   
+  // Resolve DB ID to YouTube ID
+  const video = await db.query.videos.findFirst({
+    where: eq(videos.id, id)
+  })
+
+  const youtubeVideoId = video?.youtubeVideoId || id
+
   const ytService = await createYouTubeService(session.user.id)
-  await ytService.insertComment(videoId, text)
+  await ytService.insertComment(youtubeVideoId, text)
   return { success: true }
 }
 export async function getYouTubeVideosAction() {

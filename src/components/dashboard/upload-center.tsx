@@ -1,43 +1,21 @@
 "use client"
 
-import { useState, useCallback, useRef } from "react"
+import { useCallback } from "react"
 import { useDropzone } from "react-dropzone"
 import { Icons } from "@/components/ui/icons"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { toast } from "sonner"
-import { logger } from "@/lib/logger"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { motion, AnimatePresence } from "framer-motion"
 import { Badge } from "@/components/ui/badge"
-
-interface FileWithProgress {
-  id: string
-  file: File
-  progress: number
-  status: "pending" | "uploading" | "completed" | "failed"
-  speed?: number
-  eta?: number
-  startTime?: number
-  videoId?: string
-}
+import { useUpload } from "@/providers/upload-provider"
 
 export function UploadCenter() {
-  const [files, setFiles] = useState<FileWithProgress[]>([])
-  const [isUploading, setIsUploading] = useState(false)
-  const activeXhrs = useRef<Map<string, XMLHttpRequest>>(new Map())
+  const { files, isUploading, addFiles, removeFile, startUpload } = useUpload()
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
-    const now = Date.now()
-    const newFiles = acceptedFiles.map((file, index) => ({
-      id: `upload-${now}-${index}`,
-      file,
-      progress: 0,
-      status: "pending" as const,
-    }))
-    setFiles((prev) => [...prev, ...newFiles])
-    toast.success(`Added ${acceptedFiles.length} ${acceptedFiles.length === 1 ? 'video' : 'videos'} to queue`)
-  }, [])
+    addFiles(acceptedFiles)
+  }, [addFiles])
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -45,103 +23,6 @@ export function UploadCenter() {
       "video/*": [".mp4", ".mov", ".avi", ".mkv"],
     },
   })
-
-  const removeFile = (id: string) => {
-    const xhr = activeXhrs.current.get(id)
-    if (xhr) {
-      xhr.abort()
-      activeXhrs.current.delete(id)
-    }
-    setFiles((prev) => prev.filter((f) => f.id !== id))
-  }
-
-  const startUpload = async () => {
-    if (files.length === 0) return
-    setIsUploading(true)
-    
-    try {
-      for (const fileItem of files) {
-        if (fileItem.status === "completed" || fileItem.status === "uploading") continue
-
-        setFiles(prev => prev.map(f => f.id === fileItem.id ? { ...f, status: "uploading", progress: 0 } : f))
-
-        const initRes = await fetch("/api/upload/init", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            filename: fileItem.file.name,
-            fileType: fileItem.file.type || "video/mp4",
-            fileSize: fileItem.file.size,
-            title: fileItem.file.name.split('.')[0]
-          })
-        })
-
-        if (!initRes.ok) throw new Error("Failed to initialize upload")
-        
-        const { uploadUrl, videoId } = await initRes.json()
-
-        const xhr = new XMLHttpRequest()
-        activeXhrs.current.set(fileItem.id, xhr)
-        
-        const uploadPromise = new Promise((resolve, reject) => {
-          const startTime = Date.now()
-          
-          xhr.upload.addEventListener("progress", (event) => {
-            if (event.lengthComputable) {
-              const progress = Math.round((event.loaded / event.total) * 100)
-              const elapsedTime = (Date.now() - startTime) / 1000 || 0.1
-              const speed = event.loaded / elapsedTime
-              const remainingBytes = event.total - event.loaded
-              const eta = speed > 0 ? Math.round(remainingBytes / speed) : 0
-              
-              setFiles(prev => prev.map(f => f.id === fileItem.id ? { 
-                ...f, 
-                progress, 
-                status: "uploading",
-                speed,
-                eta
-              } : f))
-            }
-          })
-
-          xhr.addEventListener("load", async () => {
-            activeXhrs.current.delete(fileItem.id)
-            if (xhr.status >= 200 && xhr.status < 300) {
-              try {
-                const finalizeRes = await fetch("/api/upload/finalize", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ videoId })
-                })
-                if (!finalizeRes.ok) throw new Error("Finalization failed")
-                setFiles(prev => prev.map(f => f.id === fileItem.id ? { ...f, status: "completed", progress: 100, eta: 0, videoId } : f))
-                resolve(true)
-              } catch (err) { reject(err) }
-            } else reject(new Error(`Upload error: ${xhr.status}`))
-          })
-
-          xhr.addEventListener("error", () => {
-            activeXhrs.current.delete(fileItem.id)
-            reject(new Error("Network error during upload"))
-          })
-          
-          xhr.open("PUT", uploadUrl)
-          xhr.setRequestHeader("Content-Type", fileItem.file.type || "application/octet-stream")
-          xhr.send(fileItem.file)
-        })
-
-        await uploadPromise
-      }
-      toast.success("All uploads completed successfully")
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Upload failed"
-      logger.error(error, "Upload Failure")
-      toast.error(`Upload failed: ${errorMessage}`)
-      setFiles(prev => prev.map(f => f.status === "uploading" ? { ...f, status: "failed" } : f))
-    } finally {
-      setIsUploading(false)
-    }
-  }
 
   return (
     <div className="animate-in fade-in duration-700">
@@ -261,10 +142,10 @@ export function UploadCenter() {
                             <div className="flex items-center gap-2 md:gap-4">
                                <span className="flex items-center gap-1.5">
                                  <Icons.refreshCw className="h-3 w-3 animate-spin" />
-                                 {(file.speed! / (1024 * 1024)).toFixed(1)} MB/s
+                                 {((file.speed || 0) / (1024 * 1024)).toFixed(1)} MB/s
                                </span>
                                <span className="opacity-30">•</span>
-                               <span>ETA: {file.eta}s</span>
+                               <span>ETA: {file.eta || 0}s</span>
                             </div>
                             <span className="text-foreground">{file.progress}%</span>
                           </div>

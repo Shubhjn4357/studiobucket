@@ -149,8 +149,19 @@ export default function DownloaderPage() {
     if (!deleteJobId) return
     const id = deleteJobId
     setDeleteJobId(null)
-    setJobs(prev => prev.filter(j => j.id !== id))
-    toast.success("Download removed from list")
+    
+    try {
+      const response = await fetch(`/api/download?id=${id}`, {
+        method: "DELETE",
+      })
+      
+      if (!response.ok) throw new Error("Failed to remove job")
+      
+      setJobs(prev => prev.filter(j => j.id !== id))
+      toast.success("Download removed from registry")
+    } catch {
+      toast.error("Failed to remove download")
+    }
   }
 
   return (

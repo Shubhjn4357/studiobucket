@@ -44,6 +44,7 @@ export const UploadJobSchema = z.object({
 })
 
 export const DownloadJobSchema = z.object({
+  downloadJobId: z.string(),
   userId: z.string(),
   sourceUrl: z.string(),
   sourceType: z.enum(["video", "playlist", "channel"]),
