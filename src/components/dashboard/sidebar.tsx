@@ -58,8 +58,8 @@ export function Sidebar({ open, isMobile, items }: SidebarProps) {
                   exit={{ opacity: 0, x: -5 }}
                   className="flex flex-col leading-none whitespace-nowrap"
                 >
-                  <span className="text-[10px] font-black italic text-foreground uppercase tracking-tight">StudioBucket</span>
-                  <span className="text-[6px] font-black uppercase text-primary opacity-60">Creative_Suite</span>
+                  <span className="text-xs font-bold text-foreground">StudioBucket</span>
+                  <span className="text-[10px] font-medium text-primary/70">Creator Studio</span>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -135,10 +135,10 @@ export function Sidebar({ open, isMobile, items }: SidebarProps) {
                className="space-y-2"
              >
                 <div className="flex items-center justify-between">
-                   <span className="text-[7px] font-black opacity-30 uppercase tracking-widest italic">System</span>
+                   <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">Status</span>
                    <div className="flex items-center gap-1">
-                      <div className="h-1 w-1 rounded-full bg-primary animate-pulse" />
-                      <span className="text-[7px] font-black text-primary uppercase tracking-tight italic">Active</span>
+                     <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
+                     <span className="text-[10px] font-bold text-green-500 uppercase tracking-tight">Online</span>
                    </div>
                 </div>
                 <div className="h-0.5 w-full bg-muted rounded-full overflow-hidden">

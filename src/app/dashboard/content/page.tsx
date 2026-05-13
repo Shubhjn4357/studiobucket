@@ -11,6 +11,7 @@ import { ContentManagerClient } from "@/components/dashboard/content-manager-cli
 import { Video } from "@/schemas"
 import Image from "next/image"
 import { PageHeader } from "@/components/dashboard/page-header"
+import { PageContainer } from "@/components/layout/page-container"
 
 interface VideoWithStats extends Video {
   views: number
@@ -30,14 +31,14 @@ export default async function ContentPage({
   const videos = await videoService.getUserVideos(session.user.id, undefined, q) as unknown as VideoWithStats[]
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-8">
+    <PageContainer>
       <PageHeader 
         title="Video Content" 
-        description="Manage your uploaded videos, track performance, and edit metadata." 
-        icon={Icons.play}
+        description="Manage your assets, track performance, and edit metadata." 
+        iconName="play"
       >
         <Link href="/dashboard/upload">
-          <Button className="font-bold rounded-xl h-12 px-6 shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all">
+          <Button className="font-bold rounded-xl h-11 px-6 shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all">
             <Icons.plus className="h-5 w-5 mr-2" />
             Upload Video
           </Button>
@@ -51,24 +52,22 @@ export default async function ContentPage({
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-border bg-muted/30">
-                    <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Video</th>
-                    <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Visibility</th>
-                    <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Status</th>
-                    <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Views</th>
-                    <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Likes</th>
-                    <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground text-right">Actions</th>
+                    <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Video Asset</th>
+                    <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground text-center">Status</th>
+                    <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground text-center">Analytics</th>
+                    <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
                   {videos.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-6 py-20 text-center">
-                        <div className="flex flex-col items-center gap-4 text-muted-foreground">
-                          <Icons.video className="h-12 w-12 opacity-20" />
-                          <p className="font-bold">No videos found</p>
+                      <td colSpan={4} className="px-6 py-24 text-center">
+                        <div className="flex flex-col items-center gap-4 text-muted-foreground opacity-40">
+                          <Icons.video className="h-12 w-12" />
+                          <p className="font-bold text-sm">No videos detected in registry</p>
                           <Link href="/dashboard/upload">
-                            <Button variant="outline" size="sm" className="font-bold rounded-lg">
-                              Upload your first video
+                            <Button variant="outline" size="sm" className="font-bold rounded-xl">
+                              Initialize First Upload
                             </Button>
                           </Link>
                         </div>
@@ -76,62 +75,69 @@ export default async function ContentPage({
                     </tr>
                   ) : (
                     videos.map((video) => (
-                      <tr key={video.id} className="group hover:bg-muted/30 transition-colors">
-                        <td className="px-6 py-4">
+                      <tr key={video.id} className="group hover:bg-muted/20 transition-colors">
+                        <td className="px-6 py-5">
                           <div className="flex items-center gap-4">
-                            <div className="h-12 w-20 rounded-lg bg-black border border-border overflow-hidden relative shrink-0">
+                            <div className="h-14 w-24 rounded-xl bg-black border border-border overflow-hidden relative shrink-0 shadow-inner">
                               {video.thumbnailPath ? (
                                 <Image unoptimized fill src={video.thumbnailPath} alt={video.title} className="object-cover" />
                               ) : (
-                                <div className="absolute inset-0 flex items-center justify-center bg-muted">
-                                   <Icons.video className="h-5 w-5 text-muted-foreground" />
+                                <div className="absolute inset-0 flex items-center justify-center bg-muted/50">
+                                   <Icons.video className="h-6 w-6 text-muted-foreground/40" />
                                 </div>
                               )}
                             </div>
-                            <div className="flex flex-col gap-1 max-w-[250px]">
-                              <span className="text-sm font-bold text-foreground line-clamp-1">{video.title}</span>
-                              <span className="text-[10px] text-muted-foreground line-clamp-1">{video.description || "No description"}</span>
+                            <div className="flex flex-col gap-1 max-w-[300px]">
+                              <span className="text-sm font-bold text-foreground line-clamp-1 group-hover:text-primary transition-colors">{video.title}</span>
+                              <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-1.5">
+                                  {video.privacyStatus === "public" ? (
+                                    <Icons.globe className="h-3 w-3 text-green-500" />
+                                  ) : (
+                                    <Icons.lock className="h-3 w-3 text-amber-500" />
+                                  )}
+                                  <span className="text-[10px] font-bold uppercase text-muted-foreground/60">{video.privacyStatus}</span>
+                                </div>
+                                <span className="text-[10px] font-bold text-muted-foreground/40">•</span>
+                                <span className="text-[10px] font-bold text-muted-foreground/60">{new Date(video.createdAt).toLocaleDateString()}</span>
+                              </div>
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-2">
-                            {video.privacyStatus === "public" ? (
-                              <Icons.globe className="h-3 w-3 text-green-500" />
-                            ) : (
-                              <Icons.lock className="h-3 w-3 text-amber-500" />
-                            )}
-                            <span className="text-[10px] font-bold uppercase text-muted-foreground">{video.privacyStatus}</span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex flex-col gap-1.5">
+                        <td className="px-6 py-5">
+                          <div className="flex flex-col items-center gap-2">
                              <div className="flex items-center gap-2">
                                <div className={cn(
                                  "h-1.5 w-1.5 rounded-full",
                                  video.status === "published" ? "bg-green-500" :
-                                 video.status === "failed" ? "bg-red-500" : "bg-amber-500"
+                                 video.status === "failed" ? "bg-red-500" : "bg-primary animate-pulse"
                                )} />
-                               <span className="text-[10px] font-bold uppercase text-foreground">{video.status}</span>
+                               <span className="text-[10px] font-bold uppercase text-foreground/80">{video.status}</span>
                              </div>
                              <div className="h-1 w-16 bg-muted rounded-full overflow-hidden">
                                 <div 
                                   className={cn("h-full transition-all duration-1000", video.status === "published" ? "bg-green-500" : "bg-primary")}
-                                  style={{ width: video.status === "published" ? "100%" : "40%" }}
+                                  style={{ width: video.status === "published" ? "100%" : "45%" }}
                                 />
                              </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4">
-                          <span className="text-xs font-bold text-foreground">{video.views.toLocaleString()}</span>
+                        <td className="px-6 py-5">
+                          <div className="flex items-center justify-center gap-6">
+                            <div className="flex flex-col items-center">
+                              <span className="text-xs font-bold text-foreground">{video.views.toLocaleString()}</span>
+                              <span className="text-[8px] font-bold uppercase text-muted-foreground/60">Views</span>
+                            </div>
+                            <div className="flex flex-col items-center">
+                              <span className="text-xs font-bold text-foreground">{video.likes.toLocaleString()}</span>
+                              <span className="text-[8px] font-bold uppercase text-muted-foreground/60">Likes</span>
+                            </div>
+                          </div>
                         </td>
-                        <td className="px-6 py-4">
-                          <span className="text-xs font-bold text-foreground">{video.likes.toLocaleString()}</span>
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
+                        <td className="px-6 py-5 text-right">
+                          <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                             <Link href={`/dashboard/studio?id=${video.id}`}>
-                              <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg hover:bg-primary/10 hover:text-primary transition-colors">
+                              <Button size="icon" variant="ghost" className="h-9 w-9 rounded-xl hover:bg-primary/10 hover:text-primary transition-all">
                                 <Icons.edit3 className="h-4 w-4" />
                               </Button>
                             </Link>
@@ -147,6 +153,6 @@ export default async function ContentPage({
           </div>
         }
       />
-    </div>
+    </PageContainer>
   )
 }

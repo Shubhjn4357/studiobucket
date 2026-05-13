@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { PageHeader } from "@/components/dashboard/page-header"
+import { PageContainer } from "@/components/layout/page-container"
 
 interface DownloadJob {
   id: string
@@ -146,91 +147,94 @@ export default function DownloaderPage() {
   }
 
   return (
-    <div className="p-6 max-w-6xl mx-auto space-y-8">
+    <PageContainer maxWidth="6xl">
       <PageHeader 
-        title="Video Downloader" 
-        description="Download videos from YouTube and other platforms easily." 
-        icon={Icons.download}
+        title="Downloader" 
+        description="Ingest video assets from various source endpoints into the studio registry." 
+        iconName="download"
       />
 
-      {/* Input Section */}
-      <div className="bg-card border border-border p-6 rounded-2xl shadow-sm flex flex-col md:flex-row items-center gap-4">
+      <div className="bg-card border border-border p-6 rounded-3xl shadow-sm flex flex-col md:flex-row items-center gap-4 group">
         <div className="relative flex-1 w-full">
-          <Icons.link className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+          <Icons.link className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground transition-colors group-focus-within:text-primary" />
           <Input
             value={url}
             onChange={(e) => setUrl(e.target.value)}
-            placeholder="Paste YouTube link here..."
-            className="pl-12 h-14 rounded-xl text-lg border-border focus-visible:ring-primary/20"
+            placeholder="Paste source URL (YouTube, Vimeo, etc.)..."
+            className="pl-14 h-16 rounded-2xl text-lg border-border focus-visible:ring-primary/10 transition-all bg-muted/20"
           />
         </div>
         <Button 
           onClick={handleAddDownload} 
           disabled={isProcessing || !url}
-          className="w-full md:w-auto px-8 h-14 rounded-xl font-bold text-base shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all"
+          className="w-full md:w-auto px-10 h-16 rounded-2xl font-black uppercase tracking-widest shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
         >
-          {isProcessing ? <Icons.refreshCw className="animate-spin h-5 w-5 mr-2" /> : <Icons.zap className="h-5 w-5 mr-2" />}
-          Start Download
+          {isProcessing ? <Icons.refreshCw className="animate-spin h-5 w-5 mr-3" /> : <Icons.zap className="h-5 w-5 mr-3" />}
+          Initialize
         </Button>
       </div>
 
-      {/* Downloads List */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <AnimatePresence mode="popLayout">
           {jobs.map((job) => (
             <motion.div
               key={job.id}
               layout
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-card border border-border p-6 rounded-2xl shadow-sm hover:border-primary/40 transition-colors group"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="bg-card border border-border p-6 rounded-3xl shadow-sm hover:border-primary/20 transition-all group/card"
             >
-              <div className="flex justify-between items-start mb-4">
-                <div className="space-y-1">
-                  <h3 className="font-bold text-lg text-foreground line-clamp-1">{job.title}</h3>
-                  <p className="text-xs text-muted-foreground truncate max-w-[250px]">{job.url}</p>
+              <div className="flex justify-between items-start mb-6">
+                <div className="space-y-1.5 flex-1 min-w-0">
+                  <h3 className="font-bold text-lg text-foreground truncate group-hover/card:text-primary transition-colors">{job.title}</h3>
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Icons.link className="h-3 w-3 shrink-0" />
+                    <p className="text-[10px] font-medium truncate max-w-[200px] uppercase tracking-wider">{job.url}</p>
+                  </div>
                 </div>
                 <div className={cn(
-                  "px-3 py-1 rounded-full text-[10px] font-bold uppercase",
+                  "px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm",
                   job.status === "completed" ? "bg-green-500/10 text-green-500" :
-                  job.status === "failed" ? "bg-red-500/10 text-red-500" : "bg-blue-500/10 text-blue-500"
+                  job.status === "failed" ? "bg-red-500/10 text-red-500" : "bg-primary/10 text-primary animate-pulse"
                 )}>
                   {job.status}
                 </div>
               </div>
 
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex justify-between text-xs font-bold text-muted-foreground">
-                    <span>Progress</span>
-                    <span>{Math.round(job.progress)}%</span>
+              <div className="space-y-6">
+                <div className="space-y-3">
+                  <div className="flex justify-between text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">
+                    <span>Registry Write Status</span>
+                    <span className="text-foreground">{Math.round(job.progress)}%</span>
                   </div>
-                  <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+                  <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
                     <motion.div 
-                      className="h-full bg-primary"
+                      className="h-full bg-primary shadow-[0_0_8px_rgba(var(--primary-rgb),0.5)]"
                       initial={{ width: 0 }}
                       animate={{ width: `${job.progress}%` }}
                     />
                   </div>
                 </div>
 
-                <div className="flex gap-3 pt-2">
+                <div className="flex gap-3">
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className="flex-1 rounded-lg text-xs font-bold"
+                    className="flex-1 rounded-xl h-10 text-[10px] font-black uppercase tracking-widest border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20 transition-all"
                     onClick={() => purgeJob(job.id)}
                   >
-                    Remove
+                    Purge
                   </Button>
-                  <Button 
-                    size="sm" 
-                    disabled={job.status !== "completed"}
-                    className="flex-1 rounded-lg text-xs font-bold"
-                  >
-                    Open in Editor
-                  </Button>
+                  <Link href={`/dashboard/studio?id=${job.id}`} className="flex-1">
+                    <Button 
+                      size="sm" 
+                      disabled={job.status !== "completed"}
+                      className="w-full rounded-xl h-10 text-[10px] font-black uppercase tracking-widest shadow-md"
+                    >
+                      Initialize Editor
+                    </Button>
+                  </Link>
                 </div>
               </div>
             </motion.div>
@@ -238,12 +242,12 @@ export default function DownloaderPage() {
         </AnimatePresence>
       </div>
 
-      {jobs.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-20 text-muted-foreground opacity-50">
-          <Icons.inbox className="h-16 w-16 mb-4" />
-          <p className="font-bold">No active downloads</p>
+      {jobs.length === 0 && !isProcessing && (
+        <div className="flex flex-col items-center justify-center py-32 text-muted-foreground opacity-30">
+          <Icons.inbox className="h-16 w-16 mb-6" />
+          <p className="font-black uppercase tracking-[0.4em] text-xs">No Active Ingress Streams</p>
         </div>
       )}
-    </div>
+    </PageContainer>
   )
 }

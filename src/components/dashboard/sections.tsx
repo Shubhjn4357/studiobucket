@@ -140,3 +140,23 @@ export async function InsightsSection({ userId }: { userId: string }) {
     </div>
   )
 }
+export function VideoCardSkeleton() {
+  return (
+    <div className="bg-card border border-border rounded-3xl overflow-hidden p-4 h-[200px] animate-pulse">
+      <div className="flex flex-col md:flex-row gap-6 h-full">
+        <div className="w-full md:w-[240px] aspect-video rounded-2xl bg-muted shrink-0" />
+        <div className="flex-1 space-y-4 py-2">
+          <div className="h-6 w-3/4 bg-muted rounded-lg" />
+          <div className="space-y-2">
+            <div className="h-4 w-full bg-muted rounded-md" />
+            <div className="h-4 w-5/6 bg-muted rounded-md" />
+          </div>
+          <div className="pt-4 flex gap-4">
+            <div className="h-8 w-16 bg-muted rounded-lg" />
+            <div className="h-8 w-16 bg-muted rounded-lg" />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}

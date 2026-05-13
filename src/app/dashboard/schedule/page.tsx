@@ -6,6 +6,7 @@ import { ScheduleManager } from "@/components/schedule/schedule-manager"
 import { Icons } from "@/components/ui/icons"
 import { Video, Schedule } from "@/schemas"
 import { PageHeader } from "@/components/dashboard/page-header"
+import { PageContainer } from "@/components/layout/page-container"
 
 export default async function SchedulePage() {
   const session = await getServerSession(authOptions)
@@ -63,33 +64,33 @@ export default async function SchedulePage() {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-8">
+    <PageContainer>
       <PageHeader 
-        title="Video Schedule" 
-        description="Plan and automate your video uploads with our easy-to-use calendar." 
-        icon={Icons.calendar}
+        title="Schedule" 
+        description="Plan and automate your video uploads with the temporal grid system." 
+        iconName="calendar"
       />
 
       <ScheduleManager initialSchedules={scheduledVideos} />
 
-      <div className="p-8 rounded-2xl bg-card border border-border flex flex-col md:flex-row items-center justify-between shadow-sm">
+      <div className="p-8 rounded-3xl bg-primary/5 border border-primary/10 flex flex-col md:flex-row items-center justify-between gap-6">
         <div className="flex items-center gap-6">
-          <div className="h-12 w-12 rounded-xl bg-green-500/10 flex items-center justify-center text-green-500">
-            <Icons.shieldCheck className="h-6 w-6" />
+          <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
+            <Icons.shieldCheck className="h-7 w-7" />
           </div>
-          <div>
+          <div className="space-y-1">
             <p className="font-bold text-foreground">Automation Active</p>
-            <p className="text-xs text-muted-foreground">All scheduled tasks are monitored and verified.</p>
+            <p className="text-xs text-muted-foreground font-medium">All scheduled tasks are monitored by the core engine.</p>
           </div>
         </div>
-        <div className="flex items-center gap-3 mt-4 md:mt-0">
-          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">System Status</span>
-          <div className="flex items-center gap-2 px-3 py-1 bg-green-500/10 rounded-full">
-            <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
-            <span className="text-[10px] font-bold text-green-500 uppercase">Mission Ready</span>
+        <div className="flex items-center gap-4 px-5 py-2.5 bg-background/50 border border-border rounded-2xl shadow-sm">
+          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em]">Engine Status</span>
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
+            <span className="text-[10px] font-black text-green-500 uppercase tracking-tighter">Operational</span>
           </div>
         </div>
       </div>
-    </div>
+    </PageContainer>
   )
 }

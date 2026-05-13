@@ -11,20 +11,19 @@ export async function registerNode() {
   const fs = await import('fs')
   const { getStoragePath } = await import('./storage-utils')
 
-  const connection = new IORedis(process.env.REDIS_URL || "redis://localhost:6379", {
+  const connection = new IORedis(process.env.REDIS_URL!, {
     maxRetriesPerRequest: null,
     lazyConnect: true,
-    retryStrategy(times) {
-      if (process.env.NODE_ENV === 'development' && times > 3) return null
-      return Math.min(times * 100, 3000)
-    }
+    family: 0, // Support both IPv4 and IPv6
+    retryStrategy: (times) => Math.min(times * 50, 2000),
   })
 
-  connection.on('error', (err: unknown) => {
-    const error = err as NodeJS.ErrnoException
-    if (error.code !== 'ECONNREFUSED') {
-      console.error('Instrumentation Redis Error:', err)
-    }
+  connection.on('error', (err) => {
+    console.error('Instrumentation Redis Error:', err)
+  })
+
+  connection.on('connect', () => {
+    console.log('Instrumentation Redis Connected')
   })
 
   // Upload Worker

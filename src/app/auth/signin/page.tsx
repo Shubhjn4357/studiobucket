@@ -7,6 +7,7 @@ import { Icons } from "@/components/ui/icons"
 import { motion } from "framer-motion"
 import { useSearchParams } from "next/navigation"
 import { Suspense, useState } from "react"
+import { cn } from "@/lib/utils"
 
 function SignInContent() {
   const searchParams = useSearchParams()
@@ -20,12 +21,11 @@ function SignInContent() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-[#050505] relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-background relative overflow-hidden transition-colors duration-500">
       {/* Background Ambience */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 rounded-full blur-[120px]" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-accent/10 rounded-full blur-[120px]" />
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-50" />
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-[120px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-secondary/5 rounded-full blur-[120px]" />
       </div>
 
       <motion.div
@@ -34,21 +34,20 @@ function SignInContent() {
         transition={{ duration: 0.8, ease: "easeOut" }}
         className="relative z-10 w-full max-w-[420px]"
       >
-        <div className="absolute -inset-0.5 bg-linear-to-r from-primary/30 via-accent/30 to-primary/30 rounded-3xl blur opacity-20 animate-pulse" />
-        <Card className="w-full cyber-card border-white/5 bg-slate-950/60 backdrop-blur-3xl shadow-2xl">
+        <Card className="w-full bg-card/50 backdrop-blur-3xl border-border shadow-2xl rounded-[2rem] overflow-hidden">
           <CardHeader className="text-center space-y-6 pt-12 pb-8">
             <div className="flex justify-center">
               <motion.div 
                 whileHover={{ scale: 1.05, rotate: 5 }}
-                className="h-20 w-20 rounded-[28px] bg-linear-to-br from-primary to-accent flex items-center justify-center shadow-[0_0_40px_-10px_rgba(255,0,0,0.5)] border border-white/20"
+                className="h-20 w-20 rounded-3xl bg-primary flex items-center justify-center shadow-2xl shadow-primary/20"
               >
-                <Icons.logo className="h-10 w-10 text-white" />
+                <Icons.logo className="h-10 w-10 text-primary-foreground" />
               </motion.div>
             </div>
             <div className="space-y-2">
-              <h1 className="text-3xl font-black text-white uppercase tracking-tighter italic">Studio Access</h1>
-              <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.2em]">
-                New users will be registered automatically upon connection.
+              <h1 className="text-3xl font-black text-foreground tracking-tighter uppercase italic">Studio Access</h1>
+              <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.2em] px-8">
+                Automate your YouTube content pipeline with mission-critical precision.
               </p>
             </div>
           </CardHeader>
@@ -57,7 +56,7 @@ function SignInContent() {
               <motion.div 
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-[10px] font-black uppercase tracking-widest text-center"
+                className="p-4 rounded-2xl bg-destructive/10 border border-destructive/20 text-destructive text-[10px] font-black uppercase tracking-widest text-center"
               >
                 <Icons.alertCircle className="h-4 w-4 mx-auto mb-2" />
                 Access Denied: {error}
@@ -68,45 +67,45 @@ function SignInContent() {
               <Button 
                 onClick={handleLogin}
                 disabled={isLoading}
-                className="w-full h-14 bg-white text-black hover:bg-slate-200 rounded-2xl font-black uppercase tracking-widest flex items-center justify-center gap-4 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-xl group"
+                className="w-full h-14 bg-foreground text-background hover:bg-foreground/90 rounded-2xl font-black uppercase tracking-widest flex items-center justify-center gap-4 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-xl"
               >
                 {isLoading ? (
                   <Icons.refreshCw className="h-5 w-5 animate-spin" />
                 ) : (
                   <>
-                    <Icons.google className="h-5 w-5 transition-transform group-hover:scale-110" />
-                    Authorize with Google
+                    <Icons.google className="h-5 w-5" />
+                    Sign in with Google
                   </>
                 )}
               </Button>
-              <p className="text-[9px] text-center text-slate-600 font-black uppercase tracking-[0.2em]">
-                Grant <span className="text-primary italic">Youtube.Upload</span> Permissions
+              <p className="text-[9px] text-center text-muted-foreground font-bold uppercase tracking-[0.2em]">
+                Secure OAuth 2.0 Authorization
               </p>
             </div>
 
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-white/5"></div>
+                <div className="w-full border-t border-border"></div>
               </div>
               <div className="relative flex justify-center text-[8px] uppercase font-black">
-                <span className="bg-[#0a0a0a] px-4 text-slate-700 tracking-[0.5em]">Encrypted Handshake</span>
+                <span className="bg-card px-4 text-muted-foreground tracking-[0.5em]">Verified Connection</span>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div className="p-3 rounded-xl bg-white/5 border border-white/5 text-center">
-                <p className="text-[10px] font-black text-white uppercase italic">99.9%</p>
-                <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest mt-1">Uptime</p>
+              <div className="p-4 rounded-2xl bg-muted/30 border border-border text-center">
+                <p className="text-xs font-black text-foreground uppercase italic">99.9%</p>
+                <p className="text-[8px] text-muted-foreground font-bold uppercase tracking-widest mt-1">Uptime</p>
               </div>
-              <div className="p-3 rounded-xl bg-white/5 border border-white/5 text-center">
-                <p className="text-[10px] font-black text-white uppercase italic">AES-256</p>
-                <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest mt-1">Security</p>
+              <div className="p-4 rounded-2xl bg-muted/30 border border-border text-center">
+                <p className="text-xs font-black text-foreground uppercase italic">SSL</p>
+                <p className="text-[8px] text-muted-foreground font-bold uppercase tracking-widest mt-1">Secured</p>
               </div>
             </div>
 
-            <p className="text-[9px] text-center text-slate-600 font-medium uppercase tracking-[0.15em] leading-relaxed">
-              By initializing session, you agree to our <br/>
-              <span className="text-slate-400 hover:text-white cursor-pointer transition-colors border-b border-slate-800">Operational Protocols</span>
+            <p className="text-[9px] text-center text-muted-foreground font-medium uppercase tracking-[0.15em] leading-relaxed">
+              By accessing the studio, you agree to our <br/>
+              <span className="text-foreground border-b border-muted-foreground/30 hover:border-primary transition-colors cursor-pointer">Terms of Operation</span>
             </p>
           </CardContent>
         </Card>
@@ -118,7 +117,7 @@ function SignInContent() {
 export default function SignInPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-[#050505] flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <Icons.refreshCw className="h-10 w-10 text-primary animate-spin" />
       </div>
     }>

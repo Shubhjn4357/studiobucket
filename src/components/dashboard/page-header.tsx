@@ -2,16 +2,16 @@
 
 import { Icons } from "@/components/ui/icons"
 import { motion } from "framer-motion"
-import { LucideIcon } from "lucide-react"
 
 interface PageHeaderProps {
   title: string
   description: string
-  icon: LucideIcon
+  iconName: keyof typeof Icons
   children?: React.ReactNode
 }
 
-export function PageHeader({ title, description, icon: Icon, children }: PageHeaderProps) {
+export function PageHeader({ title, description, iconName, children }: PageHeaderProps) {
+  const Icon = Icons[iconName]
   return (
     <div className="flex flex-col md:flex-row items-center justify-between gap-6 p-8 bg-card border border-border rounded-2xl shadow-sm relative overflow-hidden mb-8">
       <div className="flex items-center gap-6 relative z-10">

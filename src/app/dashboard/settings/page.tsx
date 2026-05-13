@@ -6,6 +6,8 @@ import { db } from "@/lib/db"
 import { users } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
 import { VideoService } from "@/lib/services/video-service"
+import { PageHeader } from "@/components/dashboard/page-header"
+import { PageContainer } from "@/components/layout/page-container"
 
 export default async function SettingsPage() {
   const session = await getServerSession(authOptions)
@@ -19,14 +21,22 @@ export default async function SettingsPage() {
   const userChannels = await videoService.getChannels(session.user.id)
 
   return (
-    <SettingsManager 
-      initialUser={user ? {
-        ...user,
-        emailVerified: user.emailVerified || null,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
-      } : undefined} 
-      initialChannels={userChannels} 
-    />
+    <PageContainer maxWidth="6xl">
+      <PageHeader 
+        title="Settings" 
+        description="Manage your account profile, connected channels, and application preferences." 
+        iconName="settings"
+      />
+      
+      <SettingsManager 
+        initialUser={user ? {
+          ...user,
+          emailVerified: user.emailVerified || null,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
+        } : undefined} 
+        initialChannels={userChannels} 
+      />
+    </PageContainer>
   )
 }
