@@ -4,7 +4,7 @@ export function getStorageRoot() {
   if (process.env.NODE_ENV === "production") {
     return "/app/storage"
   }
-  return path.join(process.cwd(), "public")
+  return path.join(/* turbopackIgnore: true */ process.cwd(), "public")
 }
 
 export function getStoragePath(subDir: string, ...parts: string[]) {
