@@ -11,14 +11,14 @@ export class YouTubeService {
   private oauth2Client: InstanceType<typeof google.auth.OAuth2>
   private youtube: ReturnType<typeof google.youtube>
 
-  constructor(accessToken?: string, refreshToken?: string) {
+  constructor(accessToken?: string, refreshToken?: string, private userId?: string) {
     this.oauth2Client = new google.auth.OAuth2(
       process.env.GOOGLE_CLIENT_ID,
       process.env.GOOGLE_CLIENT_SECRET,
       `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/api/auth/callback/google`
     )
 
-    if (accessToken && refreshToken) {
+    if (accessToken) {
       this.oauth2Client.setCredentials({
         access_token: accessToken,
         refresh_token: refreshToken,
@@ -31,25 +31,27 @@ export class YouTubeService {
     })
   }
 
-  async getUserChannels(userId: string) {
-    const userRecord = await db.query.users.findFirst({
-      where: eq(users.id, userId),
-      with: {
-        accounts: true,
-      },
-    })
+  private async ensureAuth() {
+    if (!this.oauth2Client.credentials.access_token) {
+      if (!this.userId) throw new Error("No authentication provided")
+      
+      const userRecord = await db.query.users.findFirst({
+        where: eq(users.id, this.userId),
+        with: { accounts: true },
+      })
 
-    if (!userRecord?.accounts[0]?.access_token) {
-      throw new Error("No OAuth tokens found for user")
+      const account = userRecord?.accounts.find(a => a.provider === "google")
+      if (!account?.access_token) throw new Error("No Google account linked")
+
+      this.oauth2Client.setCredentials({
+        access_token: account.access_token,
+        refresh_token: account.refresh_token,
+      })
     }
+  }
 
-    const accessToken = userRecord.accounts[0].access_token
-    const refreshToken = userRecord.accounts[0].refresh_token
-
-    this.oauth2Client.setCredentials({
-      access_token: accessToken,
-      refresh_token: refreshToken,
-    })
+  async getUserChannels() {
+    await this.ensureAuth()
 
     try {
       const response = await this.youtube.channels.list({
@@ -59,23 +61,17 @@ export class YouTubeService {
 
       return response.data.items || []
     } catch (error: unknown) {
-      if (error && typeof error === 'object' && 'code' in error && error.code === 401 && refreshToken) {
-        try {
-          const newTokens = await this.refreshTokens(refreshToken, userId)
-          this.oauth2Client.setCredentials({
-            access_token: newTokens.accessToken || undefined,
-            refresh_token: newTokens.refreshToken || undefined,
-          })
-
-          const response = await this.youtube.channels.list({
-            part: ["snippet", "statistics", "contentDetails"],
-            mine: true,
-          })
-          return response.data.items || []
-        } catch (refreshError) {
-          logger.error(refreshError, "Token refresh failed:")
-          throw refreshError
-        }
+      if ((error as { code?: number }).code === 401 && this.oauth2Client.credentials.refresh_token) {
+        const newTokens = await this.refreshTokens(this.oauth2Client.credentials.refresh_token, this.userId)
+        this.oauth2Client.setCredentials({
+          access_token: newTokens.accessToken!,
+          refresh_token: newTokens.refreshToken!,
+        })
+        const response = await this.youtube.channels.list({
+          part: ["snippet", "statistics", "contentDetails"],
+          mine: true,
+        })
+        return response.data.items || []
       }
       throw error
     }
@@ -95,6 +91,7 @@ export class YouTubeService {
       longitude: number
     }
   }) {
+    await this.ensureAuth()
     try {
       if (!fs.existsSync(data.filePath)) {
         throw new Error(`File not found: ${data.filePath}`)
@@ -161,6 +158,7 @@ export class YouTubeService {
   }
 
   async addVideoToPlaylist(videoId: string, playlistId: string) {
+    await this.ensureAuth()
     try {
       const response = await this.youtube.playlistItems.insert({
         part: ["snippet"],
@@ -182,6 +180,7 @@ export class YouTubeService {
   }
 
   async getPlaylists(channelId?: string) {
+    await this.ensureAuth()
     try {
       const response = await this.youtube.playlists.list({
         part: ["snippet", "contentDetails", "status"],
@@ -197,6 +196,7 @@ export class YouTubeService {
   }
 
   async listComments(videoId: string) {
+    await this.ensureAuth()
     try {
       const response = await this.youtube.commentThreads.list({
         part: ["snippet", "replies"],
@@ -212,6 +212,7 @@ export class YouTubeService {
   }
 
   async insertComment(videoId: string, text: string) {
+    await this.ensureAuth()
     try {
       const response = await this.youtube.commentThreads.insert({
         part: ["snippet"],
@@ -243,6 +244,7 @@ export class YouTubeService {
       privacy?: "public" | "private" | "unlisted"
     }
   ) {
+    await this.ensureAuth()
     try {
       const response = await this.youtube.videos.update({
         part: ["snippet", "status"],
@@ -268,6 +270,7 @@ export class YouTubeService {
   }
 
   async getVideo(videoId: string) {
+    await this.ensureAuth()
     try {
       const response = await this.youtube.videos.list({
         part: ["snippet", "statistics", "status", "contentDetails"],
@@ -282,6 +285,7 @@ export class YouTubeService {
   }
 
   async getChannelVideos(channelId: string, maxResults = 50) {
+    await this.ensureAuth()
     try {
       const response = await this.youtube.search.list({
         part: ["snippet"],
@@ -299,6 +303,7 @@ export class YouTubeService {
   }
 
   async deleteVideo(videoId: string) {
+    await this.ensureAuth()
     try {
       await this.youtube.videos.delete({
         id: videoId,
@@ -313,6 +318,7 @@ export class YouTubeService {
   }
 
   async scheduleVideo(videoId: string, publishAt: Date) {
+    await this.ensureAuth()
     try {
       const response = await this.youtube.videos.update({
         part: ["status"],
@@ -403,6 +409,7 @@ export class YouTubeService {
   }
 
   async getCategories(region = "US") {
+    await this.ensureAuth()
     try {
       const response = await this.youtube.videoCategories.list({
         part: ["snippet"],
@@ -417,6 +424,7 @@ export class YouTubeService {
   }
 
   async getChannelById(channelId: string) {
+    await this.ensureAuth()
     try {
       const response = await this.youtube.channels.list({
         part: ["snippet", "statistics", "contentDetails"],
@@ -431,6 +439,7 @@ export class YouTubeService {
   }
 
   async searchVideos(query: string, maxResults = 25) {
+    await this.ensureAuth()
     try {
       const response = await this.youtube.search.list({
         part: ["snippet"],
@@ -461,7 +470,8 @@ export async function createYouTubeService(userId: string) {
   }
 
   return new YouTubeService(
-    userRecord.accounts[0].access_token,
-    userRecord.accounts[0].refresh_token || undefined
+    userRecord.accounts[0].access_token || undefined,
+    userRecord.accounts[0].refresh_token || undefined,
+    userId
   )
 }

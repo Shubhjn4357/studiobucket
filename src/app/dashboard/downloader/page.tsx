@@ -158,7 +158,7 @@ export default function DownloaderPage() {
       if (!response.ok) throw new Error("Failed to remove job")
       
       setJobs(prev => prev.filter(j => j.id !== id))
-      toast.success("Download removed from registry")
+      toast.success("Download removed")
     } catch {
       toast.error("Failed to remove download")
     }
@@ -223,7 +223,7 @@ export default function DownloaderPage() {
               <div className="space-y-6 md:space-y-8">
                 <div className="space-y-3 md:space-y-4">
                   <div className="flex justify-between text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">
-                    <span>Transfer Progress</span>
+                    <span>Download Progress</span>
                     <span className="text-foreground">{Math.round(job.progress)}%</span>
                   </div>
                   <div className="h-1 md:h-1.5 w-full bg-muted rounded-full overflow-hidden border border-border/30">
@@ -250,7 +250,7 @@ export default function DownloaderPage() {
                       disabled={job.status !== "completed"}
                       className="w-full rounded-xl md:rounded-2xl h-10 md:h-12 text-[9px] md:text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/10 transition-all hover:scale-[1.05] active:scale-95"
                     >
-                      Open Studio
+                      Edit Video
                     </Button>
                   </Link>
                 </div>

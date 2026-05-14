@@ -14,16 +14,17 @@ const FileVideo = Icons.fileVideo
 const Trash2 = Icons.trash2
 const Plus = Icons.plus
 
-const mockUploadQueue = [
-  { id: 1, name: "video1.mp4", status: "uploading", progress: 75 },
-  { id: 2, name: "video2.mp4", status: "completed", progress: 100 },
-  { id: 3, name: "video3.mp4", status: "waiting", progress: 0 },
-]
+interface UploadItem {
+  id: string
+  name: string
+  status: "uploading" | "completed" | "failed" | "waiting"
+  progress: number
+}
 
 export function UploadManager() {
   const [isUploading, setIsUploading] = useState(false)
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
-  const [uploadQueue] = useState(mockUploadQueue)
+  const [uploadQueue, setUploadQueue] = useState<UploadItem[]>([])
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {
@@ -40,11 +41,47 @@ export function UploadManager() {
     if (uploadedFiles.length === 0) return
 
     setIsUploading(true)
-    // TODO: Implement upload logic
-    setTimeout(() => {
+    
+    // Add to queue as waiting/uploading
+    const newItems: UploadItem[] = uploadedFiles.map(file => ({
+      id: crypto.randomUUID(),
+      name: file.name,
+      status: "uploading",
+      progress: 0
+    }))
+    
+    setUploadQueue(prev => [...newItems, ...prev])
+    setUploadedFiles([])
+
+    try {
+      const formData = new FormData()
+      uploadedFiles.forEach(file => formData.append('files', file))
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!response.ok) throw new Error("Upload failed")
+      
+      const { uploaded } = await response.json()
+      
+      setUploadQueue(prev => prev.map(item => {
+        const uploadedFile = uploaded.find((u: { name: string }) => u.name === item.name)
+        if (uploadedFile) {
+          return { ...item, status: "completed", progress: 100 }
+        }
+        return item
+      }))
+    } catch (error) {
+      setUploadQueue(prev => prev.map(item => 
+        newItems.find(n => n.id === item.id) 
+          ? { ...item, status: "failed", progress: 0 } 
+          : item
+      ))
+    } finally {
       setIsUploading(false)
-      setUploadedFiles([])
-    }, 2000)
+    }
   }
 
   const getStatusColor = (status: string) => {
@@ -59,7 +96,6 @@ export function UploadManager() {
         return "bg-gray-100 text-gray-800"
     }
   }
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">

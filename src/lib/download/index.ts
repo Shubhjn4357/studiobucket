@@ -388,7 +388,7 @@ export async function createDownloadJob(
   options: DownloadOptions = {}
 ) {
   const downloadJob = await db.insert(downloadJobs).values({
-    id: `dl_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    id: `dl_${crypto.randomUUID()}`,
     userId,
     sourceUrl,
     sourceType,

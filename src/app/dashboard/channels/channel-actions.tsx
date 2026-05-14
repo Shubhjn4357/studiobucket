@@ -15,9 +15,9 @@ export function ChannelActions() {
     setIsSyncing(true)
     try {
       await syncAllChannelsAction()
-      toast.success("Global fleet telemetry synchronized")
+      toast.success("Channel status synchronized")
     } catch {
-      toast.error("Fleet synchronization failed")
+      toast.error("Channel synchronization failed")
     } finally {
       setIsSyncing(false)
     }

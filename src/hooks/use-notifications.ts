@@ -18,7 +18,7 @@ export function useNotifications() {
   const addNotification = (notif: Omit<Notification, "id" | "timestamp" | "read">) => {
     const newNotif: Notification = {
       ...notif,
-      id: Math.random().toString(36).substring(7),
+      id: crypto.randomUUID(),
       timestamp: new Date(),
       read: false
     }

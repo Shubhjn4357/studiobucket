@@ -36,8 +36,9 @@ async function StudioContent({ videoId, userId }: { videoId: string, userId: str
 
   return (
     <VideoStudio 
-      initialData={initialData}
+      videoId={videoId}
       title={initialVideo?.title || "Untitled Project"}
+      initialData={initialData}
       filePath={initialVideo?.filePath || undefined}
       hlsPath={initialVideo?.hlsPath || undefined}
     />

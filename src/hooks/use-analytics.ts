@@ -21,7 +21,7 @@ export function useAnalytics(days = 7) {
       const stats = await getDailyStatsAction(days)
       setData(stats as unknown as DailyStat[])
     } catch {
-      toast.error("Telemetry failure")
+      toast.error("Status update failure")
       setError("Failed to load analytics data")
     } finally {
       setIsLoading(false)

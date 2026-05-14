@@ -12,6 +12,9 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Slider } from "@/components/ui/slider"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 
+import { finalizeVideoAction } from "@/app/dashboard/actions"
+import { toast } from "sonner"
+
 interface VideoStudioProps {
   videoId: string
   initialData?: VideoProject
@@ -20,7 +23,7 @@ interface VideoStudioProps {
   hlsPath?: string
 }
 
-export function VideoStudio({ initialData, filePath, hlsPath }: Omit<VideoStudioProps, "videoId" | "title">) {
+export function VideoStudio({ videoId, title, initialData, filePath, hlsPath }: VideoStudioProps) {
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -198,7 +201,7 @@ export function VideoStudio({ initialData, filePath, hlsPath }: Omit<VideoStudio
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-10rem)] md:h-[calc(100vh-12rem)] bg-background overflow-hidden border-t border-border">
+    <div className="flex flex-col h-[calc(100vh-10rem)] md:h-[calc(100vh-12rem)] bg-background overflow-hidden border-t border-border [--sidebar-width:128px] md:[--sidebar-width:176px]">
       <div className="flex-1 flex overflow-hidden relative">
         {/* Left Sidebar - Assets (Hidden on Mobile) */}
         <div className="hidden lg:flex w-72 border-r border-border bg-card/30 flex-col shrink-0">
@@ -376,7 +379,7 @@ export function VideoStudio({ initialData, filePath, hlsPath }: Omit<VideoStudio
                 {/* Shared Timeline Playhead Line */}
                 <div 
                   className="absolute top-0 bottom-0 w-[2px] bg-primary z-50 pointer-events-none flex flex-col items-center shadow-[0_0_10px_rgba(var(--primary-rgb),0.5)]"
-                  style={{ left: `calc(${(currentTime / (duration || 1)) * 100}% + ${window.innerWidth < 768 ? 128 : 176}px)` }}
+                  style={{ left: `calc(${(currentTime / (duration || 1)) * 100}% + var(--sidebar-width))` }}
                 >
                    <div 
                      onPointerDown={(e) => onPointerDown(e, 'playhead')}
@@ -398,7 +401,19 @@ export function VideoStudio({ initialData, filePath, hlsPath }: Omit<VideoStudio
             <PropertiesPanel clip={selectedClip} onUpdate={handleUpdateClip} onDelete={handleDeleteClip} />
           </ScrollArea>
           <div className="p-6 border-t border-border bg-muted/5">
-             <Button className="w-full h-12 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-primary/20 transition-all active:scale-95">
+             <Button 
+               onClick={async () => {
+                 try {
+                   toast.loading("Queuing video for rendering...", { id: "finalize" })
+                   const res = await finalizeVideoAction(videoId, JSON.stringify(tracks))
+                   if (res.success) toast.success("Video rendering queued!", { id: "finalize" })
+                   else toast.error("Failed to queue rendering", { id: "finalize" })
+                 } catch (err) {
+                   toast.error("An error occurred", { id: "finalize" })
+                 }
+               }}
+               className="w-full h-12 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-primary/20 transition-all active:scale-95"
+             >
                Finalize Video
              </Button>
           </div>

@@ -20,7 +20,7 @@ export function useScheduler() {
       // In a real app, this would be a server action
       const newTask: ScheduledTask = {
         ...task,
-        id: Math.random().toString(36).substring(7),
+        id: crypto.randomUUID(),
         status: "pending"
       }
       setTasks(prev => [...prev, newTask])

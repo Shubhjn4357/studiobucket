@@ -8,8 +8,8 @@ export const redis = redisUrl
       enableOfflineQueue: false,
       lazyConnect: true,
       retryStrategy(times) {
-        if (times > 3) return null // Stop retrying
-        return null // Don't retry at all
+        const delay = Math.min(times * 50, 2000)
+        return delay
       }
     })
   : null

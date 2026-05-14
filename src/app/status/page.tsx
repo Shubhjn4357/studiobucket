@@ -95,16 +95,20 @@ export default async function StatusPage() {
                 </div>
                 
                 <div className="h-10 flex items-end gap-1 px-1 opacity-20 group-hover:opacity-40 transition-opacity">
-                   {Array.from({ length: 30 }).map((_, i) => (
-                     <div 
-                      key={i} 
-                      className={cn(
-                        "flex-1 rounded-full",
-                        service.status === "operational" ? "bg-green-500" : "bg-red-500"
-                      )} 
-                      style={{ height: `${Math.random() * 60 + 20}%` }} 
-                     />
-                   ))}
+                   {Array.from({ length: 30 }).map((_, i) => {
+                     // Deterministic pseudo-random pattern using sine waves
+                     const heightPct = 50 + Math.sin(i * 0.8 + service.latency) * 30 + Math.cos(i * 1.5) * 10
+                     return (
+                       <div 
+                        key={i} 
+                        className={cn(
+                          "flex-1 rounded-full",
+                          service.status === "operational" ? "bg-green-500" : "bg-red-500"
+                        )} 
+                        style={{ height: `${Math.min(100, Math.max(20, heightPct))}%` }} 
+                       />
+                     )
+                   })}
                 </div>
               </CardContent>
             </Card>

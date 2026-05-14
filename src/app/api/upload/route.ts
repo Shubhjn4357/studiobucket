@@ -1,19 +1,22 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
-import { addUploadJob, addTranscodeJob } from "@/lib/queue"
 import { db } from "@/lib/db"
 import { videos } from "@/lib/db/schema"
-import { eq, desc, and } from "drizzle-orm"
-import { logger } from "@/lib/logger"
-import { randomUUID } from "crypto"
-import fs from "fs"
-import path from "path"
-import { pipeline } from "stream/promises"
 import { getStoragePath } from "@/lib/storage-utils"
-import { StorageEngine } from "@/lib/storage"
+import { addTranscodeJob } from "@/lib/queue"
+import { logger } from "@/lib/logger"
+import * as fs from "fs"
+import * as path from "path"
+import { pipeline } from "stream/promises"
+import { createWriteStream } from "fs"
 
-export const dynamic = "force-dynamic"
+// Disable body parsing, we handle it raw with standard web APIs
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,142 +26,61 @@ export async function POST(request: NextRequest) {
     }
 
     const formData = await request.formData()
-    const file = formData.get("file") as File
-    const title = formData.get("title") as string
-    const description = formData.get("description") as string
-    const tags = formData.get("tags") as string
-    const categoryId = formData.get("categoryId") as string
-    const privacy = (formData.get("privacy") as string) || "private"
-    const publishAt = formData.get("publishAt") as string
+    const files = formData.getAll('files') as File[]
 
-    if (!file || !title) {
-      return NextResponse.json(
-        { error: "File and title are required" },
-        { status: 400 }
-      )
+    if (!files || files.length === 0) {
+      return NextResponse.json({ error: "No files uploaded" }, { status: 400 })
     }
 
-    const videoId = randomUUID()
-    const fileName = `${Date.now()}-${file.name}`
-    
-    // Write the file to a temp location first
-    const tempPath = getStoragePath("uploads", `temp-${fileName}`)
-    const destDir = path.dirname(tempPath)
-    if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true })
-
-    const writeStream = fs.createWriteStream(tempPath)
-    await pipeline(file.stream() as any, writeStream)
-
-    // Upload to Storage Engine (R2 or Local Fallback)
-    const storedPath = await StorageEngine.uploadFile(tempPath, fileName, file.type)
-    
-    // Cleanup temp file if it's different from the stored path
-    if (tempPath !== path.join(/*turbopackIgnore: true*/ process.cwd(), "public", storedPath)) {
-        fs.unlinkSync(tempPath)
+    const uploadDir = getStoragePath("uploads")
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true })
     }
 
-    logger.info(`Upload initiated: ${videoId} for user ${session.user.id}. File saved to ${storedPath}`)
+    const results = []
 
-    const newVideo = await db
-      .insert(videos)
-      .values({
-        id: videoId,
+    for (const file of files) {
+      // Create a unique filename
+      const ext = path.extname(file.name) || '.mp4'
+      const baseName = path.basename(file.name, ext).replace(/[^a-z0-9]/gi, '_').toLowerCase()
+      const filename = `${baseName}_${Date.now()}${ext}`
+      const fullPath = path.join(uploadDir, filename)
+      const relativePath = `uploads/${filename}`
+
+      // Convert File to Node.js Readable stream and write to disk
+      const arrayBuffer = await file.arrayBuffer()
+      const buffer = Buffer.from(arrayBuffer)
+      fs.writeFileSync(fullPath, buffer)
+
+      // Insert into DB
+      const [newVideo] = await db.insert(videos).values({
         userId: session.user.id,
-        title: title,
-        description: description,
-        tags: tags,
-        categoryId: categoryId,
-        privacyStatus: privacy as "public" | "private" | "unlisted",
-        filePath: storedPath,
+        title: file.name,
+        filePath: relativePath,
         fileSize: file.size,
-        status: "queued",
-        publishAt: publishAt
-          ? new Date(publishAt).getTime()
-          : undefined,
+        status: 'queued', // Automatically queue it for HLS transcoding
         createdAt: Date.now(),
         updatedAt: Date.now(),
+      }).returning()
+
+      // Queue for processing
+      await addTranscodeJob({
+        videoId: newVideo.id,
+        filePath: relativePath
       })
-      .returning()
 
-    const job = await addUploadJob({
-      videoId: videoId,
-      userId: session.user.id,
-      channelId: session.user.id,
-      filePath: storedPath,
-      title: title,
-      description: description,
-      tags: tags ? tags.split(",") : [],
-      categoryId: categoryId,
-      privacy: privacy as "public" | "private" | "unlisted",
-      publishAt: publishAt
-        ? Math.floor(new Date(publishAt).getTime() / 1000)
-        : undefined,
-    })
-
-    // Enqueue HLS Transcoding
-    await addTranscodeJob({
-      videoId: videoId,
-      filePath: storedPath
-    })
-
-    if (job) {
-      logger.info(`Upload job queued: ${job.id}`)
-    } else {
-      logger.warn("Upload job created in DB but queue is unavailable.")
+      results.push({
+        id: newVideo.id,
+        name: file.name,
+        status: 'processing'
+      })
+      
+      logger.info(`File uploaded successfully: ${filename}`)
     }
 
-    return NextResponse.json(
-      {
-        success: true,
-        data: {
-          video: newVideo[0],
-          jobId: job?.id || null,
-        },
-      },
-      { status: 201 }
-    )
+    return NextResponse.json({ success: true, uploaded: results })
   } catch (error) {
-    logger.error(error, "Upload error:")
-    return NextResponse.json(
-      { error: "Failed to upload video" },
-      { status: 500 }
-    )
-  }
-}
-
-export async function GET(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
-    const { searchParams } = new URL(request.url)
-    const status = searchParams.get("status")
-
-    const conditions = [eq(videos.userId, session.user.id)]
-    if (status) {
-      conditions.push(eq(videos.status, status))
-    }
-
-    const userVideos = await db
-      .select()
-      .from(videos)
-      .where(and(...conditions))
-      .limit(50)
-      .orderBy(desc(videos.createdAt))
-
-    logger.info(`Retrieved ${userVideos.length} upload videos for user ${session.user.id}`)
-
-    return NextResponse.json({
-      success: true,
-      data: userVideos
-    })
-  } catch (error) {
-    logger.error(error, "Upload GET error:")
-    return NextResponse.json(
-      { error: "Failed to fetch videos" },
-      { status: 500 }
-    )
+    logger.error(error, "Upload API failure")
+    return NextResponse.json({ error: "File upload failed" }, { status: 500 })
   }
 }

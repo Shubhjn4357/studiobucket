@@ -1,6 +1,5 @@
 import { uploadWorker } from "./upload-worker"
 import { downloadWorker } from "./download-worker"
-import { studioWorker } from "./studio-worker"
 import pino from "pino"
 
 const logger = pino({ level: "info" })
@@ -15,7 +14,6 @@ async function startWorkers() {
     logger.info("Shutting down workers...")
     if (uploadWorker) await uploadWorker.close()
     if (downloadWorker) await downloadWorker.close()
-    if (studioWorker) await studioWorker.close()
     process.exit(0)
   })
 

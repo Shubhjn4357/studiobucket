@@ -19,20 +19,47 @@ export function AudioWaveform({ audioUrl, width, height, color = "#10b981" }: Au
     const ctx = canvas.getContext("2d")
     if (!ctx) return
 
-    // Simple procedural waveform for now
-    // In a real app, we would fetch the audio and use Web Audio API to get real peaks
-    const drawMockWaveform = () => {
-      ctx.clearRect(0, 0, width, height)
-      ctx.fillStyle = color
+    const drawRealWaveform = async () => {
+      if (!audioUrl) return
       
-      const step = 2
-      for (let i = 0; i < width; i += step) {
-        const h = Math.random() * (height / 2)
-        ctx.fillRect(i, height / 2 - h / 2, 1.5, h)
+      try {
+        const response = await fetch(audioUrl)
+        const arrayBuffer = await response.arrayBuffer()
+        const CustomWindow = window as unknown as { webkitAudioContext: typeof AudioContext }
+        const audioContext = new (window.AudioContext || CustomWindow.webkitAudioContext)()
+        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer)
+        
+        const channelData = audioBuffer.getChannelData(0)
+        const step = Math.ceil(channelData.length / width)
+        const amp = height / 2
+
+        ctx.clearRect(0, 0, width, height)
+        ctx.fillStyle = color
+
+        for (let i = 0; i < width; i++) {
+          let min = 1.0
+          let max = -1.0
+          // Find the peak bounds in this step
+          for (let j = 0; j < step; j++) {
+            const index = (i * step) + j
+            if (index < channelData.length) {
+              const datum = channelData[index]
+              if (datum < min) min = datum
+              if (datum > max) max = datum
+            }
+          }
+          
+          const y = (1 + min) * amp
+          const h = Math.max(1, (max - min) * amp)
+          
+          ctx.fillRect(i, y, 1, h)
+        }
+      } catch (err) {
+        console.error("Failed to render real waveform:", err)
       }
     }
 
-    drawMockWaveform()
+    drawRealWaveform()
   }, [audioUrl, width, height, color])
 
   return (
