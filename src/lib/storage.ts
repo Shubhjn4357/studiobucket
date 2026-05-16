@@ -33,30 +33,30 @@ export class StorageEngine {
     try {
       if (isCloudEnabled && s3Client) {
         logger.info(`Cloud Storage Protocol: Initiating R2 upload for ${key}`)
-        
+
         // Use stream for memory efficiency on large video files
         const fileStream = fs.createReadStream(filePath)
-        
+
         await s3Client.send(new PutObjectCommand({
           Bucket: R2_BUCKET,
           Key: key,
           Body: fileStream,
           ContentType: contentType,
         }))
-        
+
         return key
       } else {
         logger.info(`Local Storage Protocol: Fallback enabled for ${key}`)
         const localDest = getStoragePath("uploads", key)
         const destDir = path.dirname(localDest)
-        
+
         if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true })
-        
+
         // If we are already there (e.g. download worker), skip copy
         if (path.resolve(filePath) !== path.resolve(localDest)) {
            fs.copyFileSync(filePath, localDest)
         }
-        
+
         return key
       }
     } catch (error) {
@@ -88,8 +88,33 @@ export class StorageEngine {
     if (isCloudEnabled) {
       return `${R2_PUBLIC_URL}/${key}`
     }
-    const isProd = process.env.NODE_ENV === 'production'
-    return isProd ? `/storage/uploads/${key}` : `/uploads/${key}`
+    // Serve via API route for both local and production storage when not using cloud
+    return `/api/storage/${key}`
+  }
+
+  /**
+   * Extracts the storage key from a URL (either cloud or local API)
+   * @param url The URL returned by StorageEngine.getUrl()
+   * @returns The storage key (the part that identifies the file in storage)
+   */
+  static getKeyFromUrl(url: string): string {
+    if (isCloudEnabled && R2_PUBLIC_URL) {
+      // Assuming the url is ${R2_PUBLIC_URL}/${key}
+      const prefix = `${R2_PUBLIC_URL}/`
+      if (url.startsWith(prefix)) {
+        return url.substring(prefix.length)
+      }
+      // Fallback: try to get the last segment
+      return url.split('/').pop() || ''
+    } else {
+      // Local: url is /api/storage/${key}
+      const prefix = '/api/storage/'
+      if (url.startsWith(prefix)) {
+        return url.substring(prefix.length)
+      }
+      // Fallback
+      return url.split('/').pop() || ''
+    }
   }
 
   static async getPresignedUrl(key: string, contentType: string): Promise<{ url: string; fields?: Record<string, string> }> {

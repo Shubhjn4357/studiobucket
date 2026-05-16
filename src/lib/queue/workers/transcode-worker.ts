@@ -8,6 +8,7 @@ import { spawn } from "child_process"
 import ffmpegStatic from "ffmpeg-static"
 import path from "path"
 import fs from "fs"
+import { StorageEngine } from "@/lib/storage"
 
 const logger = pino({ level: "info" })
 const connection = new Redis(process.env.REDIS_URL || "redis://localhost:6379")
@@ -90,11 +91,12 @@ export class TranscodeWorker {
           if (code === 0) {
             logger.info(`ABR HLS generation finished for ${videoId}`)
             
+            const hlsKey = `hls/${videoId}/master.m3u8`
             await db.update(videos)
-              .set({ 
-                hlsPath: process.env.NODE_ENV === "production" ? `/storage/hls/${videoId}/master.m3u8` : `/hls/${videoId}/master.m3u8`,
+              .set({
+                hlsPath: StorageEngine.getUrl(hlsKey),
                 status: "uploaded",
-                updatedAt: Date.now() 
+                updatedAt: Date.now()
               })
               .where(eq(videos.id, videoId))
               

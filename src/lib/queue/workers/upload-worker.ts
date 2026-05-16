@@ -101,6 +101,19 @@ export class UploadWorker {
         .set({ progress: 30 })
         .where(eq(uploadJobs.id, job.id as string))
 
+      // Get absolute file path
+      const { getStoragePath } = await import("@/lib/storage-utils")
+      // Extract key from filePath (which may have a prefix like /uploads/ or /storage/uploads/)
+      let key = data.filePath;
+      if (key.startsWith('/')) {
+        key = key.substring(1);
+      }
+      const uploadsIndex = key.lastIndexOf('uploads/');
+      if (uploadsIndex !== -1) {
+        key = key.substring(uploadsIndex + 'uploads/'.length);
+      }
+      const absoluteFilePath = getStoragePath("uploads", key)
+
       // Upload video
       const res = await youtube.videos.insert({
         part: ["snippet", "status"],
@@ -119,7 +132,7 @@ export class UploadWorker {
           },
         },
         media: {
-          body: await import("fs").then(fs => fs.createReadStream(data.filePath)),
+          body: await import("fs").then(fs => fs.createReadStream(absoluteFilePath)),
         },
       })
 

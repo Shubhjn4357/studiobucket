@@ -9,6 +9,7 @@ import ffmpegStatic from "ffmpeg-static"
 import path from "path"
 import fs from "fs"
 import { VideoProject } from "@/types/video"
+import { StorageEngine } from "@/lib/storage"
 
 const logger = pino({ level: "info" })
 const connection = new Redis(process.env.REDIS_URL || "redis://localhost:6379")
@@ -51,13 +52,13 @@ export class ExportWorker {
           const inputPath = getStoragePath("uploads", clip.assetId || "")
           if (fs.existsSync(inputPath)) {
              inputs.push("-ss", clip.offset.toString(), "-t", clip.duration.toString(), "-i", inputPath)
-             
+
              const volume = clip.volume ?? 1
              const fadeDuration = 0.5 // Standard 500ms fade
-             
+
              // Base filter for the clip: Scale, Format, and Opacity
              let clipFilter = `[${inputIdx}:v]setpts=PTS-STARTPTS, scale=${project.resolution.width}:${project.resolution.height}, format=yuva420p`
-             
+
              // Apply Fade Transitions if specified
              if (clip.transitionIn === "fade") {
                clipFilter += `, fade=t=in:st=0:d=${fadeDuration}`
@@ -65,7 +66,7 @@ export class ExportWorker {
              if (clip.transitionOut === "fade") {
                clipFilter += `, fade=t=out:st=${clip.duration - fadeDuration}:d=${fadeDuration}`
              }
-             
+
              filterComplex += `${clipFilter}[v${inputIdx}];`
              filterComplex += `[${inputIdx}:a]volume=${volume}[a${inputIdx}];`
              inputIdx++
@@ -113,11 +114,11 @@ export class ExportWorker {
 
         renderProcess.on("close", async (code) => {
           if (code === 0) {
-            const isProd = process.env.NODE_ENV === "production"
-            await db.update(videos).set({ 
-              status: "published", 
-              filePath: isProd ? `/storage/exports/${videoId}-final.mp4` : `/exports/${videoId}-final.mp4`,
-              updatedAt: Date.now() 
+            const exportKey = `exports/${videoId}-final.mp4`
+            await db.update(videos).set({
+              status: "published",
+              filePath: StorageEngine.getUrl(exportKey),
+              updatedAt: Date.now()
             }).where(eq(videos.id, videoId))
             resolve(true)
           } else {
